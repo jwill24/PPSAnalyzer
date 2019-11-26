@@ -8,46 +8,28 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 from ROOT import TCanvas, TPad, TFile, TPaveLabel, TPaveText, TAttText, TLine, TLegend, TBox, TColor, THStack, TGaxis, TH1F
 from ROOT import gROOT, gStyle
 
-#selection = 'Preselection'
-selection = 'Elastic selection'
-
-fillColor = 212
-
-#dataFile = 'outputHists/histOut_data_preselection_2017.root'
-dataFile = 'outputHists/histOut_data_elastic_2017.root'
-
-# calculated from script
-xs_ggj = 138.5
-xs_gj = 873.7
-xs_qcd = 117500.
-#xs_wg = 465.0
-xs_wg = 191.1
-xs_zg = 55.47
-
-n_ggj = 4000000 
-n_gj = 80000000
-n_qcd = 4000000
-n_wg = 6300000
-n_zg = 30000000
-
-#n_ggj = 3883535 
-#n_gj = 79243357 
-#n_qcd = 3883535
-#n_wg = 6283083
-#n_zg = 30490034
-
-lumi = 37200.0 # pb
-
 gStyle.SetOptStat(0)
 
+lab = 'Elastic selection'
+selection = 'elastic'
+fillColor = 212
+lumi = 37200.0 # pb
+
+ggj =  ['outputHists/histOut_ggj_'+selection+'_2017.root',138.5,4000000,208]
+gj =   ['outputHists/histOut_gj_'+selection+'_2017.root',873.7,80000000,38]
+qcd =  ['outputHists/histOut_qcd_'+selection+'_2017.root',117500,4000000,228]
+wg =   ['outputHists/histOut_wg_'+selection+'_2017.root',191.1,6300000,29] 
+zg =   ['outputHists/histOut_zg_'+selection+'_2017.root',55.47,30000000,210]
+aqgc = ['outputHists/histOut_aqgc_'+selection+'_2017.root',3.86e-5,300000,14]
+
 # Histogram files
-dFile = TFile( dataFile )
-ggjFile = TFile( "outputHists/histOut_ggj_elastic_2017.root" )
-gjFile = TFile( "outputHists/histOut_gj_elastic_2017.root" )
-qcdFile = TFile( "outputHists/histOut_qcd_elastic_2017.root" )
-wgFile = TFile( "outputHists/histOut_wg_elastic_2017.root" )
-zgFile = TFile( "outputHists/histOut_zg_elastic_2017.root" )
-aqgcFile = TFile( "outputHists/histOut_aqgc_elastic_2017.root" )
+dataFile = TFile('outputHists/histOut_data_'+selection+'_2017.root')
+ggjFile =  TFile(ggj[0])
+gjFile =   TFile(gj[0])
+qcdFile =  TFile(qcd[0])
+wgFile =   TFile(wg[0])
+zgFile =   TFile(zg[0])
+aqgcFile = TFile(aqgc[0])
 
 def Canvas(name):
     c = TCanvas(name,'c',750,600)
@@ -85,7 +67,7 @@ def plotRatio(name, h1, v_hist, log):
     stack.Draw('HIST')
     h1.Draw('p same')
     stack.GetHistogram().GetYaxis().SetTitle('Events')
-    pLabel, sLabel, lLabel = prelimLabel(), selectionLabel(selection), lumiLabel()
+    pLabel, sLabel, lLabel = prelimLabel(), selectionLabel(lab), lumiLabel()
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
     legend = makeLegend(h1,v_hist)
     legend.Draw()
@@ -120,14 +102,14 @@ def plotRatio(name, h1, v_hist, log):
     c.SaveAs(name+'.png')
 
 def prelimLabel():
-    #label = TPaveText( 0.135, 0.8, 0.2, 0.86, 'NB NDC' )
-    label = TPaveText( 0.8, 0.79, 0.87, 0.86, 'NB NDC' )
+    label = TPaveText( 0.135, 0.78, 0.2, 0.86, 'NB NDC' ) # Left label
+    #label = TPaveText( 0.8, 0.79, 0.87, 0.86, 'NB NDC' ) # Right label
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
     label.SetLineStyle(0)
-    #label.SetTextAlign(11)
-    label.SetTextAlign(31)
+    label.SetTextAlign(11) # Align bottom left
+    #label.SetTextAlign(31) # Align bottom right
     label.AddText( "#font[62]{CMS}" )
     label.AddText( "#scale[0.75]{#font[52]{Preliminary}}" )
     label.SetTextSize(0.05)
@@ -174,9 +156,9 @@ def makeLegend(h1,v_hist):
         legend.AddEntry(v_hist[i],backgrounds[i],'f')
     return legend
     
-def setPlot(h, color, xs, nevts):
+def setPlot(h, color, rbin, xs, nevts):
     h.SetTitle('')
-    h.Rebin(4)
+    h.Rebin(rbin)
     h.SetFillColor(color)
     h.SetLineColor(color)
     h.Scale(xs*lumi/nevts)
@@ -186,7 +168,7 @@ def setPlot(h, color, xs, nevts):
 
 v_mass = []
 
-h_diph_mass = dFile.Get("plots/h_diph_mass")
+h_diph_mass = dataFile.Get("plots/h_diph_mass")
 h_diph_mass.SetTitle('')
 h_diph_mass.SetXTitle('m_{#gamma#gamma} GeV')
 h_diph_mass.SetYTitle('Events')
@@ -195,20 +177,19 @@ h_diph_mass.SetMarkerStyle(20)
 h_diph_mass.SetMarkerSize(0.7)
 
 h_ggj_diph_mass = ggjFile.Get("plots/h_diph_mass")
-#setPlot(h_ggj_diph_mass, 208, xs_ggj, n_ggj)
-setPlot(h_ggj_diph_mass,208, 37200., 1)
+setPlot(h_ggj_diph_mass, ggj[3], 4, ggj[1], ggj[2])
 
 h_gj_diph_mass = gjFile.Get("plots/h_diph_mass")
-setPlot(h_gj_diph_mass, 38, xs_gj, n_gj)
+setPlot(h_gj_diph_mass, gj[3], 4, gj[1], gj[2])
 
 h_wg_diph_mass = wgFile.Get("plots/h_diph_mass")
-setPlot(h_wg_diph_mass, 29, xs_wg, n_wg)
+setPlot(h_wg_diph_mass, wg[3], 4, wg[1], wg[2])
 
 h_zg_diph_mass = zgFile.Get("plots/h_diph_mass")
-setPlot(h_zg_diph_mass, 210, xs_zg, n_zg)
+setPlot(h_zg_diph_mass, zg[3], 4, zg[1], zg[2])
 
 h_qcd_diph_mass = qcdFile.Get("plots/h_diph_mass")
-setPlot(h_qcd_diph_mass, 228, xs_qcd, n_qcd)
+setPlot(h_qcd_diph_mass, qcd[3], 4, qcd[1], qcd[2])
 
 v_mass.append(h_zg_diph_mass)
 v_mass.append(h_wg_diph_mass)
@@ -222,7 +203,7 @@ plotRatio('h_mass_comp', h_diph_mass, v_mass, True)
 
 v_pt = []
 
-h_single_pt = dFile.Get("plots/h_single_pt")
+h_single_pt = dataFile.Get("plots/h_single_pt")
 h_single_pt.SetTitle('')
 h_single_pt.SetXTitle('p_{T}^{#gamma} GeV')
 h_single_pt.SetYTitle('Events')
@@ -231,19 +212,19 @@ h_single_pt.SetMarkerStyle(20)
 h_single_pt.SetMarkerSize(0.7)
 
 h_ggj_single_pt = ggjFile.Get("plots/h_single_pt")
-setPlot(h_ggj_single_pt, 208, xs_ggj, n_ggj)
+setPlot(h_ggj_single_pt, ggj[3], 4, ggj[1], n_ggj)
 
 h_gj_single_pt = gjFile.Get("plots/h_single_pt")
-setPlot(h_gj_single_pt, 38, xs_gj, n_gj)
+setPlot(h_gj_single_pt, gj[3], 4, gj[1], gj[2])
 
 h_wg_single_pt = wgFile.Get("plots/h_single_pt")
-setPlot(h_wg_single_pt, 29, xs_wg, n_wg)
+setPlot(h_wg_single_pt, wg[3], 4, wg[1], wg[2])
 
 h_zg_single_pt = zgFile.Get("plots/h_single_pt")
-setPlot(h_zg_single_pt, 210, xs_zg, n_zg)
+setPlot(h_zg_single_pt, zg[3], 4, zg[1], zg[2])
 
 h_qcd_single_pt = qcdFile.Get("plots/h_single_pt")
-setPlot(h_qcd_single_pt, 228, xs_qcd, n_qcd)
+setPlot(h_qcd_single_pt, qcd[3], 4, qcd[1], qcd[2])
 
 v_pt.append(h_zg_single_pt)
 v_pt.append(h_wg_single_pt)
@@ -254,11 +235,192 @@ v_pt.append(h_qcd_single_pt)
 plotRatio('h_pt_comp', h_single_pt, v_pt, True)
 
 #-----------------------
+
+v_eta = []
+eta_rbin = 2
+
+h_single_eta = dataFile.Get("plots/h_single_eta")
+h_single_eta.SetTitle('')
+h_single_eta.SetXTitle('#eta ^{#gamma}')
+h_single_eta.SetYTitle('Events')
+h_single_eta.Rebin(eta_rbin)
+h_single_eta.SetMarkerStyle(20)
+h_single_eta.SetMarkerSize(0.7)
+
+h_ggj_single_eta = ggjFile.Get("plots/h_single_eta")
+setPlot(h_ggj_single_eta, ggj[3], eta_rbin, ggj[1], n_ggj)
+
+h_gj_single_eta = gjFile.Get("plots/h_single_eta")
+setPlot(h_gj_single_eta, gj[3], eta_rbin, gj[1], gj[2])
+
+h_wg_single_eta = wgFile.Get("plots/h_single_eta")
+setPlot(h_wg_single_eta, wg[3], eta_rbin, wg[1], wg[2])
+
+h_zg_single_eta = zgFile.Get("plots/h_single_eta")
+setPlot(h_zg_single_eta, zg[3], eta_rbin, zg[1], zg[2])
+
+h_qcd_single_eta = qcdFile.Get("plots/h_single_eta")
+setPlot(h_qcd_single_eta, qcd[3], eta_rbin, qcd[1], qcd[2])
+
+v_eta.append(h_zg_single_eta)
+v_eta.append(h_wg_single_eta)
+v_eta.append(h_gj_single_eta)
+v_eta.append(h_ggj_single_eta)
+v_eta.append(h_qcd_single_eta)
+
+plotRatio('h_eta_comp', h_single_eta, v_eta, False)
+
+#-----------------------
+'''
+v_acop = []
+acop_rbin = 2
+
+h_acop = dataFile.Get("plots/h_acop")
+h_acop.SetTitle('')
+h_acop.SetXTitle('1- |#Delta #phi|/#pi')
+h_acop.SetYTitle('Events')
+h_acop.Rebin(acop_rbin)
+h_acop.SetMarkerStyle(20)
+h_acop.SetMarkerSize(0.7)
+
+h_ggj_acop = ggjFile.Get("plots/h_acop")
+setPlot(h_ggj_acop, ggj[3], acop_rbin, ggj[1], n_ggj)
+
+h_gj_acop = gjFile.Get("plots/h_acop")
+setPlot(h_gj_acop, gj[3], acop_rbin, gj[1], gj[2])
+
+h_wg_acop = wgFile.Get("plots/h_acop")
+setPlot(h_wg_acop, wg[3], acop_rbin, wg[1], wg[2])
+
+h_zg_acop = zgFile.Get("plots/h_acop")
+setPlot(h_zg_acop, zg[3], acop_rbin, zg[1], zg[2])
+
+h_qcd_acop = qcdFile.Get("plots/h_acop")
+setPlot(h_qcd_acop, qcd[3], acop_rbin, qcd[1], qcd[2])
+
+v_acop.append(h_zg_acop)
+v_acop.append(h_wg_acop)
+v_acop.append(h_gj_acop)
+v_acop.append(h_ggj_acop)
+v_acop.append(h_qcd_acop)
+
+plotRatio('h_acop_comp', h_acop, v_acop, True)
+'''
+#-----------------------
+
+v_nvtx = []
+nvtx_rbin = 1
+
+h_nvtx = dataFile.Get("plots/h_nvtx")
+h_nvtx.SetTitle('')
+h_nvtx.SetXTitle('Number of primary vertices')
+h_nvtx.SetYTitle('Events')
+h_nvtx.Rebin(nvtx_rbin)
+h_nvtx.SetMarkerStyle(20)
+h_nvtx.SetMarkerSize(0.7)
+
+h_ggj_nvtx = ggjFile.Get("plots/h_nvtx")
+setPlot(h_ggj_nvtx, ggj[3], nvtx_rbin, ggj[1], n_ggj)
+
+h_gj_nvtx = gjFile.Get("plots/h_nvtx")
+setPlot(h_gj_nvtx, gj[3], nvtx_rbin, gj[1], gj[2])
+
+h_wg_nvtx = wgFile.Get("plots/h_nvtx")
+setPlot(h_wg_nvtx, wg[3], nvtx_rbin, wg[1], wg[2])
+
+h_zg_nvtx = zgFile.Get("plots/h_nvtx")
+setPlot(h_zg_nvtx, zg[3], nvtx_rbin, zg[1], zg[2])
+
+h_qcd_nvtx = qcdFile.Get("plots/h_nvtx")
+setPlot(h_qcd_nvtx, qcd[3], nvtx_rbin, qcd[1], qcd[2])
+
+v_nvtx.append(h_zg_nvtx)
+v_nvtx.append(h_wg_nvtx)
+v_nvtx.append(h_gj_nvtx)
+v_nvtx.append(h_ggj_nvtx)
+v_nvtx.append(h_qcd_nvtx)
+
+plotRatio('h_nvtx_comp', h_nvtx, v_nvtx, True)
+
+#-----------------------
+
+v_xip = []
+xip_rbin = 4
+
+h_xip = dataFile.Get("plots/h_xip")
+h_xip.SetTitle('')
+h_xip.SetXTitle('#xi^+')
+h_xip.SetYTitle('Events')
+h_xip.Rebin(xip_rbin)
+h_xip.SetMarkerStyle(20)
+h_xip.SetMarkerSize(0.7)
+
+h_ggj_xip = ggjFile.Get("plots/h_xip")
+setPlot(h_ggj_xip, ggj[3], xip_rbin, ggj[1], n_ggj)
+
+h_gj_xip = gjFile.Get("plots/h_xip")
+setPlot(h_gj_xip, gj[3], xip_rbin, gj[1], gj[2])
+
+h_wg_xip = wgFile.Get("plots/h_xip")
+setPlot(h_wg_xip, wg[3], xip_rbin, wg[1], wg[2])
+
+h_zg_xip = zgFile.Get("plots/h_xip")
+setPlot(h_zg_xip, zg[3], xip_rbin, zg[1], zg[2])
+
+h_qcd_xip = qcdFile.Get("plots/h_xip")
+setPlot(h_qcd_xip, qcd[3], xip_rbin, qcd[1], qcd[2])
+
+v_xip.append(h_zg_xip)
+v_xip.append(h_wg_xip)
+v_xip.append(h_gj_xip)
+v_xip.append(h_ggj_xip)
+v_xip.append(h_qcd_xip)
+
+plotRatio('h_xip_comp', h_xip, v_xip, True)
+
+#-----------------------
+
+v_xim = []
+xim_rbin = 4
+
+h_xim = dataFile.Get("plots/h_xim")
+h_xim.SetTitle('')
+h_xim.SetXTitle('#xi^+')
+h_xim.SetYTitle('Events')
+h_xim.Rebin(xim_rbin)
+h_xim.SetMarkerStyle(20)
+h_xim.SetMarkerSize(0.7)
+
+h_ggj_xim = ggjFile.Get("plots/h_xim")
+setPlot(h_ggj_xim, ggj[3], xim_rbin, ggj[1], n_ggj)
+
+h_gj_xim = gjFile.Get("plots/h_xim")
+setPlot(h_gj_xim, gj[3], xim_rbin, gj[1], gj[2])
+
+h_wg_xim = wgFile.Get("plots/h_xim")
+setPlot(h_wg_xim, wg[3], xim_rbin, wg[1], wg[2])
+
+h_zg_xim = zgFile.Get("plots/h_xim")
+setPlot(h_zg_xim, zg[3], xim_rbin, zg[1], zg[2])
+
+h_qcd_xim = qcdFile.Get("plots/h_xim")
+setPlot(h_qcd_xim, qcd[3], xim_rbin, qcd[1], qcd[2])
+
+v_xim.append(h_zg_xim)
+v_xim.append(h_wg_xim)
+v_xim.append(h_gj_xim)
+v_xim.append(h_ggj_xim)
+v_xim.append(h_qcd_xim)
+
+plotRatio('h_xim_comp', h_xim, v_xim, True)
+
+#-----------------------
+
 '''
 c1 = Canvas("c1")
 c1.cd()
 c1.SetLogy()
-h_diph_mass = dFile.Get("plots/h_diph_mass")
+h_diph_mass = dataFile.Get("plots/h_diph_mass")
 h_diph_mass.Rebin(2)
 #h_diph_mass.GetXaxis().SetRange(15,100)
 h_diph_mass.SetTitle("")
@@ -267,104 +429,13 @@ h_diph_mass.SetYTitle('Events')
 h_diph_mass.SetFillColor(fillColor)
 h_diph_mass.SetLineColor(fillColor)
 h_diph_mass.Draw()
-pLabel, sLabel, lLabel = prelimLabel(), selectionLabel(selection), lumiLabel()
+pLabel, sLabel, lLabel = prelimLabel(), selectionLabel(lab), lumiLabel()
 pLabel.Draw()
 sLabel.Draw()
 lLabel.Draw()
 c1.SaveAs("h_diph_mass.png")
-
-#-----------------------
-
-c2 = Canvas("c2")
-c2.cd()
-c2.SetLogy()
-h_single_pt = dFile.Get("plots/h_single_pt")
-h_single_pt.Rebin(2)
-#h_single_pt.GetXaxis().SetRange(15,100)
-h_single_pt.GetXaxis().SetRange(7,100)
-h_single_pt.SetTitle("")
-h_single_pt.SetXTitle('Single photon p_{T}')
-h_single_pt.SetYTitle('Events')
-h_single_pt.SetFillColor(fillColor)
-h_single_pt.SetLineColor(fillColor)
-h_single_pt.Draw()
-pLabel.Draw()
-sLabel.Draw()
-lLabel.Draw()
-c2.SaveAs("h_single_pt.png")
-
-#-----------------------
-
-c3 = Canvas("c3")
-c3.cd()
-c3.SetLogy()
-h_acop = dFile.Get("plots/h_acop")
-h_acop.SetTitle("")
-h_acop.SetXTitle('1 - #void8 #Delta #phi_{#gamma#gamma}/#pi #void8')
-h_acop.SetYTitle('Events')
-h_acop.SetFillColor(fillColor)
-h_acop.SetLineColor(fillColor)
-h_acop.Draw()
-pLabel.Draw()
-sLabel.Draw()
-lLabel.Draw()
-c3.SaveAs("h_acop.png")
-
-#-----------------------
-
-c4 = Canvas("c4")
-c4.cd()
-h_single_eta = dFile.Get("plots/h_single_eta")
-h_single_eta.Rebin(2)
-#h_single_eta.GetXaxis().SetRange(8,92)
-h_single_eta.Draw()
-h_single_eta.SetTitle("")
-h_single_eta.SetXTitle('Single photon #eta')
-h_single_eta.SetYTitle('Events')
-h_single_eta.SetFillColor(fillColor)
-h_single_eta.SetLineColor(fillColor)
-pLabel.Draw()
-sLabel.Draw()
-lLabel.Draw()
-c4.SaveAs("h_single_eta.png")
-
-
-#-----------------------
-
-c5 = Canvas("c5")
-c5.cd()
-c5.SetLogy()
-h_xip = dFile.Get("plots/h_xip")
-h_xip.GetXaxis().SetRange(0,60)
-h_xip.Draw()
-h_xip.SetTitle("")
-h_xip.SetXTitle('#xi _{#gamma#gamma}^{+}')
-h_xip.SetYTitle('Events')
-h_xip.SetFillColor(fillColor)
-h_xip.SetLineColor(fillColor)
-pLabel.Draw()
-sLabel.Draw()
-lLabel.Draw()
-c5.SaveAs("h_xip.png")
-
-#-----------------------
-
-c6 = Canvas("c6")
-c6.cd()
-c6.SetLogy()
-h_xim = dFile.Get("plots/h_xim")
-h_xim.GetXaxis().SetRange(0,60)
-h_xim.Draw()
-h_xim.SetTitle("")
-h_xim.SetXTitle('#xi _{#gamma#gamma}^{-}')
-h_xim.SetYTitle('Events')
-h_xim.SetFillColor(fillColor)
-h_xim.SetLineColor(fillColor)
-pLabel.Draw()
-sLabel.Draw()
-lLabel.Draw()
-c6.SaveAs("h_xim.png")
 '''
 #-----------------------
+
 
 

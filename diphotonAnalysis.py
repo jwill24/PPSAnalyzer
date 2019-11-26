@@ -1,7 +1,9 @@
 # Things To Do
-#  1. Add error bars (with correct errors)
-#  2. Choose one diproton candidate per event
-
+#  1. Add photon errors 
+#  2. Add proton errors
+#  3. Choose one diproton candidate per event
+#  4. Verify SFs
+#  5. Verify PU weight
 
 #!/usr/bin/env python
 import os, sys, re
@@ -34,7 +36,6 @@ for mc in mcs:
 
 sample_weight = xsec*lumi/n_events
 
-
 class DiphotonAnalysis(Module):
     def __init__(self):
         self.writeHistFile=True
@@ -62,7 +63,7 @@ class DiphotonAnalysis(Module):
         self.h_single_pt=ROOT.TH1F('h_single_pt', 'Single Photon pT', 100, 0., 750.0)
         self.h_xip=ROOT.TH1F('h_xip', '#xi _{#gamma#gamma}^{+}', 100, 0., 0.25)
         self.h_xim=ROOT.TH1F('h_xim', '#xi _{#gamma#gamma}^{-}', 100, 0., 0.25)
-        self.h_nvtx=ROOT.TH1F('h_nvtx','Number Of Vertices', 100, 0., 75.)
+        self.h_nvtx=ROOT.TH1F('h_nvtx','Number Of Vertices', 75, 0., 75.)
         self.gr_matching=ROOT.TGraph()
         self.gr_matching.SetName('gr_matching')
         self.addObject( self.h_diph_mass )
@@ -73,7 +74,6 @@ class DiphotonAnalysis(Module):
         self.addObject( self.h_xim )
         self.addObject( self.h_nvtx )
         self.addObject( self.gr_matching )
-
 
     def endJob(self):
         Module.endJob(self)
@@ -229,7 +229,7 @@ class DiphotonAnalysis(Module):
                 self.h_xip.Fill(xip,weight), self.h_xim.Fill(xim,weight)
                 self.h_nvtx.Fill(event.PV_npvs,weight) 
 
-
+        
         return True
 
 preselection=""
