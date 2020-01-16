@@ -22,17 +22,20 @@ from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer im
 
 PI = 3.14159265358979323846
 sqrts = 13000
-lumi = 37200
+#lumi = 37200
+lumi = 20000
 
-data_ = False
-sample = 'ggj'
+sample = str( sys.argv[1] )
 
 mcs = [ ['ggj', 138.5, 4000000],['g+j',873.7,80000000],['qcd',117500,4000000],['wg',191.1,6300000],['zg',55.47,30000000], ['aqgc',3.86e-5,300000] ]
 
 for mc in mcs:
-    if sample == mc[0]:
-        xsec = mc[1]
-        n_events = mc[2]
+    if sample == 'data': 
+        xsec, n_events = 1, 1
+        data_ = True
+    elif sample == mc[0]:
+        xsec, n_events = mc[1], mc[2]
+        data_ = False
 
 sample_weight = xsec*lumi/n_events
 
@@ -64,6 +67,7 @@ class DiphotonAnalysis(Module):
         self.h_xip=ROOT.TH1F('h_xip', '#xi _{#gamma#gamma}^{+}', 100, 0., 0.25)
         self.h_xim=ROOT.TH1F('h_xim', '#xi _{#gamma#gamma}^{-}', 100, 0., 0.25)
         self.h_nvtx=ROOT.TH1F('h_nvtx','Number Of Vertices', 75, 0., 75.)
+        self.h_vtx_z=ROOT.TH1F('h_vtx_z', 'Vtx z position', 100,-15,15)
         self.gr_matching=ROOT.TGraph()
         self.gr_matching.SetName('gr_matching')
         self.addObject( self.h_diph_mass )
@@ -73,6 +77,7 @@ class DiphotonAnalysis(Module):
         self.addObject( self.h_xip )
         self.addObject( self.h_xim )
         self.addObject( self.h_nvtx )
+        self.addObject( self.h_vtx_z )
         self.addObject( self.gr_matching )
 
     def endJob(self):
@@ -151,7 +156,7 @@ class DiphotonAnalysis(Module):
     def analyze(self, event):
         if data_: protons = Collection(event, "Proton_singleRP")
         photons = Collection(event, "Photon")
-        pu_weight = event.puWeight
+        if not data_: pu_weight = event.puWeight
         #print 'pu_weight:', pu_weight
 
         #if self.two_protons(protons):
@@ -171,7 +176,7 @@ class DiphotonAnalysis(Module):
             if data_: 
                 weight = 1
             else: 
-                s_weight = pu_weight*sample_weight
+                s_weight = sample_weight#*pu_weight
 
             #if self.photon_id(pho1,pho2):
                 #if self.electron_veto(pho1,pho2):
@@ -187,69 +192,71 @@ class DiphotonAnalysis(Module):
                                         #else: continue
 
             # Make selection cuts
-            if \
-               self.photon_id(pho1,pho2) and \
-               self.electron_veto(pho1,pho2) and \
-               self.eta_cut(pho1,pho2) and \
-               self.mass_cut(diph_mass): #and \
-               #self.acop_cut(acop):
+            #if pho1.r9 < 0.85 or pho2.r9 < 0.85: continue # loose r9 cut
+            #if pho1.isScEtaEB and pho1.hoe > 0.04596: continue # loose hoe cut
+            #if pho1.isScEtaEE and pho1.hoe > 0.05900: continue # loose hoe cut
+            #if pho2.isScEtaEB and pho2.hoe > 0.04596: continue # loose hoe cut
+            #if pho2.isScEtaEE and pho2.hoe > 0.05900: continue # loose hoe cut
+            #if not self.photon_id(pho1,pho2): continue
+            #if not self.eta_cut(pho1,pho2): continue
+            if not self.mass_cut(diph_mass): continue
+            #if not self.electron_veto(pho1,pho2): continue
+            #if not self.acop_cut(acop): continue
                 
-                if not data_:
-                    eff_pho1 = self.efficiency(pho1.pt,pho1.eta)
-                    eff_pho2 = self.efficiency(pho2.pt,pho2.eta)
-                    weight = s_weight * ( eff_pho1*eff_pho2 )
+            if not data_:
+                eff_pho1 = self.efficiency(pho1.pt,pho1.eta)
+                eff_pho2 = self.efficiency(pho2.pt,pho2.eta)
+                weight = s_weight * ( eff_pho1*eff_pho2 )
 
-                #for combo in combinations(range(0,len(protons)),2):
-                    #pro1, pro2 = protons[combo[0]], protons[combo[1]]
-                    #if pro1.sector45 == pro2.sector45: continue
+            #for combo in combinations(range(0,len(protons)),2):
+                #pro1, pro2 = protons[combo[0]], protons[combo[1]]
+                #if pro1.sector45 == pro2.sector45: continue
                     
-                    # SetPoint for matching plot
-                    #self.gr_matching.SetPoint( self.gr_matching.GetN(),\
-                        #sqrts*math.sqrt(pro1.xi*pro2.xi) / diph_mass,\
-                        #0.5*math.log(pro1.xi/pro2.xi) - diph_rap )
+                # SetPoint for matching plot
+                #self.gr_matching.SetPoint( self.gr_matching.GetN(),\
+                    #sqrts*math.sqrt(pro1.xi*pro2.xi) / diph_mass,\
+                    #0.5*math.log(pro1.xi/pro2.xi) - diph_rap )
 
-                    #if self.mass_matching(diph_mass,pro1,pro2) and self.rap_matching(diph_rap,pro1,pro2):
-                        #print "Passing cuts!"
-                        #print "R:L:E", str(event.run)+":"+str(event.luminosityBlock)+":"+str(event.event)
-                        #print "Diphoton mass:", diph_mass
-                        #print "Diphoton rapidity:", diph_rap
-                        #print "Acoplanarity:", acop
-                        #print "Pho1 pT:", pho1.pt, "Pho2 pT:", pho2.pt
-                        #print "Pho1 eta:", pho1.eta, "Pho2 eta:", pho2.eta
-                        #print "xi1:", pro1.xi, "xi2:", pro2.xi
-                        #print "Diproton mass:", sqrts*math.sqrt(pro1.xi*pro2.xi)
-                        #print "Diproton rapidity:", 0.5*math.log(pro1.xi/pro2.xi)
-                        #print "" 
+                #if self.mass_matching(diph_mass,pro1,pro2) and self.rap_matching(diph_rap,pro1,pro2):
+                    #print "Passing cuts!"
+                    #print "R:L:E", str(event.run)+":"+str(event.luminosityBlock)+":"+str(event.event)
+                    #print "Diphoton mass:", diph_mass
+                    #print "Diphoton rapidity:", diph_rap
+                    #print "Acoplanarity:", acop
+                    #print "Pho1 pT:", pho1.pt, "Pho2 pT:", pho2.pt
+                    #print "Pho1 eta:", pho1.eta, "Pho2 eta:", pho2.eta
+                    #print "xi1:", pro1.xi, "xi2:", pro2.xi
+                    #print "Diproton mass:", sqrts*math.sqrt(pro1.xi*pro2.xi)
+                    #print "Diproton rapidity:", 0.5*math.log(pro1.xi/pro2.xi)
+                    #print "" 
                                 
-                # Ploting
-                self.h_diph_mass.Fill(diph_mass,weight)
-                self.h_acop.Fill(acop,weight)
-                self.h_single_eta.Fill(pho1.eta,weight), self.h_single_eta.Fill(pho2.eta,weight)
-                self.h_single_pt.Fill(pho1.pt,weight), self.h_single_pt.Fill(pho2.pt,weight)
-                self.h_xip.Fill(xip,weight), self.h_xim.Fill(xim,weight)
-                self.h_nvtx.Fill(event.PV_npvs,weight) 
-
+            # Ploting
+            self.h_diph_mass.Fill(diph_mass,weight)
+            self.h_acop.Fill(acop,weight)
+            self.h_single_eta.Fill(pho1.eta,weight), self.h_single_eta.Fill(pho2.eta,weight)
+            self.h_single_pt.Fill(pho1.pt,weight), self.h_single_pt.Fill(pho2.pt,weight)
+            self.h_xip.Fill(xip,weight), self.h_xim.Fill(xim,weight)
+            self.h_nvtx.Fill(event.PV_npvs,weight) 
+            self.h_vtx_z.Fill(event.PV_z,weight)
+            
         
         return True
 
 preselection=""
-files=[
-#"nanoAOD_Run2017B_Skim.root",
-#"nanoAOD_Run2017C_Skim.root",
-#"nanoAOD_Run2017D_Skim.root",
-#"nanoAOD_Run2017E_Skim.root",
-#"nanoAOD_Run2017F_Skim.root"
-
-"nanoAOD_ggj_Skim_test.root"
-#"nanoAOD_GGJ2017_Skim.root"
-#"nanoAOD_gj_2017_Skim.root"
-#"nanoAOD_qcd_2017_Skim.root"
-#"nanoAOD_wg_2017_Skim.root"
-#"nanoAOD_zg_2017_Skim.root"
-
-#"nanoAOD_aqgc_Skim.root"
-]
-p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="histOut_ggj_inelastic_test.root",histDirName="plots")
+if sample == 'data' : 
+    files=[
+        "Skims/nanoAOD_Run2017B_Skim.root",
+        "Skims/nanoAOD_Run2017C_Skim.root",
+        "Skims/nanoAOD_Run2017D_Skim.root",
+        "Skims/nanoAOD_Run2017E_Skim.root",
+        "Skims/nanoAOD_Run2017F_Skim.root"
+    ]
+else: 
+    files=[
+        "Skims/nanoAOD_"+sample+"2017_Skim.root"
+    ]
+p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="histOut_"+sample+"_MnoPUR_2017.root",histDirName="plots")
+#p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="histOut_"+sample+"_ID_2017_test.root",histDirName="plots",maxEntries=1000)
 p.run()
 
 
