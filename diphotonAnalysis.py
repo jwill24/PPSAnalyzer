@@ -1,9 +1,8 @@
 # Things To Do
-#  1. Add photon errors 
-#  2. Add proton errors
-#  3. Choose one diproton candidate per event
-#  4. Verify SFs
-#  5. Verify PU weight
+#  1. Add proton errors
+#  2. Choose one diproton candidate per event
+#  3. Verify SFs
+#  4. Verify PU weight
 
 #!/usr/bin/env python
 import os, sys, re
@@ -22,8 +21,8 @@ from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer im
 
 PI = 3.14159265358979323846
 sqrts = 13000
-#lumi = 37200
-lumi = 20000
+lumi = 37200
+
 
 sample = str( sys.argv[1] )
 
@@ -157,8 +156,6 @@ class DiphotonAnalysis(Module):
         if data_: protons = Collection(event, "Proton_singleRP")
         photons = Collection(event, "Photon")
         if not data_: pu_weight = event.puWeight
-        #print 'pu_weight:', pu_weight
-
         #if self.two_protons(protons):
 
         it = 0
@@ -199,7 +196,7 @@ class DiphotonAnalysis(Module):
             #if pho2.isScEtaEE and pho2.hoe > 0.05900: continue # loose hoe cut
             #if not self.photon_id(pho1,pho2): continue
             #if not self.eta_cut(pho1,pho2): continue
-            if not self.mass_cut(diph_mass): continue
+            #if not self.mass_cut(diph_mass): continue
             #if not self.electron_veto(pho1,pho2): continue
             #if not self.acop_cut(acop): continue
                 
@@ -255,8 +252,7 @@ else:
     files=[
         "Skims/nanoAOD_"+sample+"2017_Skim.root"
     ]
-p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="histOut_"+sample+"_MnoPUR_2017.root",histDirName="plots")
-#p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="histOut_"+sample+"_ID_2017_test.root",histDirName="plots",maxEntries=1000)
+p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="histOut_"+sample+"_HLTnoPUR_2017.root",histDirName="plots")
 p.run()
 
 

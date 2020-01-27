@@ -10,16 +10,16 @@ from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
 
-lab = 'After HLT'
-selection = 'HLTnoPUR'
+lab = 'Elastic selection'
+selection = 'elastic'
 fillColor = 212
 lumi = 37200.0 # pb
 
 ggj =  ['outputHists/histOut_ggj_'+selection+'_2017.root',138.5,4000000,208]
 gj =   ['outputHists/histOut_g+j_'+selection+'_2017.root',873.7,80000000,38]
-qcd =  ['outputHists/histOut_qcd_'+selection+'_2017.root',117500,4000000,69]
-wg =   ['outputHists/histOut_wg_'+selection+'_2017.root',465,6300000,29] 
-zg =   ['outputHists/histOut_zg_'+selection+'_2017.root',55.47,30000000,212]
+qcd =  ['outputHists/histOut_qcd_'+selection+'_2017.root',117500,4000000,ROOT.kCyan-9]
+wg =   ['outputHists/histOut_wg_'+selection+'_2017.root',465,6300000,ROOT.kTeal+3] 
+zg =   ['outputHists/histOut_zg_'+selection+'_2017.root',55.47,30000000,ROOT.kGreen-9]
 aqgc = ['outputHists/histOut_aqgc_'+selection+'_2017.root',3.86e-5,300000,92] 
 
 # Histogram files
@@ -85,8 +85,8 @@ def plotRatio(name, h1, v_hist, hs, log):
     h_mc_err.SetFillStyle(3004)
     h1.Draw('p same')
     hs.Draw('HIST same')
-    ymax=stack.GetMaximum()*200 if log else stack.GetMaximum()*1.5
-    ymax2=h1.GetMaximum()*10 if log else h1.GetMaximum()*2
+    ymax=stack.GetMaximum()*2 if log else stack.GetMaximum()*1.2
+    ymax2=h1.GetMaximum()*2 if log else h1.GetMaximum()*1.2
     stack.SetMaximum(max(ymax,ymax2))
     stack.SetMinimum(1)
     #stack.GetHistogram().GetYaxis().SetTitleSize(20)
