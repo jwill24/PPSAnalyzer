@@ -13,7 +13,7 @@ from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
 
-selections = [['HLT','After HLT'], ['ID','HLT + Photon ID'], ['Elastic','Elastic selection']]
+selections = [['HLToneCand','After HLT'], ['QualityoneCand','Quality selection'], ['ElasticoneCand','Elastic selection'], ['XioneCand', 'Tight #xi']]
 #selections = [['HLT','After HLT'], ['looseR9','HLT + R9'], ['Quality','Quality selection'], ['Elastic','Elastic selection']]
 
 # ROOT.kTeal+3 -> Dark Green
@@ -100,8 +100,8 @@ def setPlot(h, color):
     return h
 
 for selection in selections:
-    dataFile = TFile('outputHists/histOut_data_'+selection[0]+'noPUR_2017.root') 
-    aqgcFile = TFile('outputHists/histOut_aqgc_'+selection[0]+'noPUR_2017.root') 
+    dataFile = TFile('outputHists/histOut_data_'+selection[0]+'_2017.root') 
+    aqgcFile = TFile('outputHists/histOut_aqgc_'+selection[0]+'_2017.root') 
 
     thisBin = selections.index(selection)+1
 
@@ -110,7 +110,7 @@ for selection in selections:
 
     for bg in bgs:
 
-        f = TFile('outputHists/histOut_'+str(bg[0])+'_'+selection[0]+'noPUR_2017.root') 
+        f = TFile('outputHists/histOut_'+str(bg[0])+'_'+selection[0]+'_2017.root') 
         hist = f.Get('plots/h_diph_mass')
         bg[1].SetBinContent( thisBin, hist.Integral() )
 
