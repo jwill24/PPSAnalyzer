@@ -5,13 +5,9 @@ import math
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
-from ROOT import TCanvas, TPad, TFile, TPaveLabel, TPaveText, TAttText, TLine, TLegend, TBox, TColor
+from ROOT import TCanvas, TPad, TFile, TPaveLabel, TPaveText, TAttText, TLine, TLegend, TBox, TColor, TGraphErrors
 from ROOT import gROOT
 
-#gROOT.LoadMacro("tdrstyle.C")
-#gROOT.ProcessLine("setTDRStyle();")
-#gROOT.LoadMacro("CMS_lumi.C")
-#gROOT.ProcessLine("CMS_lumi(c1);")
 
 def Canvas(name):
     canvas = TCanvas(name,'',750,600)
@@ -28,7 +24,7 @@ def PaveText(x1,y1,x2,y2):
     return txt
 
 def topLabel(text):
-    lab = PaveText( 0.135, 0.95, 0.2, 0.96 )
+    lab = PaveText( 0.1, 0.9, 0.18, 0.92, 'NB NDC' )
     #lab.SetTextAlign( 1+10 )
     #lab.SetTextFont( 52 )
     lab.AddText( text )
@@ -37,7 +33,8 @@ def topLabel(text):
     return lab
 
 def prelimLabel():
-    label = TPaveText(0.07,0.74,.50,0.91)
+    #label = TPaveText(0.07,0.74,.50,0.91)
+    label = TPaveText( 0.14, 0.8, 0.2, 0.87, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
@@ -51,7 +48,7 @@ def prelimLabel():
     return label
 
 def selectionLabel(text):
-    label = TPaveText(-.02,0.93,.6,1.13)
+    label = TPaveText(0.08, 0.88, .6, 0.95, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
@@ -64,7 +61,8 @@ def selectionLabel(text):
     return label
     
 def lumiLabel():
-    label = TPaveText(1.48,0.92,1.98,1.14)
+    #label = TPaveText(1.48,0.92,1.98,1.14)
+    label = TPaveText( 0.7, 0.88, 0.8, 0.93, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
@@ -80,64 +78,46 @@ def lumiLabel():
 file = TFile( "histOut_matching.root" )
 file.ls() 
 
-#-----------------------------------
-#c1 = Canvas("c1")
-#c1.cd()
 
-#h_diph_mass = file.Get("plots/h_diph_mass")
-#h_diph_mass.Draw()
-#topLabel("CMS Preliminary")
-#c1.SaveAs("h_diphoton_mass.png")
-
-
-#-----------------------------------
 c2 = Canvas("c2")
 c2.cd()
 
 gr_matching = file.Get("plots/gr_matching")
-gr_matching.GetXaxis().SetTitle("m_{pp}/m_{#gamma#gamma}")
-gr_matching.GetYaxis().SetTitle("y_{pp} - y_{#gamma#gamma}")
-gr_matching.Draw("AP")
-gr_matching.GetXaxis().SetLimits(0.,2.)
-gr_matching.GetYaxis().SetRangeUser(-1.,1.)
+
+#print 'Entries:', gr_matching.GetN()
+#for point in range(0,gr_matching.GetN()):
+    #print 'Error:', gr_matching.GetErrorX( point )
+
+
+gr_matching.SetLineColor(ROOT.kBlack)
+gr_matching.SetTitle('')
+#gr_matching.GetXaxis().SetTitle("m_{pp}/m_{#gamma#gamma}")
+gr_matching.GetXaxis().SetTitle("(m_{pp}-m_{#gamma#gamma})/#sigma(m_{pp}-m_{#gamma#gamma})")
+#gr_matching.GetYaxis().SetTitle("y_{pp} - y_{#gamma#gamma}")
+gr_matching.GetYaxis().SetTitle("(y_{pp} - y_{#gamma#gamma})/#sigma(y_{pp} - y_{#gamma#gamma})")
+#gr_matching.GetXaxis().SetLimits(0.,2.)
+gr_matching.GetXaxis().SetLimits(-20,20)
+#gr_matching.GetYaxis().SetRangeUser(-1.,1.)
+gr_matching.GetYaxis().SetRangeUser(-20,20)
 gr_matching.SetMarkerSize(0.5)
 gr_matching.SetMarkerStyle(24)
 gr_matching.Draw("AP")
-#l1 = TLine(.9,-.1,.9,.1)
-#l2 = TLine(1.1,-.1,1.1,.1)
-#l3 = TLine(.9,-.1,1.1,-.1)
-#l4 = TLine(.9,.1,1.1,.1)
-#l1.SetLineColor(2)
-#l2.SetLineColor(2)
-#l3.SetLineColor(2)
-#l4.SetLineColor(2)
-#l1.Draw()
-#l2.Draw()
-#l3.Draw()
-#l4.Draw()
-#l5 = TLine(.8,-.15,.8,.15)
-#l6 = TLine(1.2,-.15,1.2,.15)
-#l7 = TLine(.8,-.15,1.2,-.15)
-#l8 = TLine(.8,.15,1.2,.15)
-#l5.SetLineColor(4)
-#l6.SetLineColor(4)
-#l7.SetLineColor(4)
-#l8.SetLineColor(4)
-#l5.Draw()
-#l6.Draw()
-#l7.Draw()
-#l8.Draw()
-b2 = TBox(.8, -.15, 1.2, .15)
-b2.SetFillColor(5) #207
+
+#b2 = TBox(.8, -.15, 1.2, .15)
+b2 = TBox(-3, -3, 3, 3)
+b2.SetFillStyle(3001) # transparent
+b2.SetFillColor(5)
 b2.SetLineColor(1)
 b2.Draw()
-b1 = TBox(.9, -.1, 1.1, .1)
-b1.SetFillColor(3) #63
+#b1 = TBox(.9, -.1, 1.1, .1)
+b1 = TBox(-2, -2, 2, 2)
+b1.SetFillStyle(3001) # transparent
+b1.SetFillColor(3) 
 b1.SetLineColor(1)
 b1.Draw()
 legend = TLegend(0.7,0.8,0.9,0.9)
-legend.AddEntry(b1,"2#sigma matching",'l')
-legend.AddEntry(b2,"3#sigma matching",'l')
+legend.AddEntry(b1,"2#sigma matching",'f')
+legend.AddEntry(b2,"3#sigma matching",'f')
 legend.Draw()
 c2.Update() 
 pLabel = prelimLabel()

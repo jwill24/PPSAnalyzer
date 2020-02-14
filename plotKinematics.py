@@ -10,28 +10,30 @@ from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
 
-lab = 'After HLT'
+lab = 'HLT selection'
 selection = 'HLTpuUp'
 fillColor = 212
 lumi = 37200.0 # pb
 
-ggj =  ['outputHists/histOut_ggj_'+selection+'_2017.root',138.5,4000000,208]
-gj =   ['outputHists/histOut_g+j_'+selection+'_2017.root',873.7,80000000,38]
-qcd =  ['outputHists/histOut_qcd_'+selection+'_2017.root',117500,4000000,ROOT.kCyan-9]
-wg =   ['outputHists/histOut_wg_'+selection+'_2017.root',465,6300000,ROOT.kTeal+3] 
-zg =   ['outputHists/histOut_zg_'+selection+'_2017.root',55.47,30000000,ROOT.kGreen-9]
-tt =   ['outputHists/histOut_tt_'+selection+'_2017.root',494.9,8026103,ROOT.kViolet-9]
-aqgc = ['outputHists/histOut_aqgc_'+selection+'_2017.root',3.86e-5,300000,92] 
+lightBlue, red, yellow, purple, darkGreen, green = ROOT.kCyan-9, 208, ROOT.kYellow-9, 38, ROOT.kTeal+3, ROOT.kGreen-9
+
+ggj =  ['outputHists/histOut_ggj_'+selection+'_2017.root',138.5,4000000,red]
+gj =   ['outputHists/histOut_g+j_'+selection+'_2017.root',873.7,80000000, darkGreen]
+qcd =  ['outputHists/histOut_qcd_'+selection+'_2017.root',117500,4000000, lightBlue]
+wg =   ['outputHists/histOut_wg_'+selection+'_2017.root',465,6300000, purple] 
+zg =   ['outputHists/histOut_zg_'+selection+'_2017.root',55.47,30000000, yellow]
+tt =   ['outputHists/histOut_tt_'+selection+'_2017.root',494.9,8026103, green]
+aqgc = ['outputHists/histOut_aqgc_'+selection+'_2017.root',3.86e-5,300000, 92] 
+
 
 # Histogram files
 dataFile = TFile('outputHists/histOut_data_'+selection+'_2017.root')
-#dataFile = TFile('outputHists/histOut_data_HLT_2017.root')
 ggjFile  = TFile(ggj[0])
 gjFile   = TFile(gj[0])
 qcdFile  = TFile(qcd[0])
 wgFile   = TFile(wg[0])
 zgFile   = TFile(zg[0])
-#ttFile   = TFile(tt[0])
+ttFile   = TFile(tt[0])
 aqgcFile = TFile(aqgc[0])
 
 def Canvas(name):
@@ -86,19 +88,25 @@ def plotRatio(name, h1, v_hist, hs, log):
     h_mc_err.SetMarkerSize(0)
     h_mc_err.SetFillColor(1)
     h_mc_err.SetFillStyle(3004)
-    h1.Draw('p same')
+    h_data = asym_error_bars(h1)
+    h_data.SetLineColor(ROOT.kBlack)
+    h_data.SetFillColor(ROOT.kBlack)
+    h_data.SetLineWidth(2)
+    h_data.Draw('p e2 same')
     hs.Draw('HIST same')
-    #ymax=stack.GetMaximum()*2 if log else stack.GetMaximum()*1.2
-    #ymax2=h1.GetMaximum()*2 if log else h1.GetMaximum()*1.2
-    ymax=stack.GetMaximum()*100 if log else stack.GetMaximum()*1.2
-    ymax2=h1.GetMaximum()*100 if log else h1.GetMaximum()*1.2
+    if any(['Elastic' in lab, 'Xi' in lab]):
+        ymax=stack.GetMaximum()*2 if log else stack.GetMaximum()*1.2
+        ymax2=h_data.GetMaximum()*2 if log else h_data.GetMaximum()*1.2
+    else:
+        ymax=stack.GetMaximum()*10 if log else stack.GetMaximum()*1.6
+        ymax2=h_data.GetMaximum()*10 if log else h_data.GetMaximum()*1.6
     stack.SetMaximum(max(ymax,ymax2))
-    stack.SetMinimum(1)
+    if log: stack.SetMinimum(1)
     #stack.GetHistogram().GetYaxis().SetTitleSize(20)
     #stack.GetHistogram().GetYaxis().SetTitleFont(43)
     #stack.GetHistogram().GetYaxis().SetTitleOffset(4)
     stack.GetHistogram().GetYaxis().SetTitle('Events')
-    pLabel, sLabel, lLabel = prelimLabel(), selectionLabel(lab), lumiLabel()
+    pLabel, sLabel, lLabel = prelimLabel(), selectionLabel(lab,True,log), lumiLabel(True)
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
     legend = makeLegend(h1,v_hist,hs)
     legend.Draw()
@@ -110,10 +118,9 @@ def plotRatio(name, h1, v_hist, hs, log):
     h_ratio.Divide(h_sum)
     h_ratio.SetMinimum(-0.499)
     h_ratio.SetMaximum(2.499)
-    #h_ratio.SetMinimum(0.1)
-    #h_ratio.SetMaximum(1.9)
-    #h_ratio.GetYaxis().SetTickLength(0.5)
+    h_ratio.SetLineColor(ROOT.kBlack)
     h_ratio.SetMarkerStyle(20)
+    h_ratio.SetMarkerColorAlpha(ROOT.kBlack,1)
     h_ratio.SetMarkerSize(0.7)
     h_ratio.Draw('p same')
     denom_err, denom_err2 = h_mc_err.Clone(), h_mc_err.Clone()
@@ -135,6 +142,20 @@ def plotRatio(name, h1, v_hist, hs, log):
 
     c.SaveAs('plots/'+name+'_'+selection+'.png')
 
+def asym_error_bars(hist):
+    alpha = 1 - 0.6827
+    g = ROOT.TGraphAsymmErrors(hist)
+    for i in range(0,g.GetN()):
+        N = g.GetY()[i]
+        if N == 0: continue #FIXME skip the empty bins??
+        L = 0. if N == 0 else ( ROOT.Math.gamma_quantile( 0.5*alpha, N, 1. ) )
+        U = ( ROOT.Math.gamma_quantile_c( alpha, N+1, 1 ) ) if N == 0 else ( ROOT.Math.gamma_quantile_c( 0.5*alpha, N+1, 1 ) )
+        g.SetPointEXlow( i, 0. ) #FIXME
+        g.SetPointEXhigh( i, 0. ) #FIXME
+        g.SetPointEYlow( i, N-L )
+        g.SetPointEYhigh( i, U-N )
+    return g
+
 def prelimLabel():
     label = TPaveText( 0.135, 0.76, 0.2, 0.84, 'NB NDC' ) # Left label
     #label = TPaveText( 0.8, 0.79, 0.87, 0.86, 'NB NDC' ) # Right label
@@ -151,27 +172,30 @@ def prelimLabel():
     label.SetTextColor( 1 )
     return label
 
-def selectionLabel(text):
-    label = TPaveText( 0.1, 0.9, 0.18, 0.92, 'NB NDC' ) 
+def selectionLabel(text,ratio,log):
+    if log: label = TPaveText( 0.1, 0.9, 0.18, 0.92, 'NB NDC' ) 
+    else: label = TPaveText( 0.15, 0.9, 0.2, 0.92, 'NB NDC' ) 
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
     label.SetLineStyle(0)
     label.AddText( text )
-    label.SetTextSize( 0.048 )
+    if ratio: label.SetTextSize( 0.048 )
+    else: label.SetTextSize( 0.034 )
     label.SetTextAlign(11)
     label.SetTextFont( 52 )
     label.SetTextColor( 1 )
     return label
 
-def lumiLabel():
+def lumiLabel(ratio):
     label = TPaveText( 0.70, 0.9, 0.8, 0.92, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
     label.SetLineStyle(0)
     label.AddText( "37.19 fb^{-1} (13 TeV)" )
-    label.SetTextSize( 0.048 )
+    if ratio: label.SetTextSize( 0.048 )
+    else: label.SetTextSize( 0.034 )
     label.SetTextAlign(11)
     label.SetTextFont( 42 )
     label.SetTextColor( 1 )
@@ -185,8 +209,7 @@ def makeLegend(h1,v_hist,hs):
     legend.SetTextFont(42)
     legend.SetTextSize(0.038)
     legend.AddEntry(h1,'Data', 'lep')
-    #backgrounds = ['t#bar{t} + j (NLO)', 'Incl. Z + #gamma', 'Incl. W + #gamma', '#gamma + j', 'Incl. #gamma#gamma + j (NLO)', 'QCD (e#gamma enriched)']
-    backgrounds = ['Incl. Z + #gamma', 'Incl. W + #gamma', '#gamma + j', 'Incl. #gamma#gamma + j (NLO)', 'QCD (e#gamma enriched)']
+    backgrounds = ['t#bar{t} + j (NLO)', 'Incl. Z + #gamma', 'Incl. W + #gamma', '#gamma + j', 'Incl. #gamma#gamma + j (NLO)', 'QCD (e#gamma enriched)']
     for i in range( len(backgrounds) ):
         legend.AddEntry(v_hist[i],backgrounds[i],'f')
     legend.AddEntry(hs,'AQGC #times 100','l')
@@ -225,48 +248,60 @@ def makePlot(inName, outName, xTitle, rbin, log):
     h_zg = zgFile.Get('plots/' + inName)
     setPlot(h_zg, zg[3], rbin, zg[1], zg[2])
 
-    #h_tt = ttFile.Get('plots/' + inName)
-    #setPlot(h_tt, tt[3], rbin, tt[1], tt[2])
+    h_tt = ttFile.Get('plots/' + inName)
+    setPlot(h_tt, tt[3], rbin, tt[1], tt[2])
 
     h_aqgc = aqgcFile.Get('plots/' + inName)
     setPlot(h_aqgc, aqgc[3], rbin, aqgc[1], aqgc[2])
     h_aqgc.SetFillColor(0), h_aqgc.Scale(100)
 
-    #v.append(h_tt), 
+    v.append(h_tt), 
     v.append(h_zg), v.append(h_wg), v.append(h_gj), v.append(h_ggj), v.append(h_qcd)
     
     plotRatio(outName, h_data, v, h_aqgc, log)
     
+def makeProtonPlot(name, xTitle, rbin, log):
+    c = Canvas('c')
+    c.cd()
+    h = dataFile.Get('plots/' + name)
+    h.SetTitle('')
+    h.SetXTitle(xTitle)
+    h.SetYTitle('Events')
+    h.Rebin(rbin)
+    h.SetFillColor(ROOT.kTeal-4)
+    h.SetMaximum( h.GetMaximum()*1.2 )
+    if 'detType' in name: h.GetXaxis().SetBinLabel(1,'Pixel'), h.GetXaxis().SetBinLabel(2,'Strip')
+    h.Draw('HIST')
+    pLabel, sLabel, lLabel = prelimLabel(), selectionLabel(lab,False,log), lumiLabel(False)
+    pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
+    c.SaveAs('plots/'+name+'_'+selection+'.png')
+
 
 
 #-----------------------
 
 makePlot('h_diph_mass', 'h_mass_comp', 'm_{#gamma#gamma} GeV', 4, True)
-
-makePlot9'h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
-
+makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
 makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 2, True)
 makePlot('h_lead_pt', 'h_lead_pt_comp', 'Leading p_{T}^{#gamma} GeV', 2, True)
 makePlot('h_sub_pt', 'h_sub_pt_comp', 'Subleading p_{T}^{#gamma} GeV', 2, True)
-
 makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 4, False)
 makePlot('h_lead_eta', 'h_lead_eta_comp', 'Leading #eta ^{#gamma}', 4, False)
 makePlot('h_sub_eta', 'h_sub_eta_comp', 'Subleading #eta ^{#gamma}', 4, False)
-
 makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 2, True)
 makePlot('h_lead_r9', 'h_lead_r9_comp', 'Leading R_{9} ^{#gamma}', 2, True)
 makePlot('h_sub_r9', 'h_sub_r9_comp', 'Subleading R_{9} ^{#gamma}', 2, True)
-
 makePlot('h_nvtx', 'h_nvtx_comp', 'Number of vertices', 1, True)
-
 makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
-
 makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
-
 makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 4, True)
-
 makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
-
 makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, False)
 
+
+
+makeProtonPlot('h_num_pro', 'Number of protons', 1, False)
+makeProtonPlot('h_detType', 'Proton Detector Type', 1, False)
+makeProtonPlot('h_pro_xip', 'Proton #xi ^{+}', 1, False)
+makeProtonPlot('h_pro_xim', 'Proton #xi ^{-}', 1, False)
 

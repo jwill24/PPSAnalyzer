@@ -13,11 +13,9 @@ from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
 
-selections = [['HLToneCand','After HLT'], ['QualityoneCand','Quality selection'], ['ElasticoneCand','Elastic selection'], ['XioneCand', 'Tight #xi']]
-#selections = [['HLT','After HLT'], ['looseR9','HLT + R9'], ['Quality','Quality selection'], ['Elastic','Elastic selection']]
+selections = [['HLTpuUp','After HLT'], ['QualitypuUp','Preselection'], ['ElasticpuUp','Elastic selection'], ['XipuUp', 'Tight #xi']]
 
-# ROOT.kTeal+3 -> Dark Green
-# ROOT.kCyan-9 -> pastel blue
+lightBlue, red, yellow, purple, darkGreen, green = ROOT.kCyan-9, 208, ROOT.kYellow-9, 38, ROOT.kTeal+3, ROOT.kGreen-9
 
 h_data =  ROOT.TH1F('h_data', '', len(selections), 0, len(selections))
 h_ggj =   ROOT.TH1F('h_ggj', '', len(selections), 0, len(selections))
@@ -25,10 +23,11 @@ h_gj =    ROOT.TH1F('h_gj', '', len(selections), 0, len(selections))
 h_qcd =   ROOT.TH1F('h_qcd', '', len(selections), 0, len(selections))
 h_wg =    ROOT.TH1F('h_wg', '', len(selections), 0, len(selections))
 h_zg =    ROOT.TH1F('h_zg', '', len(selections), 0, len(selections))
+h_tt =    ROOT.TH1F('h_tt', '', len(selections), 0, len(selections))
 h_aqgc =  ROOT.TH1F('h_aqgc', '', len(selections), 0, len(selections))
 h_stack = ROOT.THStack('norm_stack','')
 
-bgs = [['zg',h_zg,ROOT.kGreen-9], ['wg',h_wg,ROOT.kTeal+3], ['g+j',h_gj,38], ['ggj',h_ggj,208], ['qcd',h_qcd,ROOT.kCyan-9]]
+bgs = [['tt',h_tt, green], ['zg',h_zg,yellow], ['wg',h_wg,purple], ['g+j',h_gj,darkGreen], ['ggj',h_ggj,red], ['qcd',h_qcd,lightBlue]]
 v_hist = []
 
 def Canvas(name):
@@ -61,7 +60,7 @@ def makeLegend(h1,v_hist,hs):
     legend.SetTextFont(42)
     legend.SetTextSize(0.038)
     legend.AddEntry(h1,'Data', 'lep')
-    backgrounds = ['Incl. Z + #gamma', 'Incl. W + #gamma', '#gamma + j', 'Incl. #gamma#gamma + j (NLO)', 'QCD (e#gamma enriched)']
+    backgrounds = ['t#bar{t} + j (NLO)', 'Incl. Z + #gamma', 'Incl. W + #gamma', '#gamma + j', 'Incl. #gamma#gamma + j (NLO)', 'QCD (e#gamma enriched)']
     for i in range( len(backgrounds) ):
         legend.AddEntry(v_hist[i],backgrounds[i],'f')
     legend.AddEntry(hs,'AQGC #times 100','l')
@@ -171,6 +170,7 @@ h_ratio.SetMaximum(1.9)
 #h_ratio.GetYaxis().SetTickLength(0.5)
 h_ratio.SetMarkerStyle(20)
 h_ratio.SetMarkerSize(0.7)
+h_ratio.SetLineColor(ROOT.kBlack)
 h_ratio.Draw('p same')
 for i in range( len(selections) ): h_ratio.GetXaxis().SetBinLabel(i+1,selections[i][1])
 denom_err, denom_err2 = h_mc_err.Clone(), h_mc_err.Clone()
