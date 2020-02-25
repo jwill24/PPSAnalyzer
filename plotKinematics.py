@@ -10,9 +10,9 @@ from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
 
-lab = 'HLT selection'
-selection = 'HLTpuUp'
-fillColor = 212
+lab = 'Elastic selection'
+selection = 'ElasticpuUp'
+
 lumi = 37200.0 # pb
 
 lightBlue, red, yellow, purple, darkGreen, green = ROOT.kCyan-9, 208, ROOT.kYellow-9, 38, ROOT.kTeal+3, ROOT.kGreen-9
@@ -98,7 +98,7 @@ def plotRatio(name, h1, v_hist, hs, log):
         ymax=stack.GetMaximum()*2 if log else stack.GetMaximum()*1.2
         ymax2=h_data.GetMaximum()*2 if log else h_data.GetMaximum()*1.2
     else:
-        ymax=stack.GetMaximum()*10 if log else stack.GetMaximum()*1.6
+        ymax=stack.GetMaximum()*10 if log else stack.GetMaximum()*1.2
         ymax2=h_data.GetMaximum()*10 if log else h_data.GetMaximum()*1.6
     stack.SetMaximum(max(ymax,ymax2))
     if log: stack.SetMinimum(1)
@@ -106,7 +106,7 @@ def plotRatio(name, h1, v_hist, hs, log):
     #stack.GetHistogram().GetYaxis().SetTitleFont(43)
     #stack.GetHistogram().GetYaxis().SetTitleOffset(4)
     stack.GetHistogram().GetYaxis().SetTitle('Events')
-    pLabel, sLabel, lLabel = prelimLabel(), selectionLabel(lab,True,log), lumiLabel(True)
+    pLabel, sLabel, lLabel = prelimLabel(log,h1.GetMaximum()), selectionLabel(lab,True,log,h1.GetMaximum()), lumiLabel(True)
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
     legend = makeLegend(h1,v_hist,hs)
     legend.Draw()
@@ -147,17 +147,19 @@ def asym_error_bars(hist):
     g = ROOT.TGraphAsymmErrors(hist)
     for i in range(0,g.GetN()):
         N = g.GetY()[i]
-        if N == 0: continue #FIXME skip the empty bins??
+        if N == 0: continue
         L = 0. if N == 0 else ( ROOT.Math.gamma_quantile( 0.5*alpha, N, 1. ) )
         U = ( ROOT.Math.gamma_quantile_c( alpha, N+1, 1 ) ) if N == 0 else ( ROOT.Math.gamma_quantile_c( 0.5*alpha, N+1, 1 ) )
-        g.SetPointEXlow( i, 0. ) #FIXME
-        g.SetPointEXhigh( i, 0. ) #FIXME
+        g.SetPointEXlow( i, 0. )
+        g.SetPointEXhigh( i, 0. )
         g.SetPointEYlow( i, N-L )
         g.SetPointEYhigh( i, U-N )
     return g
 
-def prelimLabel():
-    label = TPaveText( 0.135, 0.76, 0.2, 0.84, 'NB NDC' ) # Left label
+def prelimLabel(log,maximum):
+    if not log and maximum > 10e4: label = TPaveText( 0.15, 0.76, 0.2, 0.84, 'NB NDC' )
+    else: label = TPaveText( 0.135, 0.76, 0.2, 0.84, 'NB NDC' )
+    #label = TPaveText( 0.135, 0.76, 0.2, 0.84, 'NB NDC' ) # Left label
     #label = TPaveText( 0.8, 0.79, 0.87, 0.86, 'NB NDC' ) # Right label
     label.SetFillStyle(0)
     label.SetBorderSize(0)
@@ -172,9 +174,9 @@ def prelimLabel():
     label.SetTextColor( 1 )
     return label
 
-def selectionLabel(text,ratio,log):
-    if log: label = TPaveText( 0.1, 0.9, 0.18, 0.92, 'NB NDC' ) 
-    else: label = TPaveText( 0.15, 0.9, 0.2, 0.92, 'NB NDC' ) 
+def selectionLabel(text,ratio,log,maximum):
+    if not log and maximum > 10e4: label = TPaveText( 0.15, 0.9, 0.2, 0.92, 'NB NDC' )
+    else: label = TPaveText( 0.1, 0.9, 0.18, 0.92, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
@@ -270,13 +272,11 @@ def makeProtonPlot(name, xTitle, rbin, log):
     h.Rebin(rbin)
     h.SetFillColor(ROOT.kTeal-4)
     h.SetMaximum( h.GetMaximum()*1.2 )
-    if 'detType' in name: h.GetXaxis().SetBinLabel(1,'Pixel'), h.GetXaxis().SetBinLabel(2,'Strip')
+    if 'detType' in name: h.GetXaxis().SetBinLabel(1,'Strip'), h.GetXaxis().SetBinLabel(2,'Pixel')
     h.Draw('HIST')
-    pLabel, sLabel, lLabel = prelimLabel(), selectionLabel(lab,False,log), lumiLabel(False)
+    pLabel, sLabel, lLabel = prelimLabel(log,h.GetMaximum()), selectionLabel(lab,False,log,h.GetMaximum()), lumiLabel(False)
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
     c.SaveAs('plots/'+name+'_'+selection+'.png')
-
-
 
 #-----------------------
 
@@ -299,9 +299,14 @@ makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
 makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, False)
 
 
-
+'''
 makeProtonPlot('h_num_pro', 'Number of protons', 1, False)
 makeProtonPlot('h_detType', 'Proton Detector Type', 1, False)
 makeProtonPlot('h_pro_xip', 'Proton #xi ^{+}', 1, False)
 makeProtonPlot('h_pro_xim', 'Proton #xi ^{-}', 1, False)
+makeProtonPlot('h_pro_xi_45f', 'Proton #xi 45F', 1, False)
+makeProtonPlot('h_pro_xi_45n', 'Proton #xi 45N', 1, False)
+makeProtonPlot('h_pro_xi_56n', 'Proton #xi 56N', 1, False)
+makeProtonPlot('h_pro_xi_56f', 'Proton #xi 56F', 1, False)
+'''
 

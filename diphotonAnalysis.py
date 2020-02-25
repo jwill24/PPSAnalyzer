@@ -103,10 +103,6 @@ class DiphotonAnalysis(Module):
         self.addObject( self.h_sub_r9 )
         self.addObject( self.h_xip )
         self.addObject( self.h_xim )
-        self.addObject( self.h_pro_xi_45f )
-        self.addObject( self.h_pro_xi_45n )
-        self.addObject( self.h_pro_xi_56n )
-        self.addObject( self.h_pro_xi_56f )
         self.addObject( self.h_nvtx )
         self.addObject( self.h_vtx_z )
         self.addObject( self.h_fgr )
@@ -116,6 +112,10 @@ class DiphotonAnalysis(Module):
             self.addObject( self.h_detType )
             self.addObject( self.h_pro_xip )
             self.addObject( self.h_pro_xim )
+            self.addObject( self.h_pro_xi_45f )
+            self.addObject( self.h_pro_xi_45n )
+            self.addObject( self.h_pro_xi_56n )
+            self.addObject( self.h_pro_xi_56f )
             self.addObject( self.gr_matching )
 
 
@@ -126,7 +126,7 @@ class DiphotonAnalysis(Module):
             self.mctree.Project('mchist', 'fixedGridRhoFastjetAll')
             self.mchist.Scale( 1 / self.mchist.Integral() )
 
-            self.datafile = ROOT.TFile( 'dataFixedGridRho.root' )
+            self.datafile = ROOT.TFile( 'dataFixedGridRho_2017.root' )
             self.datahist = self.datafile.Get('h')
             self.datahist.Scale( 1 / self.datahist.Integral() )
 
@@ -258,6 +258,7 @@ class DiphotonAnalysis(Module):
 
     def analyze(self, event):
         if data_: protons = Collection(event, "Proton_singleRP")
+        #if data_: protons = Collection(event, "Proton_multiRP")
         photons = Collection(event, "Photon")
         if data_: pu_weight, vtxWeight, eff_pho1, eff_pho2 = 1, 1, 1, 1
         else: pu_weight, vtxWeight = event.puWeightUp, self.rhoReweight(event.Pileup_nPU)
@@ -310,18 +311,21 @@ class DiphotonAnalysis(Module):
         #if pho2.isScEtaEB and pho2.hoe > 0.04596: continue # loose hoe cut
         #if pho2.isScEtaEE and pho2.hoe > 0.05900: continue # loose hoe cut
         
-        #if pho1.r9 < 0.85 or pho2.r9 < 0.85: return 
-        #if not self.eta_cut(pho1,pho2): return
-        #if not self.mass_cut(diph_mass): return
-        #if not self.photon_id(pho1,pho2): return
-        #if not self.electron_veto(pho1,pho2): return
-        #if not self.acop_cut(acop): return
+        if pho1.r9 < 0.85 or pho2.r9 < 0.85: return 
+        if not self.eta_cut(pho1,pho2): return
+        if not self.mass_cut(diph_mass): return
+        if not self.photon_id(pho1,pho2): return
+        if not self.electron_veto(pho1,pho2): return
+        if not self.acop_cut(acop): return
         #if not self.xi_cut(xip,xim): return
 
-        if data_ and diph_mass > 1800:
-            with open('events.txt', 'w') as f:
-                print >> f, 'R:L:E', str(event.run)+':'+str(event.luminosityBlock)+':'+str(event.event), 'mass:', diph_mass, 'Acoplanarity:', acop
-                print >> f, 'Num protons:', len(protons)
+        if data_ and diph_mass > 1700:
+            print 'R:L:E', str(event.run)+':'+str(event.luminosityBlock)+':'+str(event.event), 'mass:', diph_mass, 'Acoplanarity:', acop
+            print 'pt1:', pho1.pt, 'pt2:', pho2.pt, 'eta1:', pho1.eta, 'eta2:', pho2.eta
+            print 'Num protons:', len(protons)
+            #with open('events.txt', 'w') as f:
+                #print >> f, 'R:L:E', str(event.run)+':'+str(event.luminosityBlock)+':'+str(event.event), 'mass:', diph_mass, 'Acoplanarity:', acop
+                #print >> f, 'Num protons:', len(protons)
         
         if not data_:
             eff_pho1 = self.efficiency(pho1.pt,pho1.eta)
@@ -337,8 +341,8 @@ class DiphotonAnalysis(Module):
         self.h_lead_r9.Fill(pho1.r9,s_weight*eff_pho1),     self.h_sub_r9.Fill(pho2.r9,s_weight*eff_pho2)
 
         # Fill diphoton hists
-        self.h_diph_mass.Fill(diph_mass,weight)
-        self.h_acop.Fill(acop,weight)
+        self.h_diph_mass.Fill(diph_mass,weight) 
+        self.h_acop.Fill(acop,weight) 
         self.h_xip.Fill(xip,weight), self.h_xim.Fill(xim,weight)
 
         # Fill event hists
@@ -352,7 +356,7 @@ class DiphotonAnalysis(Module):
         if not data_: return 
         self.h_num_pro.Fill( len(protons) )
         for proton in protons:
-            self.h_detType.Fill( proton.protonRPType )
+            self.h_detType.Fill( proton.protonRPType ) # not available for multiRP
             if proton.sector45: self.h_pro_xim.Fill( proton.xi )
             elif proton.sector56: self.h_pro_xip.Fill( proton.xi ) 
             if proton.decDetId == 3: self.h_pro_xi_45f.Fill( proton.xi )
@@ -432,7 +436,7 @@ else:
     files=[
         "Skims/nanoAOD_"+sample+"2017_Skim.root"
     ]
-p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="histOut_"+sample+"_HLTpuUp_2017.root",histDirName="plots")
+p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="histOut_"+sample+"_ElasticpuUp_2017.root",histDirName="plots")
 p.run()
 
 

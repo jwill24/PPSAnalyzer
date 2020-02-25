@@ -75,7 +75,8 @@ def lumiLabel():
     return label
     
 
-file = TFile( "histOut_matching.root" )
+#file = TFile( "histOut_matching.root" )
+file = TFile( "outputHists/histOut_data_XipuUp_2017.root" )
 file.ls() 
 
 
@@ -105,13 +106,13 @@ gr_matching.Draw("AP")
 
 #b2 = TBox(.8, -.15, 1.2, .15)
 b2 = TBox(-3, -3, 3, 3)
-b2.SetFillStyle(3001) # transparent
+#b2.SetFillStyle(3001) # transparent
 b2.SetFillColor(5)
 b2.SetLineColor(1)
 b2.Draw()
 #b1 = TBox(.9, -.1, 1.1, .1)
 b1 = TBox(-2, -2, 2, 2)
-b1.SetFillStyle(3001) # transparent
+#b1.SetFillStyle(3001) # transparent
 b1.SetFillColor(3) 
 b1.SetLineColor(1)
 b1.Draw()
@@ -122,7 +123,7 @@ legend.Draw()
 c2.Update() 
 pLabel = prelimLabel()
 pLabel.Draw()
-sLabel = selectionLabel("Elastic selection")
+sLabel = selectionLabel("Tight #xi selection")
 sLabel.Draw()
 lLabel = lumiLabel()
 lLabel.Draw()
