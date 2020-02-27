@@ -15,7 +15,7 @@ gStyle.SetOptStat(0)
 color = 212
 weight = 3.86e-5*37200/300000
 
-signalFile = TFile('outputHists/histOut_signal_2017.root')
+signalFile = TFile('outputHists/2017/histOut_signal_2017.root')
 
 def Canvas(name):
     c = TCanvas(name,'c',750,600)
@@ -93,7 +93,13 @@ def makeSignalPlot(name, xTitle, rbin, log):
     c.SaveAs('plots/signal/'+name+'_signal.png')
 
 
-makeSignalPlot('h_diph_mass', 'm_{#gamma#gamma} (GeV)', 1, False)
-makeSignalPlot('h_single_eta', '#eta^{#gamma}', 1, False)
-makeSignalPlot('h_single_pt', 'p_{T}^{#gamma} (GeV)', 1, False)
-makeSignalPlot('h_acop', '1- |#Delta #phi|/#pi', 1, True)
+#makeSignalPlot('h_diph_mass', 'm_{#gamma#gamma} (GeV)', 1, False)
+#makeSignalPlot('h_single_eta', '#eta^{#gamma}', 1, False)
+#makeSignalPlot('h_single_pt', 'p_{T}^{#gamma} (GeV)', 1, False)
+#makeSignalPlot('h_acop', '1- |#Delta #phi|/#pi', 1, True)
+
+makeSignalPlot('h_single_r9', 'R_{9}', 1, True)
+makeSignalPlot('h_eb_hoe', 'EB H/E', 1, True)
+makeSignalPlot('h_ee_hoe', 'EE H/E', 1, True)
+makeSignalPlot('h_eb_sieie', 'EB #sigma_{i#etai#eta}', 1, True)
+makeSignalPlot('h_ee_sieie', 'EE #sigma_{i#etai#eta}', 1, True)

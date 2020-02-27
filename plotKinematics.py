@@ -17,17 +17,17 @@ lumi = 37200.0 # pb
 
 lightBlue, red, yellow, purple, darkGreen, green = ROOT.kCyan-9, 208, ROOT.kYellow-9, 38, ROOT.kTeal+3, ROOT.kGreen-9
 
-ggj =  ['outputHists/histOut_ggj_'+selection+'_2017.root',138.5,4000000,red]
-gj =   ['outputHists/histOut_g+j_'+selection+'_2017.root',873.7,80000000, darkGreen]
-qcd =  ['outputHists/histOut_qcd_'+selection+'_2017.root',117500,4000000, lightBlue]
-wg =   ['outputHists/histOut_wg_'+selection+'_2017.root',465,6300000, purple] 
-zg =   ['outputHists/histOut_zg_'+selection+'_2017.root',55.47,30000000, yellow]
-tt =   ['outputHists/histOut_tt_'+selection+'_2017.root',494.9,8026103, green]
-aqgc = ['outputHists/histOut_aqgc_'+selection+'_2017.root',3.86e-5,300000, 92] 
+ggj =  ['outputHists/2017/histOut_ggj_'+selection+'_2017.root',138.5,4000000,red]
+gj =   ['outputHists/2017/histOut_g+j_'+selection+'_2017.root',873.7,80000000, darkGreen]
+qcd =  ['outputHists/2017/histOut_qcd_'+selection+'_2017.root',117500,4000000, lightBlue]
+wg =   ['outputHists/2017/histOut_wg_'+selection+'_2017.root',465,6300000, purple] 
+zg =   ['outputHists/2017/histOut_zg_'+selection+'_2017.root',55.47,30000000, yellow]
+tt =   ['outputHists/2017/histOut_tt_'+selection+'_2017.root',494.9,8026103, green]
+aqgc = ['outputHists/2017/histOut_aqgc_'+selection+'_2017.root',3.86e-5,300000, 92] 
 
 
 # Histogram files
-dataFile = TFile('outputHists/histOut_data_'+selection+'_2017.root')
+dataFile = TFile('outputHists/2017/histOut_data_'+selection+'_2017.root')
 ggjFile  = TFile(ggj[0])
 gjFile   = TFile(gj[0])
 qcdFile  = TFile(qcd[0])
