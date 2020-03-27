@@ -2,6 +2,7 @@
 import os, sys
 import math, random
 import numpy as np
+#import matplotlib.pyplot as plt
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
@@ -24,8 +25,8 @@ gROOT.ProcessLine(
 "struct proStruct {\
    Int_t    num_m;\
    Int_t    num_p;\
-   Float_t  xim[6];\
-   Float_t  xip[6];\
+   Float_t  xim[12];\
+   Float_t  xip[12];\
 };");
 
 from ROOT import diphStruct, proStruct
@@ -34,9 +35,9 @@ pro_struct  = proStruct()
 
 
 # Flags
-experiments = 1     # number of iterations
-plotting = False     # make matching plot for each experiment
-testing  = True    # only run over a few events
+experiments = 5     # number of iterations
+plotting = True     # make matching plot for each experiment
+testing  = False    # only run over a few events
 test_events = 10    # number of events to use for testing
 method = 'singleRP' # singleRP or multiRP reconstruction
 
@@ -169,7 +170,7 @@ h_xim = TH1F('h_xim', '#xi ^{-}', 100, 0., 0.25)
 #----------------------------------
 
 def find_nearest(array, value):
-    if array.size == 0: return -1
+    if len(array) == 0: return -1
     #array = np.asarray(array)
     #idx = (np.abs(array - value)).argmin()
     #return array[idx]
@@ -343,27 +344,16 @@ for e in range(experiments):
 
         if pro_struct.num_m == 0 or pro_struct.num_p == 0: continue
 
-        #for i in range(pro_struct.num_m): print 'xim:', pro_struct.xim[i]
-        #for i in range(pro_struct.num_p): print 'xip:', pro_struct.xip[i]
-
-        v_xim, v_xip = np.asarray( pro_struct.xim ), np.asarray( pro_struct.xip )
-        #print 'v_xim:', v_xim
-        #print 'v_xip:', v_xip
-        trim_xim, trim_xip = np.trim_zeros( v_xim ), np.trim_zeros( v_xip )
-        pro_xim, pro_xip = find_nearest(trim_xim, diph_struct.xim), find_nearest(trim_xip, diph_struct.xip) 
-        h_xip.Fill( pro_xip ), h_xim.Fill( pro_xim )
+        for j in range(pro_struct.num_m): v_xim.append( pro_struct.xim[j] )
+        for j in range(pro_struct.num_p): v_xip.append( pro_struct.xip[j] )
+        pro_xim, pro_xip = find_nearest(v_xim, diph_struct.xim), find_nearest(v_xip, diph_struct.xip) 
+        
+        #h_xip.Fill( pro_xip ), h_xim.Fill( pro_xim )
         #h2_xim.Fill( pro_xim, diph_struct.xim )
         #h2_xip.Fill( pro_xip, diph_struct.xip )
 
-        
-        #print 'diph xim:', diph_struct.xim, 'diph xip:', diph_struct.xip
-        #print 'xim:', trim_xim, 'xip:', trim_xip
-        #print 'chosen xim:', pro_xim, 'chosen xip:', pro_xip
-        #print ''
-    
         # Check for matching
         mass_match, rap_match = isMatching(diph_struct.mass, diph_struct.rap, pro_xim, pro_xip)
-        #print 'mass_match:', mass_match, 'rap_match:', rap_match
 
         # Plot events
         if plotting: gr_estimate.SetPoint( gr_estimate.GetN(), mass_match, rap_match )
@@ -386,6 +376,7 @@ print 'Average matching ----> 20 sigma:', getAverage(v_20sig), '3 sigma:', getAv
 print 'Average num events:', getAverage(v_count)
 
 
+# Plotting for cross checks
 '''    
 c = TCanvas('c','',750,600)
 c.cd()
@@ -394,18 +385,15 @@ h2_estimate.GetYaxis().SetTitle("(y_{pp} - y_{#gamma#gamma})/#sigma(y_{pp} - y_{
 h2_estimate.Draw('colz')
 c.SaveAs('h2_estimate.png')
 
-
 c1 = TCanvas('c1','',750,600)
 c1.cd()
 h_xim.Draw()
 c1.SaveAs('h_pro_xim.png')
 
-
 c2 = TCanvas('c2','',750,600)
 c2.cd()
 h_xip.Draw()
 c2.SaveAs('h_pro_xip.png')
-
 
 c3 = TCanvas('c3', '', 750, 600)
 c3.cd()
@@ -420,4 +408,28 @@ h2_xip.GetXaxis().SetTitle('PPS #xi^{-}')
 h2_xip.GetYaxis().SetTitle('CMS #xi^{-}')
 h2_xip.Draw('colz')
 c4.SaveAs('h2_xip_matching.png')
+
+c5 = TCanvas('c5', '2#sigma Matching', 740, 600)
+c5.cd()
+distribution_2sig = TH1F( 'distribution_2sig', '', 100, 0, 15)
+for x in v_2sig:
+    distribution_2sig.Fill(x)
+distribution_2sig.GetYaxis().SetTitle('Experiments')
+distribution_2sig.GetXaxis().SetTitle('Events matching')
+distribution_2sig.Draw()
+std = round( distribution_2sig.GetStdDev(), 3 )
+std_label = TPaveText( 0.6, 0.8, 0.64, 0.87, 'NB NDC' )
+std_label.SetFillStyle(0)
+std_label.SetBorderSize(0)
+std_label.SetLineWidth(0)
+std_label.SetLineStyle(0)
+std_label.SetTextAlign(11)
+std_label.AddText( "Standard Deviation = " + str(std) )
+std_label.SetTextSize(0.03)
+std_label.SetTextFont( 42 )
+std_label.SetTextColor( 1 )
+std_label.Draw()
+c5.SaveAs('2sigma_distribution.png')
+
 '''
+
