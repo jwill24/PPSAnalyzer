@@ -6,7 +6,7 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 from ROOT import gROOT, gStyle
-from ROOT import TFile, TTree, AddressOf, TGraphErrors, TCanvas, TBox, TLegend
+from ROOT import TFile, TTree, AddressOf, TGraphErrors, TCanvas, TBox, TLegend, TPaveText, TH2F, TH1F
 
 gStyle.SetOptStat(0)
 
@@ -34,9 +34,9 @@ pro_struct  = proStruct()
 
 
 # Flags
-experiments = 5     # number of iterations
-plotting = True     # make matching plot for each experiment
-testing  = False    # only run over a few events
+experiments = 1     # number of iterations
+plotting = False     # make matching plot for each experiment
+testing  = True    # only run over a few events
 test_events = 10    # number of events to use for testing
 method = 'singleRP' # singleRP or multiRP reconstruction
 
@@ -159,7 +159,12 @@ tree_F_150.SetBranchAddress('xim', AddressOf( pro_struct, 'xim'))
 tree_F_150.SetBranchAddress('xip', AddressOf( pro_struct, 'xip'))
 
 gr_estimate = TGraphErrors('gr_estimate')
+h2_estimate = TH2F( 'h2_estimate', '', 100, -20, 20, 100, -20, 20)
+h2_xim = TH2F( 'h2_xim', '', 100, 0, 0.2, 100, 0, 0.2 )
+h2_xip = TH2F( 'h2_xip', '', 100, 0, 0.2, 100, 0, 0.2 )
 
+h_xip = TH1F('h_xip', '#xi ^{+}', 100, 0., 0.25)
+h_xim = TH1F('h_xim', '#xi ^{-}', 100, 0., 0.25)
 
 #----------------------------------
 
@@ -200,6 +205,11 @@ def isMatching(cms_mass,cms_rap,pro_xim,pro_xip):
     mass_point = (pps_mass - cms_mass) / (pps_mass_err + cms_mass*rel_mass_err)
     rap_point = (pps_rap - cms_rap) / (pps_rap_err + rel_rap_err*cms_rap)
     return mass_point, rap_point
+
+#----------------------------------
+
+def getAverage(v):
+    return float( sum(v) ) / float( len(v) )
 
 #----------------------------------
 
@@ -265,7 +275,7 @@ def selectionLabel(text):
     label.SetLineWidth(0)
     label.SetLineStyle(0)
     label.AddText( text )
-    label.SetTextSize( 0.033 )
+    label.SetTextSize( 0.03 )
     label.SetTextAlign(11)
     label.SetTextFont( 52 )
     label.SetTextColor( 1 )
@@ -291,16 +301,18 @@ def lumiLabel():
 entries = diphoton_tree.GetEntries()
 if testing: entries, experiments = test_events, 1
 
-v_20sig, v_3sig, v_2sig = [], [], []
+v_count, v_20sig, v_3sig, v_2sig = [], [], [], []
 
 for e in range(experiments):
 
-    matching_2sig, matching_3sig, matching_20sig = 0, 0, 0
+    count, matching_2sig, matching_3sig, matching_20sig = 0, 0, 0, 0
+    gr_estimate.Set(0)
 
     for i in range(entries):
         diphoton_tree.GetEntry(i)
 
         #print 'i:', i, 'era:', diph_struct.era, 'xangle:', diph_struct.xangle
+        v_xim, v_xip = [], []
     
         # Get entry by era and xangle
         if diph_struct.era == '2017B':
@@ -331,9 +343,17 @@ for e in range(experiments):
 
         if pro_struct.num_m == 0 or pro_struct.num_p == 0: continue
 
+        #for i in range(pro_struct.num_m): print 'xim:', pro_struct.xim[i]
+        #for i in range(pro_struct.num_p): print 'xip:', pro_struct.xip[i]
+
         v_xim, v_xip = np.asarray( pro_struct.xim ), np.asarray( pro_struct.xip )
+        #print 'v_xim:', v_xim
+        #print 'v_xip:', v_xip
         trim_xim, trim_xip = np.trim_zeros( v_xim ), np.trim_zeros( v_xip )
-        pro_xim, pro_xip = find_nearest(trim_xim, diph_struct.xim), find_nearest(trim_xip, diph_struct.xip)
+        pro_xim, pro_xip = find_nearest(trim_xim, diph_struct.xim), find_nearest(trim_xip, diph_struct.xip) 
+        h_xip.Fill( pro_xip ), h_xim.Fill( pro_xim )
+        #h2_xim.Fill( pro_xim, diph_struct.xim )
+        #h2_xip.Fill( pro_xip, diph_struct.xip )
 
         
         #print 'diph xim:', diph_struct.xim, 'diph xip:', diph_struct.xip
@@ -347,21 +367,57 @@ for e in range(experiments):
 
         # Plot events
         if plotting: gr_estimate.SetPoint( gr_estimate.GetN(), mass_match, rap_match )
+        #h2_estimate.Fill(mass_match, rap_match)
 
+        count += 1
         if abs(mass_match) < 20 and abs(rap_match) < 20: matching_20sig += 1
         if abs(mass_match) < 3 and abs(rap_match) < 3: matching_3sig += 1
         if abs(mass_match) < 2 and abs(rap_match) < 2: matching_2sig += 1
 
 
     print 'Experiment number:', e, 'Number of 3-sigma matching:', matching_3sig, 'Number of 2-sigma matching:', matching_2sig
-    v_20sig.append(matching_20sig), v_3sig.append(matching_3sig), v_2sig.append(matching_2sig)
+    v_20sig.append(matching_20sig), v_3sig.append(matching_3sig), v_2sig.append(matching_2sig), v_count.append(count)
 
     if plotting: plot_estimate( gr_estimate, 'background_estimate_%d.png' % e )
 
 print ''
 print ''
-print 'Average matching ----> 20 sigma:', sum(v_20sig)/len(v_20sig), '3 sigma:', sum(v_3sig)/len(v_3sig), '2 sigma:', sum(v_2sig)/len(v_2sig)
+print 'Average matching ----> 20 sigma:', getAverage(v_20sig), '3 sigma:', getAverage(v_3sig), '2 sigma:', getAverage(v_2sig)
+print 'Average num events:', getAverage(v_count)
 
 
+'''    
+c = TCanvas('c','',750,600)
+c.cd()
+h2_estimate.GetXaxis().SetTitle("(m_{pp}-m_{#gamma#gamma})/#sigma(m_{pp}-m_{#gamma#gamma})")
+h2_estimate.GetYaxis().SetTitle("(y_{pp} - y_{#gamma#gamma})/#sigma(y_{pp} - y_{#gamma#gamma})")
+h2_estimate.Draw('colz')
+c.SaveAs('h2_estimate.png')
 
-    
+
+c1 = TCanvas('c1','',750,600)
+c1.cd()
+h_xim.Draw()
+c1.SaveAs('h_pro_xim.png')
+
+
+c2 = TCanvas('c2','',750,600)
+c2.cd()
+h_xip.Draw()
+c2.SaveAs('h_pro_xip.png')
+
+
+c3 = TCanvas('c3', '', 750, 600)
+c3.cd()
+h2_xim.GetXaxis().SetTitle('PPS #xi^{-}')
+h2_xim.GetYaxis().SetTitle('CMS #xi^{-}')
+h2_xim.Draw('colz')
+c3.SaveAs('h2_xim_matching.png')
+
+c4 = TCanvas('c4', '', 750, 600)
+c4.cd()
+h2_xip.GetXaxis().SetTitle('PPS #xi^{-}')
+h2_xip.GetYaxis().SetTitle('CMS #xi^{-}')
+h2_xip.Draw('colz')
+c4.SaveAs('h2_xip_matching.png')
+'''
