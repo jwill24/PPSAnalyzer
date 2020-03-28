@@ -6,12 +6,12 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 from ROOT import TCanvas, TPad, TFile, TPaveLabel, TPaveText, TAttText, TLine, TLegend, TBox, TColor, TGraphErrors
-from ROOT import gROOT
+from ROOT import gROOT, gStyle
 
+gStyle.SetOptStat(0)
 
 file = TFile( "outputHists/2017/histOut_data_Xi_2017.root" )
-#file = TFile( "outputHists/2017/histOut_data_XipuUp_2017.root" )
-file.ls() 
+#file = TFile( "histOut_data_ReverseElastic_2017.root" )
 
 
 def Canvas(name):
@@ -78,17 +78,30 @@ def massrap_matching(blinded):
     c = Canvas("c")
     c.cd()
 
-    gr_matching = file.Get("plots/gr_matching")
-    gr_matching.SetLineColor(ROOT.kBlack)
-    gr_matching.SetTitle('')
-    gr_matching.GetXaxis().SetTitle("(m_{pp}-m_{#gamma#gamma})/#sigma(m_{pp}-m_{#gamma#gamma})")
-    gr_matching.GetYaxis().SetTitle("(y_{pp} - y_{#gamma#gamma})/#sigma(y_{pp} - y_{#gamma#gamma})")
-    gr_matching.GetXaxis().SetLimits(-20,20)
-    gr_matching.GetYaxis().SetRangeUser(-20,20)
-    gr_matching.SetMarkerSize(0.5)
-    gr_matching.SetMarkerStyle(24)
-    gr_matching.Draw("AP")
+    gr = file.Get("plots/gr_matching")
+    count_20, count_5, count_3, count_2, x, y = 0, 0, 0, 0, ROOT.Double(0), ROOT.Double(0)
+    for i in range(gr.GetN()):
+        gr.GetPoint(i,x,y)
+        if abs(x) < 20 and abs(y) < 20: count_20 += 1
+        if abs(x) < 5 and abs(y) < 5: count_5 += 1
+        if abs(x) < 3 and abs(y) < 3: count_3 += 1
+        if abs(x) < 2 and abs(y) < 2: count_2 += 1
+    print 'Total events:', gr.GetN(), '20sig:', count_20, '5sig:', count_5, '3sig:', count_3, '2sig:', count_2
 
+    gr.SetLineColor(ROOT.kBlack)
+    gr.SetTitle('')
+    gr.GetXaxis().SetTitle("(m_{pp}-m_{#gamma#gamma})/#sigma(m_{pp}-m_{#gamma#gamma})")
+    gr.GetYaxis().SetTitle("(y_{pp} - y_{#gamma#gamma})/#sigma(y_{pp} - y_{#gamma#gamma})")
+    gr.GetXaxis().SetLimits(-20,20)
+    gr.GetYaxis().SetRangeUser(-20,20)
+    gr.SetMarkerSize(0.5)
+    gr.SetMarkerStyle(24)
+    gr.Draw("AP")
+
+    b3 = TBox(-5, -5, 5, 5)
+    b3.SetLineColor(ROOT.kRed)
+    b3.SetFillStyle(0)
+    b3.Draw()
     b2 = TBox(-3, -3, 3, 3)
     if not blinded: b2.SetFillStyle(3001) # transparent
     b2.SetFillColor(5)
@@ -102,6 +115,7 @@ def massrap_matching(blinded):
     legend = TLegend(0.7,0.8,0.9,0.9)
     legend.AddEntry(b1,"2#sigma matching",'f')
     legend.AddEntry(b2,"3#sigma matching",'f')
+    legend.AddEntry(b3,"5#sigma matching",'l')
     legend.Draw()
     c.Update() 
     pLabel = prelimLabel()
@@ -151,12 +165,57 @@ def xi_matching(sector):
 
     pLabel, sLabel, lLabel = prelimLabel(), selectionLabel("Tight #xi selection"), lumiLabel()
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
-    c.SaveAs("plots/matching/xi"+sector+"_matching.png")
+    c.SaveAs("plots/matching/xi"+sector+"_matching_reverse.png")
 
 #------------------------------------------------
 
 massrap_matching(False)
 
-xi_matching('m')
-xi_matching('p')
+#xi_matching('m')
+#xi_matching('p')
 
+'''
+# Make hit map of matching
+h2_matching = ROOT.TH2F( 'h2_matching', '', 100, -20, 20, 100, -20, 20 )
+gr = file.Get('plots/gr_matching')
+x,y = ROOT.Double(0), ROOT.Double(0)
+for i in range( gr.GetN() ):
+    gr.GetPoint(i,x,y)
+    h2_matching.Fill(x,y)
+h2_matching.GetXaxis().SetTitle("(m_{pp}-m_{#gamma#gamma})/#sigma(m_{pp}-m_{#gamma#gamma})")
+h2_matching.GetYaxis().SetTitle("(y_{pp} - y_{#gamma#gamma})/#sigma(y_{pp} - y_{#gamma#gamma})")
+c = Canvas('c')
+c.cd()
+h2_matching.Draw('colz')
+c.SaveAs('reverse_matching_2d.png')
+
+# Make xi matching 2d hists
+h2_xim = ROOT.TH2F( 'h2_xim', '', 100, 0, 0.2, 100, 0, 0.2 )
+h2_xip = ROOT.TH2F( 'h2_xip', '', 100, 0, 0.2, 100, 0, 0.2 )
+
+gr_xim = file.Get('plots/gr_xim_matching')
+gr_xip = file.Get('plots/gr_xim_matching')
+
+for i in range( gr_xim.GetN() ):
+    gr_xim.GetPoint(i,x,y)
+    h2_xim.Fill(x,y)
+
+for i in range( gr_xip.GetN() ):
+    gr_xip.GetPoint(i,x,y)
+    h2_xip.Fill(x,y)
+
+h2_xim.GetXaxis().SetTitle('PPS #xi^{-}')
+h2_xim.GetYaxis().SetTitle('CMS #xi^{-}')
+h2_xip.GetXaxis().SetTitle('PPS #xi^{+}')
+h2_xip.GetYaxis().SetTitle('CMS #xi^{+}')
+
+c1 = Canvas('c1')
+c1.cd()
+h2_xim.Draw('colz')
+c1.SaveAs('reverse_xim_matching_2d.png')
+
+c2 = Canvas('c2')
+c2.cd()
+h2_xip.Draw('colz')
+c2.SaveAs('reverse_xip_matching_2d.png')
+'''

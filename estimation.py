@@ -2,7 +2,6 @@
 import os, sys
 import math, random
 import numpy as np
-#import matplotlib.pyplot as plt
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
@@ -35,8 +34,8 @@ pro_struct  = proStruct()
 
 
 # Flags
-experiments = 5     # number of iterations
-plotting = True     # make matching plot for each experiment
+experiments = 100000     # number of iterations
+plotting = False     # make matching plot for each experiment
 testing  = False    # only run over a few events
 test_events = 10    # number of events to use for testing
 method = 'singleRP' # singleRP or multiRP reconstruction
@@ -171,9 +170,6 @@ h_xim = TH1F('h_xim', '#xi ^{-}', 100, 0., 0.25)
 
 def find_nearest(array, value):
     if len(array) == 0: return -1
-    #array = np.asarray(array)
-    #idx = (np.abs(array - value)).argmin()
-    #return array[idx]
     return min(array, key=lambda x:abs(x-value))
 
 #----------------------------------
@@ -307,12 +303,12 @@ v_count, v_20sig, v_3sig, v_2sig = [], [], [], []
 for e in range(experiments):
 
     count, matching_2sig, matching_3sig, matching_20sig = 0, 0, 0, 0
+    #plotting = True
     gr_estimate.Set(0)
 
     for i in range(entries):
         diphoton_tree.GetEntry(i)
 
-        #print 'i:', i, 'era:', diph_struct.era, 'xangle:', diph_struct.xangle
         v_xim, v_xip = [], []
     
         # Get entry by era and xangle
@@ -357,7 +353,7 @@ for e in range(experiments):
 
         # Plot events
         if plotting: gr_estimate.SetPoint( gr_estimate.GetN(), mass_match, rap_match )
-        #h2_estimate.Fill(mass_match, rap_match)
+        h2_estimate.Fill(mass_match, rap_match)
 
         count += 1
         if abs(mass_match) < 20 and abs(rap_match) < 20: matching_20sig += 1
@@ -365,9 +361,10 @@ for e in range(experiments):
         if abs(mass_match) < 2 and abs(rap_match) < 2: matching_2sig += 1
 
 
-    print 'Experiment number:', e, 'Number of 3-sigma matching:', matching_3sig, 'Number of 2-sigma matching:', matching_2sig
+    #print 'Experiment number:', e, 'Number of 3-sigma matching:', matching_3sig, 'Number of 2-sigma matching:', matching_2sig
+    if e%1000 == 0: print str(100*e/experiments)+'% done'
     v_20sig.append(matching_20sig), v_3sig.append(matching_3sig), v_2sig.append(matching_2sig), v_count.append(count)
-
+    #if matching_2sig > 3 or matching_3sig > 7: plotting = False
     if plotting: plot_estimate( gr_estimate, 'background_estimate_%d.png' % e )
 
 print ''
@@ -376,8 +373,17 @@ print 'Average matching ----> 20 sigma:', getAverage(v_20sig), '3 sigma:', getAv
 print 'Average num events:', getAverage(v_count)
 
 
+#with open('2sigma.txt','w') as f2:
+#    for count in v_2sig:
+#        f2.write(str(count)+'\n')
+
+#with open('3sigma.txt','w') as f3:
+#    for count in v_3sig:
+#        f3.write(str(count)+'\n')
+
+
 # Plotting for cross checks
-'''    
+
 c = TCanvas('c','',750,600)
 c.cd()
 h2_estimate.GetXaxis().SetTitle("(m_{pp}-m_{#gamma#gamma})/#sigma(m_{pp}-m_{#gamma#gamma})")
@@ -385,6 +391,7 @@ h2_estimate.GetYaxis().SetTitle("(y_{pp} - y_{#gamma#gamma})/#sigma(y_{pp} - y_{
 h2_estimate.Draw('colz')
 c.SaveAs('h2_estimate.png')
 
+'''    
 c1 = TCanvas('c1','',750,600)
 c1.cd()
 h_xim.Draw()
@@ -431,5 +438,12 @@ std_label.SetTextColor( 1 )
 std_label.Draw()
 c5.SaveAs('2sigma_distribution.png')
 
+c6 = TCanvas('c6', 'c6', 740, 600)
+h_2sig_v_total = TH2F('h_2sig_v_total', '', 14, 0, 14, 50, 160, 210)
+for i in range( len(v_count) ):
+    h_2sig_v_total.Fill( v_2sig[i], v_count[i] )
+h_2sig_v_total.GetXaxis().SetTitle('Events at 2#sigma matching')
+h_2sig_v_total.GetYaxis().SetTitle('Total Events (with protons)')
+h_2sig_v_total.Draw('colz')
+c6.SaveAs('matching_v_total.png')
 '''
-
