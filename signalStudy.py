@@ -20,11 +20,11 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 PI = 3.14159265358979323846
 sqrts = 13000
 
-signal = True
+signal = False
 
-photon_id = 'MVA_WP90'
+#photon_id = 'MVA_WP90'
 #photon_id = 'cutBased_loose'
-#photon_id = 'highPt'
+photon_id = 'highPt'
 
 class SignalStudy(Module):
     def __init__(self):
@@ -37,7 +37,7 @@ class SignalStudy(Module):
                 [800,1000,0,0],
                 [1000,1200,0,0],
                 [1200,1400,0,0]]
-        '''
+
         self.v_id = [[100,200,0,0],
                 [200,300,0,0],
                 [300,400,0,0],
@@ -51,6 +51,20 @@ class SignalStudy(Module):
                 [1100,1200,0,0],
                 [1200,1300,0,0],
                 [1300,1400,0,0]]
+        '''
+        self.v_id = [[100,200,0,0,0,0,0],
+                [200,300,0,0,0,0,0],
+                [300,400,0,0,0,0,0],
+                [400,500,0,0,0,0,0],
+                [500,600,0,0,0,0,0],
+                [600,700,0,0,0,0,0],
+                [700,800,0,0,0,0,0],
+                [800,900,0,0,0,0,0],
+                [900,1000,0,0,0,0,0],
+                [1000,1100,0,0,0,0,0],
+                [1100,1200,0,0,0,0,0],
+                [1200,1300,0,0,0,0,0],
+                [1300,1400,0,0,0,0,0]]
 
         self.total = 0
 
@@ -67,8 +81,7 @@ class SignalStudy(Module):
         self.h_logxi_diff=ROOT.TH1F('h_logxi_diff', 'log(1/#xi) Difference', 100, -0.25,0.25)
         
         self.h_ratio=ROOT.TH1F('h_ratio', photon_id+'ID Efficiency', len(self.v_id), 0, len(self.v_id))
-        self.h_efficiency=ROOT.TH1F('h_efficiency', photon_id+'ID Efficiency', len(self.v_id), 100, 1400)
-
+        self.h_cuts_2d=ROOT.TH2F('h_cuts_2d', '', len(self.v_id), 0, len(self.v_id), 5, 0, 5)
 
     def beginJob(self,histFile=None,histDirName=None):
         Module.beginJob(self,histFile,histDirName)
@@ -85,61 +98,66 @@ class SignalStudy(Module):
         self.addObject( self.h_xi_res )
         self.addObject( self.h_logxi_diff )
 
-        self.addObject( self.h_efficiency )        
 
     def endJob(self):
         Module.endJob(self)
 
-        rootFile = ROOT.TFile(photon_id+'_output.root', 'RECREATE')
-        total, passing, comb_total, comb_passing = 0, 0, 0, 0
+        rootFile = ROOT.TFile('cutTest.root', 'RECREATE')
+        #total, passing, comb_total, comb_passing = 0, 0, 0, 0
+        cut_names = ['Iso Chg', 'Iso All', 'H/E', 'R_{9}', '#sigma_{i#etai#ta}']
 
         for i, v in enumerate(self.v_id):
+            '''
             total = float(v[2])
             passing = float(v[3])
             comb_total += total
             comb_passing += passing
             try: ratio = 100*passing/total
             except: ratio = 0
-            self.h_ratio.SetBinContent(i+1, ratio)
+            if signal: self.h_ratio.SetBinContent(i+1, ratio)
+            else: self.h_ratio.SetBinContent(i+1, 100-ratio)
             self.h_ratio.GetXaxis().SetBinLabel(i+1, str(self.v_id[i][1]))
             print 'i:', i, 'bin:', v[1], 'efficiency:', ratio
-
-        print ''
-        print 'Signal' if signal else 'Background', 'ID:', photon_id, 'Total:', comb_total, 'Passing:', comb_passing
-        print ''
-        
-        if signal:
-            c = ROOT.TCanvas('c','c',750,600)
-            c.cd()
-      
-            self.h_ratio.SetLineColor(ROOT.kWhite)
-            #self.h_ratio.Draw('HIST')
-            self.h_ratio.GetXaxis().SetTitleOffset(1.3)
-            self.h_ratio.GetYaxis().SetTitleOffset(1.5)
+            '''
+            self.h_cuts_2d.GetXaxis().SetBinLabel(i+1, str(self.v_id[i][1]))
+            for j, c in enumerate(cut_names):
+                self.h_cuts_2d.GetYaxis().SetBinLabel(j+1, c)
+                self.h_cuts_2d.SetBinContent(i+1, j+1, v[j+2])
             
-            g_ratio = ROOT.TGraph(self.h_ratio)
-            g_ratio.SetMarkerSize(0.7)
-            g_ratio.SetMarkerStyle(20)
-            #g_ratio.Draw('p e2 same')
-        
-            x = self.h_ratio.GetXaxis()
-            x.SetTitleSize(20)
-            x.SetTitleFont(43)
-            x.SetLabelFont(43)
-            x.SetLabelSize(15)
-            x.SetTitle('p_{T}^{#gamma}')
-            y = self.h_ratio.GetYaxis()
-            y.SetTitle('Efficiency %')
-            y.SetTitleSize(20)
-            y.SetTitleFont(43)
-            y.SetLabelFont(43)
-            y.SetLabelSize(20)
-            y.SetRangeUser(40,100)
-            
-            self.h_ratio.Write()
-            g_ratio.Write()
-            rootFile.Close()
 
+        #print ''
+        #print 'Signal' if signal else 'Background', 'ID:', photon_id, 'Total:', comb_total, 'Passing:', comb_passing
+        #print ''
+        '''
+        self.h_ratio.SetLineColor(ROOT.kWhite)
+        self.h_ratio.GetXaxis().SetTitleOffset(1.3)
+        self.h_ratio.GetYaxis().SetTitleOffset(1.5)
+        
+        g_ratio = ROOT.TGraph(self.h_ratio)
+        g_ratio.SetMarkerSize(0.7)
+        g_ratio.SetMarkerStyle(20)
+                
+        x = self.h_ratio.GetXaxis()
+        x.SetTitleSize(20)
+        x.SetTitleFont(43)
+        x.SetLabelFont(43)
+        x.SetLabelSize(15)
+        x.SetTitle('p_{T}^{#gamma}')
+        y = self.h_ratio.GetYaxis()
+        y.SetTitle('Efficiency %')
+        y.SetTitleSize(20)
+        y.SetTitleFont(43)
+        y.SetLabelFont(43)
+        y.SetLabelSize(20)
+        y.SetRangeUser(40,100) if signal else y.SetRangeUser(0,105)
+        
+        self.h_ratio.Write()
+        g_ratio.Write()
+        '''
+        self.h_cuts_2d.Draw('colz')
+        self.h_cuts_2d.Write()
+        rootFile.Close()
+        
     # Apply photon ID
     def photon_id(self,pho1,pho2):
         if '90' in photon_id:
@@ -244,6 +262,37 @@ class SignalStudy(Module):
         
         self.total += 1
 
+        # Fill 2D cut plots
+        for v in self.v_id:
+            if pt1 > v[0] and pt1< v[1]:
+                if pho1.isScEtaEB:
+                    if pho1.pfRelIso03_chg > 5:    v[2] += 1
+                    if pho1.pfRelIso03_all > 2.75: v[3] += 1
+                    if pho1.hoe > 0.05:            v[4] += 1
+                    if pho1.r9 < 0.8:              v[5] += 1
+                    if pho1.sieie > 0.0112:        v[6] += 1
+                elif pho1.isScEtaEE:
+                    if pho1.pfRelIso03_chg > 5:    v[2] += 1
+                    if pho1.pfRelIso03_all > 2:    v[3] += 1
+                    if pho1.hoe > 0.05:            v[4] += 1
+                    if pho1.r9 < 0.8:              v[5] += 1
+                    if pho1.sieie > 0.0280:        v[6] += 1
+            if pt2> v[0] and pt2 < v[1]:
+                if pho2.isScEtaEB:
+                    if pho1.pfRelIso03_chg > 5:    v[2] += 1
+                    if pho1.pfRelIso03_all > 2.75: v[3] += 1
+                    if pho1.hoe > 0.05:            v[4] += 1
+                    if pho1.r9 < 0.8:              v[5] += 1
+                    if pho1.sieie > 0.0112:        v[6] += 1
+                elif pho2.isScEtaEE:
+                    if pho1.pfRelIso03_chg > 5:    v[2] += 1
+                    if pho1.pfRelIso03_all > 2:    v[3] += 1
+                    if pho1.hoe > 0.05:            v[4] += 1
+                    if pho1.r9 < 0.8:              v[5] +=1 
+                    if pho1.sieie > 0.0280:        v[6] += 1
+
+        '''
+        # Increment total for pT bins
         for v in self.v_id:
             if pt1 > v[0] and pt1 < v[1]: v[2] += 1
             if pt2 > v[0] and pt2 < v[1]: v[2] += 1
@@ -253,11 +302,12 @@ class SignalStudy(Module):
         #if not self.acop_cut(acop): continue
         
 
+        #Increment passing for pT bins
         for v in self.v_id:
             if pt1 > v[0] and pt1 < v[1]: v[3] += 1
             if pt2 > v[0] and pt2 < v[1]: v[3] += 1
             
-        '''
+
         part1, part2 = lhe[2], lhe[3]
         if ( abs(part1.p4().Pz()-pho1.p4().Pz()) ) > ( abs(part2.p4().Pz()-pho1.p4().Pz()) ): part1, part2 = lhe[3], lhe[2] 
         part_p4 = ROOT.TLorentzVector( part1.p4() + part2.p4() )
@@ -294,5 +344,5 @@ class SignalStudy(Module):
 
 preselection=''
 files=["Skims/nanoAOD_aqgc2017_Skim.root"] if signal else ["Skims/nanoAOD_ggj2017_Skim.root"]
-p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[SignalStudy()],noOut=True,histFileName="histOut_study_ggj.root",histDirName="plots")
+p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[SignalStudy()],noOut=True,histFileName="histOut_study.root",histDirName="plots")
 p.run()
