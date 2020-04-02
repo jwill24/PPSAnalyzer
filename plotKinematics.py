@@ -10,24 +10,26 @@ from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
 
-lab = 'Elastic selection'
-selection = 'ElasticpuUp'
+lab = 'Reverse Elastic'
+selection = 'ReverseElastic'
+year = 2018
 
 lumi = 37200.0 # pb
 
 lightBlue, red, yellow, purple, darkGreen, green = ROOT.kCyan-9, 208, ROOT.kYellow-9, 38, ROOT.kTeal+3, ROOT.kGreen-9
 
-ggj =  ['outputHists/2017/histOut_ggj_'+selection+'_2017.root',138.5,4000000,red]
-gj =   ['outputHists/2017/histOut_g+j_'+selection+'_2017.root',873.7,80000000, darkGreen]
-qcd =  ['outputHists/2017/histOut_qcd_'+selection+'_2017.root',117500,4000000, lightBlue]
-wg =   ['outputHists/2017/histOut_wg_'+selection+'_2017.root',465,6300000, purple] 
-zg =   ['outputHists/2017/histOut_zg_'+selection+'_2017.root',55.47,30000000, yellow]
-tt =   ['outputHists/2017/histOut_tt_'+selection+'_2017.root',494.9,8026103, green]
-aqgc = ['outputHists/2017/histOut_aqgc_'+selection+'_2017.root',3.86e-5,300000, 92] 
+ggj =  ['outputHists/'+year+'/histOut_ggj_'+selection+year+'.root',138.5,4000000,red]
+gj =   ['outputHists/'+year+'/histOut_g+j_'+selection+year+'.root',873.7,80000000, darkGreen]
+qcd =  ['outputHists/'+year+'/histOut_qcd_'+selection+year+'.root',117500,4000000, lightBlue]
+wg =   ['outputHists/'+year+'/histOut_wg_'+selection+year+'.root',465,6300000, purple] 
+zg =   ['outputHists/'+year+'/histOut_zg_'+selection+year+'.root',55.47,30000000, yellow]
+tt =   ['outputHists/'+year+'/histOut_tt_'+selection+year+'.root',494.9,8026103, green]
+aqgc = ['outputHists/'+year+'/histOut_aqgc_'+selection+year+'.root',3.86e-5,300000, 92] 
 
 
 # Histogram files
 dataFile = TFile('outputHists/2017/histOut_data_'+selection+'_2017.root')
+#dataFile = TFile('outputHists/2017/histOut_data_ReverseElastic_2017.root')
 ggjFile  = TFile(ggj[0])
 gjFile   = TFile(gj[0])
 qcdFile  = TFile(qcd[0])
@@ -140,7 +142,7 @@ def plotRatio(name, h1, v_hist, hs, log):
 
     Prettify( h_ratio )
 
-    c.SaveAs('plots/'+name+'_'+selection+'.png')
+    c.SaveAs('plots/'+year+'/'+name+'_'+selection+'.png')
 
 def asym_error_bars(hist):
     alpha = 1 - 0.6827
@@ -276,37 +278,40 @@ def makeProtonPlot(name, xTitle, rbin, log):
     h.Draw('HIST')
     pLabel, sLabel, lLabel = prelimLabel(log,h.GetMaximum()), selectionLabel(lab,False,log,h.GetMaximum()), lumiLabel(False)
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
-    c.SaveAs('plots/'+name+'_'+selection+'.png')
+    c.SaveAs('plots/'+year+'/'+name+'_'+selection+'.png')
 
 #-----------------------
 
+'''
 makePlot('h_diph_mass', 'h_mass_comp', 'm_{#gamma#gamma} GeV', 4, True)
 makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
-makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 2, True)
+makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 1, True)
 makePlot('h_lead_pt', 'h_lead_pt_comp', 'Leading p_{T}^{#gamma} GeV', 2, True)
 makePlot('h_sub_pt', 'h_sub_pt_comp', 'Subleading p_{T}^{#gamma} GeV', 2, True)
-makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 4, False)
+makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 1, False)
 makePlot('h_lead_eta', 'h_lead_eta_comp', 'Leading #eta ^{#gamma}', 4, False)
 makePlot('h_sub_eta', 'h_sub_eta_comp', 'Subleading #eta ^{#gamma}', 4, False)
 makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 2, True)
 makePlot('h_lead_r9', 'h_lead_r9_comp', 'Leading R_{9} ^{#gamma}', 2, True)
 makePlot('h_sub_r9', 'h_sub_r9_comp', 'Subleading R_{9} ^{#gamma}', 2, True)
+makePlot('h_eb_hoe', 'h_eb_hoe_comp', 'EB H/E', 1, True)
+makePlot('h_eb_sieie', 'h_eb_sieie_comp', 'EB #sigma_{i#etai#eta}', 1, True)
 makePlot('h_nvtx', 'h_nvtx_comp', 'Number of vertices', 1, True)
 makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
+'''
 makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
 makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 4, True)
-makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
-makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, False)
+#makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
+#makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, True)
 
 
-'''
-makeProtonPlot('h_num_pro', 'Number of protons', 1, False)
-makeProtonPlot('h_detType', 'Proton Detector Type', 1, False)
-makeProtonPlot('h_pro_xip', 'Proton #xi ^{+}', 1, False)
-makeProtonPlot('h_pro_xim', 'Proton #xi ^{-}', 1, False)
-makeProtonPlot('h_pro_xi_45f', 'Proton #xi 45F', 1, False)
-makeProtonPlot('h_pro_xi_45n', 'Proton #xi 45N', 1, False)
-makeProtonPlot('h_pro_xi_56n', 'Proton #xi 56N', 1, False)
-makeProtonPlot('h_pro_xi_56f', 'Proton #xi 56F', 1, False)
-'''
+
+#makeProtonPlot('h_num_pro', 'Number of protons', 1, False)
+#makeProtonPlot('h_detType', 'Proton Detector Type', 1, False)
+#makeProtonPlot('h_pro_xip', 'Proton #xi ^{+}', 1, False)
+#makeProtonPlot('h_pro_xim', 'Proton #xi ^{-}', 1, False)
+#makeProtonPlot('h_pro_xi_45f', 'Proton #xi 45F', 1, False)
+#makeProtonPlot('h_pro_xi_45n', 'Proton #xi 45N', 1, False)
+#makeProtonPlot('h_pro_xi_56n', 'Proton #xi 56N', 1, False)
+#makeProtonPlot('h_pro_xi_56f', 'Proton #xi 56F', 1, False)
 

@@ -41,8 +41,9 @@ rel_xi_err = 0.08
 sample = str( sys.argv[1] )
 selection = str( sys.argv[2] )
 
-mcs = [ ['ggj', 138.5, 4000000],['g+j',873.7,80000000],['qcd',117500,4000000],['wg',191.1,6300000],['zg',55.47,30000000], ['tt',494.9,8026103], ['aqgc',3.86e-5,300000] ]
-selections = [ ['HLT', 1], ['Preselection', 2], ['ID', 3], ['Elastic', 4], ['Xi', 5] ]
+mcs = [ ['ggj2017', 138.5, 4000000],['g+j2017',873.7,80000000],['qcd2017',117500,4000000],['wg2017',191.1,6300000],['zg2017',55.47,30000000],['tt2017',494.9,8026103],['aqgc2017',3.86e-5,300000],
+        ['ggj2018', 118.0, 4000000],['g+j2018',875.4,80000000],['qcd2018',117200,4000000],['wg2018',191.6,6300000],['zg2018',55.48,30000000],['tt2018',749.9,8000000] ]
+selections = [ ['HLT', 1], ['Preselection', 2], ['ReverseElastic', 2.5], ['ID', 3], ['Elastic', 4], ['Xi', 5] ]
 
 for sel in selections:
     if selection == sel[0]: nSelect = sel[1] 
@@ -66,19 +67,24 @@ print ''
 class DiphotonAnalysis(Module):
     def __init__(self):
         self.writeHistFile=True
-        self.n_passing = 0
-        self.photonmapname = "EGamma_SF2D"
-        self.photon_file = self.open_root("2017_PhotonsMVAwp90.root")
-        self.photon_map = self.get_root_obj(self.photon_file, self.photonmapname)
-        self.csevmapname = "MVA_ID"
-        self.csev_file = self.open_root("CSEV_ScaleFactors_2017.root")
-        self.csev_map = self.get_root_obj(self.csev_file, self.csevmapname)
 
+        # Get SF hists for ID and CSEV
+        self.photonmapname = "EGamma_SF2D"        
+        if '2017' in selection: 
+            self.photon_file = self.open_root("2017_PhotonsMVAwp90.root")
+            self.csev_file = self.open_root("CSEV_ScaleFactors_2017.root")
+            self.csevmapname = "MVA_ID"
+        elif '2018' in selection:
+            self.photon_file = self.open_root("2018_PhotonsMVAwp90.root")
+            self.csev_file = self.open_root("CSEV_2018.root")
+            self.csevmapname = "eleVeto_SF"
+        self.csev_map = self.get_root_obj(self.csev_file, self.csevmapname)
+        self.photon_map = self.get_root_obj(self.photon_file, self.photonmapname)
+
+        # Initialize objects for toy matching file
         self.diphoton_file = ROOT.TFile('diphotonEvents.root', 'RECREATE')
         self.diphoton_tree = ROOT.TTree('tree','Tree with diphoton events')
-
         self.v_mass, self.v_rap, self.v_xip, self.v_xim, self.v_era, self.v_xangle = array('f', []), array('f', []), array('f', []), array('f', []), array('f', []), array('f', [])
-
         self.diphoton_tree.Branch('mass', ROOT.AddressOf( mystruct, 'mass'), 'mass/F')
         self.diphoton_tree.Branch('rap', ROOT.AddressOf( mystruct, 'rap'), 'rap/F')
         self.diphoton_tree.Branch('xim', ROOT.AddressOf( mystruct, 'xim'), 'xim/F')
@@ -144,56 +150,34 @@ class DiphotonAnalysis(Module):
         self.gr_xim_matching=ROOT.TGraphErrors('gr_xim_matching')
         self.gr_xim_matching.SetName('gr_xim_matching')
 
-        self.addObject( self.h_num_pho )
-        self.addObject( self.h_diph_mass )
-        self.addObject( self.h_acop )
-        self.addObject( self.h_pt_ratio )
-        self.addObject( self.h_single_eta )
-        self.addObject( self.h_lead_eta )
-        self.addObject( self.h_sub_eta )
-        self.addObject( self.h_single_pt )        
-        self.addObject( self.h_lead_pt )        
-        self.addObject( self.h_sub_pt )        
-        self.addObject( self.h_single_r9 )
-        self.addObject( self.h_lead_r9 )
-        self.addObject( self.h_sub_r9 )
-        self.addObject( self.h_single_hoe )
-        self.addObject( self.h_eb_hoe )
-        self.addObject( self.h_ee_hoe )
-        self.addObject( self.h_single_sieie )
-        self.addObject( self.h_eb_sieie )
-        self.addObject( self.h_ee_sieie )
-        self.addObject( self.h_single_electronVeto )
-        self.addObject( self.h_lead_electronVeto )
-        self.addObject( self.h_sub_electronVeto )
-        self.addObject( self.h_xip )
-        self.addObject( self.h_xim )
-        self.addObject( self.h_nvtx )
-        self.addObject( self.h_vtx_z )
-        self.addObject( self.h_fgr )
+        self.addObject( self.h_num_pho ), self.addObject( self.h_diph_mass ), self.addObject( self.h_acop ), self.addObject( self.h_pt_ratio )
+        self.addObject( self.h_single_eta ), self.addObject( self.h_lead_eta ), self.addObject( self.h_sub_eta ) 
+        self.addObject( self.h_single_pt ), self.addObject( self.h_lead_pt ), self.addObject( self.h_sub_pt )
+        self.addObject( self.h_single_r9 ), self.addObject( self.h_lead_r9 ), self.addObject( self.h_sub_r9 )
+        self.addObject( self.h_single_hoe ), self.addObject( self.h_eb_hoe ), self.addObject( self.h_ee_hoe )
+        self.addObject( self.h_single_sieie ), self.addObject( self.h_eb_sieie ), self.addObject( self.h_ee_sieie )
+        self.addObject( self.h_single_electronVeto ), self.addObject( self.h_lead_electronVeto ), self.addObject( self.h_sub_electronVeto )
+        self.addObject( self.h_xip ), self.addObject( self.h_xim )
+        self.addObject( self.h_nvtx ), self.addObject( self.h_vtx_z ), self.addObject( self.h_fgr )
 
         if data_:
-            self.addObject( self.h_num_pro )
-            self.addObject( self.h_detType )
-            self.addObject( self.h_pro_xip )
-            self.addObject( self.h_pro_xim )
-            self.addObject( self.h_pro_xi_45f )
-            self.addObject( self.h_pro_xi_45n )
-            self.addObject( self.h_pro_xi_56n )
-            self.addObject( self.h_pro_xi_56f )
+            self.addObject( self.h_num_pro ), self.addObject( self.h_detType )
+            self.addObject( self.h_pro_xip ), self.addObject( self.h_pro_xim )
+            self.addObject( self.h_pro_xi_45f ), self.addObject( self.h_pro_xi_45n )
+            self.addObject( self.h_pro_xi_56n ), self.addObject( self.h_pro_xi_56f )
             self.addObject( self.gr_matching )
-            self.addObject( self.gr_xip_matching )
-            self.addObject( self.gr_xim_matching )
+            self.addObject( self.gr_xip_matching ), self.addObject( self.gr_xim_matching )
 
 
         if not data_:
-            self.mcfile = ROOT.TFile( 'Skims/nanoAOD_'+sample+'2017_Skim.root' )
+            self.mcfile = ROOT.TFile( 'Skims/nanoAOD_'+sample+'_Skim.root' )
             self.mchist = ROOT.TH1F('mchist', 'fixedGridRho', 100, 0, 58)
             self.mctree = self.mcfile.Events
             self.mctree.Project('mchist', 'fixedGridRhoFastjetAll')
             self.mchist.Scale( 1 / self.mchist.Integral() )
 
-            self.datafile = ROOT.TFile( 'dataFixedGridRho_2017.root' )
+            if '2017' in selection: self.datafile = ROOT.TFile( 'dataFixedGridRho_2017.root' )
+            elif '2018' in selction: self.datafile = ROOT.TFile( 'dataFixedGridRho_2018.root' )
             self.datahist = self.datafile.Get('h')
             self.datahist.Scale( 1 / self.datahist.Integral() )
 
@@ -262,13 +246,18 @@ class DiphotonAnalysis(Module):
         
     # Get the SFs for MCs
     def efficiency(self,pt,eta_sc,r9):
+        if nSelect != 2.5 and nSelect < 3: return 1
         bin_x = min( max( self.photon_map.GetXaxis().FindBin( eta_sc ), 1 ), self.photon_map.GetXaxis().GetNbins() )
         bin_y = min( max( self.photon_map.GetYaxis().FindBin( pt ), 1 ), self.photon_map.GetYaxis().GetNbins() )
         id_sf = self.photon_map.GetBinContent( bin_x, bin_y )
-        if nSelect < 3: return 1
-        if eta_sc <= 1.4442: bin_r9 = 2 if r9 > 0.94 else 3
-        else: bin_r9 = 5 if r9 > 0.94 else 6
-        csev_sf = self.csev_map.GetBinContent( bin_r9 ) 
+        if '2017' in selection:
+            if eta_sc <= 1.4442: bin_r9 = 2 if r9 > 0.94 else 3
+            else: bin_r9 = 5 if r9 > 0.94 else 6
+            csev_sf = self.csev_map.GetBinContent( bin_r9 ) 
+        if '2018' in selection:
+            bin_x = min( max( self.csev_map.GetXaxis().FindBin( eta_sc ), 1 ), self.photon_map.GetXaxis().GetNbins() )
+            bin_y = min( max( self.csev_map.GetYaxis().FindBin( pt ), 1 ), self.photon_map.GetYaxis().GetNbins() )
+            csev_sf = self.csev_map.GetBinContent( bin_x, bin_y )
         return id_sf*csev_sf 
 
     # Use the fixedGridRho for reweighting
@@ -327,10 +316,15 @@ class DiphotonAnalysis(Module):
         elif run > 302111 and run < 302679: return '2017D'
         elif run > 303708 and run < 304798: return '2017E'
         elif run > 305016 and run < 306462: return '2017F'
+        elif run > 305016 and run < 306462: return '2018A'
+        elif run > 305016 and run < 306462: return '2018B'
+        elif run > 305016 and run < 306462: return '2018C'
+        elif run > 305016 and run < 306462: return '2018D'
         else: return 'none'
 
     def analyze(self, event):
         if data_: protons = Collection(event, "Proton_singleRP")
+        #if data_: protons = Collection(event, "Proton_multiRP")
         photons = Collection(event, "Photon")
         if data_: pu_weight, vtxWeight, eff_pho1, eff_pho2 = 1, 1, 1, 1
         else: pu_weight, vtxWeight = event.puWeightUp, self.rhoReweight(event.Pileup_nPU)
@@ -365,9 +359,11 @@ class DiphotonAnalysis(Module):
         if nSelect > 2: # ID
             if not self.photon_id(pho1,pho2): return
             if not self.electron_veto(pho1,pho2): return
+        if nSelect == 2.5: 
+            if acop < 0.005: return
         if nSelect > 3: # Elastic
             if not self.acop_cut(acop): return
-        if nSelect > 4: # Tight xi
+        if nSelect > 4 or nSelect == 2.5: # Tight xi or reverse elastic
             if not self.xi_cut(xip,xim): return
 
         # Print high-mass event kinematics
@@ -383,14 +379,15 @@ class DiphotonAnalysis(Module):
                 print >> f, ''
 
         # Fill diphoton tree for background estimation
-        if data_ and nSelect == 5: 
-            mystruct.mass = diph_mass
-            mystruct.rap = diph_rap
-            mystruct.xim = xim
-            mystruct.xip = xip
-            mystruct.xangle = event.LHCInfo_xangle
-            mystruct.era = self.getEra(event.run)
-            self.diphoton_tree.Fill()
+        if data_: 
+            if nSelect == 2.5 or nSelect == 5: # tight xi selection 
+                mystruct.mass = diph_mass
+                mystruct.rap = diph_rap
+                mystruct.xim = xim
+                mystruct.xip = xip
+                mystruct.xangle = event.LHCInfo_xangle
+                mystruct.era = self.getEra(event.run)
+                self.diphoton_tree.Fill()
 
         if not data_:
             eff_pho1 = self.efficiency(pho1.pt,pho1.eta,pho1.r9)
@@ -430,14 +427,14 @@ class DiphotonAnalysis(Module):
         if not data_: return 
         self.h_num_pro.Fill( len(protons) )
         for proton in protons:
-            self.h_detType.Fill( proton.protonRPType ) # not available for multiRP
+            self.h_detType.Fill( proton.protonRPType )                       # not available for multiRP
             if proton.sector45: self.h_pro_xip.Fill( proton.xi )
             elif proton.sector56: self.h_pro_xim.Fill( proton.xi ) 
-            if proton.decDetId == 3: self.h_pro_xi_45f.Fill( proton.xi )
-            elif proton.decDetId == 23: self.h_pro_xi_45n.Fill( proton.xi )
-            elif proton.decDetId == 103: self.h_pro_xi_56n.Fill( proton.xi )
-            elif proton.decDetId == 123: self.h_pro_xi_56f.Fill( proton.xi )
-            else: print 'Proton not in known det id:', proton.decDetId
+            if proton.decDetId == 3: self.h_pro_xi_45f.Fill( proton.xi )     # not available for multiRP
+            elif proton.decDetId == 23: self.h_pro_xi_45n.Fill( proton.xi )  # not available for multiRP
+            elif proton.decDetId == 103: self.h_pro_xi_56n.Fill( proton.xi ) # not available for multiRP
+            elif proton.decDetId == 123: self.h_pro_xi_56f.Fill( proton.xi ) # not available for multiRP
+            else: print 'Proton not in known det id:', proton.decDetId       # not available for multiRP
 
         # Choose the best diproton candidate
         if not self.two_protons(protons): return
@@ -463,7 +460,7 @@ class DiphotonAnalysis(Module):
         return True
 
 preselection=""
-if sample == 'data' : 
+if sample == 'data2017':
     files=[
         "Skims/nanoAOD_Run2017B_Skim.root",
         "Skims/nanoAOD_Run2017C_Skim.root",
@@ -471,11 +468,17 @@ if sample == 'data' :
         "Skims/nanoAOD_Run2017E_Skim.root",
         "Skims/nanoAOD_Run2017F_Skim.root"
     ]
+elif sample == 'data2018':
+    files=[
+        "Skims/nanoAOD_Run2018A_Skim.root",
+        "Skims/nanoAOD_Run2018B_Skim.root",
+        "Skims/nanoAOD_Run2018C_Skim.root",
+        "Skims/nanoAOD_Run2018D_Skim.root",
 else: 
     files=[
         "Skims/nanoAOD_"+sample+"2017_Skim.root"
     ]
-p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="histOut_"+sample+"_"+selection+"_2017.root",histDirName="plots")
+p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="histOut_"+sample+"_"+selection+".root",histDirName="plots")
 p.run()
 
 
