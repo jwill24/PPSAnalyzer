@@ -10,10 +10,7 @@ from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
 
-#color = ROOT.kGreen-9
-#color = ROOT.kTeal+8
-color = 212
-weight = 3.86e-5*37200/300000
+signal = False
 
 def Canvas(name):
     c = TCanvas(name,'c',750,600)
@@ -46,18 +43,15 @@ def condLabel():
     return label
 
 def simLabel():
-    #label = TPaveText( 0.11, 0.9, 0.2, 0.92, 'NB NDC' )
-    label = TPaveText( 0.8, 0.79, 0.87, 0.86, 'NB NDC' )
+    label = TPaveText( 0.11, 0.9, 0.2, 0.92, 'NB NDC' )
+    #label = TPaveText( 0.8, 0.79, 0.87, 0.86, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
     label.SetLineStyle(0)
-    #label.SetTextAlign(11)                                                                                                                                                         
-    label.SetTextAlign(31)
-    #label.AddText( "#font[62]{CMS} #font[52]{Simulation}" )
-    label.AddText( "#font[62]{CMS}" )
-    label.AddText( "#scale[0.75]{#font[52]{Simulation}}" )
-    label.SetTextSize(0.045)
+    label.SetTextAlign(11)                                                                                                                          
+    label.AddText( "#font[62]{CMS} #font[52]{Simulation}" )
+    label.SetTextSize(0.036)
     label.SetTextColor( 1 )
     return label
 
@@ -71,27 +65,9 @@ def addText():
     label.AddText( "FPMC, BSM pred." )
     return label
 
-'''
-def makeIDPlot(name, xTitle, rbin, log):
-    c = Canvas('c')
-    c.cd()
-    h = signalFile.Get('plots/' + name)
-    h.SetTitle('')
-    h.SetYTitle('Events')
-    h.SetXTitle(xTitle)
-    #h.Scale(1/weight)
-    h.Rebin(rbin)
-    h.SetFillColor(color)
-    h.SetLineColor(color)
-    h.SetMaximum( h.GetMaximum()*1.2 )
-    h.Draw('HIST')
-    sLabel, cLabel, selLabel = simLabel(), condLabel(), selectionLabel('FPMC, BSM #gamma#gamma#rightarrow#gamma#gamma pred.')
-    sLabel.Draw(), cLabel.Draw(), selLabel.Draw()
-    c.SaveAs('plots/signal/'+name+'_signal.png')
-'''
-
 def graph(id_name, color, leg):
-    rootFile = TFile('identification/'+id_name+'_output.root')
+    if signal: rootFile = TFile('identification/'+id_name+'_output.root')
+    else: rootFile = TFile('identification/'+id_name+'_ggj_output.root')
     g = rootFile.Get('Graph_from_h_ratio')
     g.SetMarkerSize(0.7)
     g.SetMarkerStyle(24)
@@ -102,21 +78,27 @@ def graph(id_name, color, leg):
 
 
 c = Canvas('c')
+c.SetGrid()
 IDs = ['MVA_WP90', 'highPt']
 colors = [ROOT.kRed, ROOT.kBlue]
 
 c.cd() 
-rootFile = TFile('identification/MVA_WP90_output.root')
+if signal: rootFile = TFile('identification/MVA_WP90_output.root')
+else: rootFile = TFile('identification/MVA_WP90_ggj_output.root')
 h = rootFile.Get('h_ratio')
 h.SetTitle('')
-h.Draw('HIST')
+h.SetMarkerColor(ROOT.kWhite)
+if signal: h.GetYaxis().SetTitle('Efficiency %')
+else: h.GetYaxis().SetTitle('Rejection %')
+h.Draw('p')
 
-leg = TLegend(0.45, 0.2, 0.55, 0.3)
+if signal: leg = TLegend(0.45, 0.25, 0.55, 0.35)
+else: leg = TLegend(0.2, 0.7, 0.3, 0.8)
 leg.SetBorderSize(0)
 leg.SetFillColor(0)
 leg.SetFillStyle(0)
 leg.SetTextFont(42)
-leg.SetTextSize(0.032)
+leg.SetTextSize(0.04)
 
 for i,ID in enumerate(IDs):
     print 'ID:', ID
@@ -128,4 +110,5 @@ sLabel.Draw(), cLabel.Draw()
 
 leg.Draw()
 
-c.SaveAs('multiplot_id.png')
+if signal: c.SaveAs('multiplot_id.png')
+else: c.SaveAs('multiplot_bg_id.png')

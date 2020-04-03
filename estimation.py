@@ -41,8 +41,8 @@ test_events = 10    # number of events to use for testing
 method = 'singleRP' # singleRP or multiRP reconstruction
 
 
-diphoton_file = TFile( 'diphotonEvents_'+method+'.root' )
-proton_file = TFile( 'protonEvents_'+method+'.root' )
+diphoton_file = TFile( 'estimation/diphotonEvents_'+method+'.root' )
+proton_file = TFile( 'estimation/protonEvents_'+method+'.root' )
 
 
 diphoton_tree = diphoton_file.Get( 'tree' )
@@ -245,7 +245,7 @@ def plot_estimate(gr,name):
     sLabel.Draw()
     lLabel = lumiLabel()
     lLabel.Draw()
-    c.SaveAs(name)
+    c.SaveAs('estimation/'+name)
 
 #----------------------------------
 

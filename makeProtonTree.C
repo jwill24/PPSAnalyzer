@@ -37,7 +37,7 @@ void makeProtonTree( TString outFile=output_file )
   TTree* tree_F_140 = new TTree( "tree_F_140", "tree for 140 protons");
   TTree* tree_F_150 = new TTree( "tree_F_150", "tree for 150 protons");
 
-  unsigned short maxProSide = 6;
+  unsigned short maxProSide = 12;
   unsigned int num_m, num_p;
   float xim[maxProSide], xip[maxProSide];
 
@@ -133,7 +133,7 @@ void makeProtonTree( TString outFile=output_file )
   chain.Add( "Skims/nanoAOD_Run2017E_Skim.root" );
   chain.Add( "Skims/nanoAOD_Run2017F_Skim.root" );
 
-  unsigned int run, num_proton;
+  unsigned int run, event, num_proton;
   float xangle;
   const unsigned short maxPro = 21;
   float proton_xi[maxPro];
@@ -144,6 +144,9 @@ void makeProtonTree( TString outFile=output_file )
   chain.SetBranchAddress( "nProton_singleRP", &num_proton );
   chain.SetBranchAddress( "Proton_singleRP_xi", proton_xi );
   chain.SetBranchAddress( "Proton_singleRP_sector45", sector45 );
+  //chain.SetBranchAddress( "nProton_multiRP", &num_proton );
+  //chain.SetBranchAddress( "Proton_multiRP_xi", proton_xi );
+  //chain.SetBranchAddress( "Proton_multiRP_sector45", sector45 );
 
 
   unsigned int entries = chain.GetEntries();
@@ -153,7 +156,7 @@ void makeProtonTree( TString outFile=output_file )
 
     chain.GetEntry( i );
 
-    if ( i%100000 == 0 ) std::cout << "\n i: " << i << " " << 100*i/entries << "% done \n" << std::endl;
+    if ( i%100000 == 0 ) std::cout << "i: " << i << " " << 100*i/entries << "% done" << std::endl;
 
     if ( num_proton > 20 ) {
       std::cout << "Skipping event i:" << i << " num proton: " << num_proton << std::endl;

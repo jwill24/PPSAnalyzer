@@ -104,7 +104,7 @@ class SignalStudy(Module):
 
         rootFile = ROOT.TFile('cutTest.root', 'RECREATE')
         #total, passing, comb_total, comb_passing = 0, 0, 0, 0
-        cut_names = ['Iso Chg', 'Iso All', 'H/E', 'R_{9}', '#sigma_{i#etai#ta}']
+        cut_names = ['Iso Chg', 'Iso All', 'H/E', 'R_{9}', '#sigma_{i#etai#eta}']
 
         for i, v in enumerate(self.v_id):
             '''
@@ -270,7 +270,7 @@ class SignalStudy(Module):
                     if pho1.pfRelIso03_all > 2.75: v[3] += 1
                     if pho1.hoe > 0.05:            v[4] += 1
                     if pho1.r9 < 0.8:              v[5] += 1
-                    if pho1.sieie > 0.0112:        v[6] += 1
+                    if pho1.sieie > 0.0105:        v[6] += 1
                 elif pho1.isScEtaEE:
                     if pho1.pfRelIso03_chg > 5:    v[2] += 1
                     if pho1.pfRelIso03_all > 2:    v[3] += 1
@@ -283,7 +283,7 @@ class SignalStudy(Module):
                     if pho1.pfRelIso03_all > 2.75: v[3] += 1
                     if pho1.hoe > 0.05:            v[4] += 1
                     if pho1.r9 < 0.8:              v[5] += 1
-                    if pho1.sieie > 0.0112:        v[6] += 1
+                    if pho1.sieie > 0.0105:        v[6] += 1
                 elif pho2.isScEtaEE:
                     if pho1.pfRelIso03_chg > 5:    v[2] += 1
                     if pho1.pfRelIso03_all > 2:    v[3] += 1

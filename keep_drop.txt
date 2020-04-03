@@ -1,0 +1,20 @@
+drop *
+keep Photon*
+keep run
+keep luminosityBlock
+keep event
+keep Photon_*
+keep GenPart_*
+keep genWeight
+keep LHE*
+keep Pileup_*
+keep fixedGridRhoFastjetAll
+keep PV_*
+keep Flag_*
+keep puWeight
+keep puWeightUp
+keep puWeightDown
+
+# if data
+#keep Proton_*
+#keep LHCInfo_*
