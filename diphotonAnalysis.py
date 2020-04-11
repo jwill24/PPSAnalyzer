@@ -1,6 +1,5 @@
 # Things To Do
 #   1. Implement proton errors when available
-#   2. Make pho1 the leading photon
 
 #!/usr/bin/env python
 import os, sys, re
@@ -33,7 +32,7 @@ mystruct = MyStruct()
 
 PI = 3.14159265358979323846
 sqrts = 13000
-lumi = 37200
+lumi = 37200 # 2017 data
 rel_mass_err = 0.02
 rel_rap_err = 0.074
 rel_xi_err = 0.08
@@ -41,8 +40,8 @@ rel_xi_err = 0.08
 sample = str( sys.argv[1] )
 selection = str( sys.argv[2] )
 
-mcs = [ ['ggj2017', 138.5, 3883535],['g+j2017',873.7,79243357],['qcd2017',117500,20622034],['wg2017',191.1,25918966],['zg2017',55.47,30490034],['tt2017',725.5,154280331],['aqgc2017',3.86e-5,300000],
-        ['ggj2018', 118.0, 4000000],['g+j2018',875.4,80000000],['qcd2018',117200,4000000],['wg2018',191.6,6300000],['zg2018',55.48,30000000],['tt2018',749.9,8000000] ]
+mcs = [ ['ggj2017', 134.3, 3883535],['g+j2017',873.7,79243357],['qcd2017',117500,20622034],['wg2017',191.1,25918966],['zg2017',55.47,30490034],['tt2017',725.5,154280331],['aqgc2017',3.86e-5,300000],
+        ['ggj2018', 118.0, 3760030],['g+j2018',875.4,10205533],['qcd2018',117200,10895375],['wg2018',191.6,27933663],['zg2018',55.48,13946364],['tt2018',749.9,304627424] ]
 selections = [ ['HLT', 1], ['Preselection', 2], ['ReverseElastic', 2.5], ['ID', 3], ['Elastic', 4], ['Xi', 5] ]
 
 for sel in selections:
@@ -70,11 +69,11 @@ class DiphotonAnalysis(Module):
 
         # Get SF hists for ID and CSEV
         self.photonmapname = "EGamma_SF2D"        
-        if '2017' in selection: 
+        if '2017' in sample: 
             self.photon_file = self.open_root("2017_PhotonsMVAwp90.root")
             self.csev_file = self.open_root("CSEV_ScaleFactors_2017.root")
             self.csevmapname = "MVA_ID"
-        elif '2018' in selection:
+        elif '2018' in sample:
             self.photon_file = self.open_root("2018_PhotonsMVAwp90.root")
             self.csev_file = self.open_root("CSEV_2018.root")
             self.csevmapname = "eleVeto_SF"
@@ -106,22 +105,22 @@ class DiphotonAnalysis(Module):
     def beginJob(self,histFile=None,histDirName=None):
 	Module.beginJob(self,histFile,histDirName)
         
-        self.h_num_pho=ROOT.TH1F('h_num_pho', 'Number Of Photons', 10, 0, 10)
-        self.h_diph_mass=ROOT.TH1F('h_diph_mass', 'Diphoton Mass', 100, 100 if nSelect==1 else 350, 3000.) # aqgc - 3000, data - 2500
-        self.h_acop=ROOT.TH1F('h_acop', 'Diphoton Acoplanarity', 100, 0., 0.01) # aqgc - 0.01, data - 0.25 if nSelect < 4 else 0.01
+        self.h_num_pho=ROOT.TH1F('h_num_pho', 'Number Of Photons', 10, 0, 8)
+        self.h_diph_mass=ROOT.TH1F('h_diph_mass', 'Diphoton Mass', 100, 100 if nSelect==1 else 350, 2500.) # aqgc - 3000, data - 2500
+        self.h_acop=ROOT.TH1F('h_acop', 'Diphoton Acoplanarity', 100, 0., 0.25 if nSelect < 4 else 0.01) # aqgc - 0.01, data - 0.25 if nSelect < 4 else 0.01
         self.h_pt_ratio=ROOT.TH1F('h_pt_ratio', 'Diphoton p_{T} Ratio', 100, 0, 2)
         self.h_single_eta=ROOT.TH1F('h_single_eta', 'Single Photon Eta', 100, -3.0, 3.0)
         self.h_lead_eta=ROOT.TH1F('h_lead_eta', 'Leading Photon Eta', 100, -3.0, 3.0)
         self.h_sub_eta=ROOT.TH1F('h_sub_eta', 'Subleading Photon Eta', 100, -3.0, 3.0)
-        self.h_single_pt=ROOT.TH1F('h_single_pt', 'Single Photon pT', 100, 0., 1400.0) # aqgc - 1400, data - 750
-        self.h_lead_pt=ROOT.TH1F('h_lead_pt', 'Lead Photon pT', 100, 0., 750.0)
-        self.h_sub_pt=ROOT.TH1F('h_sub_pt', 'Sublead Photon pT', 100, 0., 750.0)
-        self.h_single_r9=ROOT.TH1F('h_single_r9', 'Single Photon R_{9}', 100, 0.8, 1) # aqgc - 0.8, data - 0.5 if nSelect < 4 else 0.8
+        self.h_single_pt=ROOT.TH1F('h_single_pt', 'Single Photon pT', 100, 100, 750) # aqgc - 1400, data - 750
+        self.h_lead_pt=ROOT.TH1F('h_lead_pt', 'Lead Photon pT', 100, 100, 750)
+        self.h_sub_pt=ROOT.TH1F('h_sub_pt', 'Sublead Photon pT', 100, 100, 750)
+        self.h_single_r9=ROOT.TH1F('h_single_r9', 'Single Photon R_{9}', 100, 0.5 if nSelect < 4 else 0.8, 1) # aqgc - 0.8, data - 0.5 if nSelect < 4 else 0.8
         self.h_lead_r9=ROOT.TH1F('h_lead_r9', 'Lead Photon R_{9}', 100, 0.5 if nSelect < 4 else 0.8, 1)
         self.h_sub_r9=ROOT.TH1F('h_sub_r9', 'Sublead Photon R_{9}', 100, 0.5 if nSelect < 4 else 0.8, 1)
-        self.h_single_hoe=ROOT.TH1F('h_single_hoe', 'Single Photon H/E', 100, 0, 2)
-        self.h_eb_hoe=ROOT.TH1F('h_eb_hoe', 'Lead Photon H/E', 100, 0, 2)
-        self.h_ee_hoe=ROOT.TH1F('h_ee_hoe', 'Sublead Photon H/E', 100, 0, 2)
+        self.h_single_hoe=ROOT.TH1F('h_single_hoe', 'Single Photon H/E', 100, 0, 1)
+        self.h_eb_hoe=ROOT.TH1F('h_eb_hoe', 'Lead Photon H/E', 100, 0, 1 if nSelect == 1 else 0.1)
+        self.h_ee_hoe=ROOT.TH1F('h_ee_hoe', 'Sublead Photon H/E', 100, 0, 1 if nSelect == 1 else 0.1)
         self.h_single_sieie=ROOT.TH1F('h_single_sieie', 'Single Photon #sigma_{i#etai#eta}', 100, 0, 0.1)
         self.h_eb_sieie=ROOT.TH1F('h_eb_sieie', 'Lead Photon #sigma_{i#etai#eta}', 100, 0, 0.1)
         self.h_ee_sieie=ROOT.TH1F('h_ee_sieie', 'Sublead Photon #sigma_{i#etai#eta}', 100, 0, 0.1)
@@ -176,8 +175,8 @@ class DiphotonAnalysis(Module):
             self.mctree.Project('mchist', 'fixedGridRhoFastjetAll')
             self.mchist.Scale( 1 / self.mchist.Integral() )
 
-            if '2017' in selection: self.datafile = ROOT.TFile( 'dataFixedGridRho_2017.root' )
-            elif '2018' in selction: self.datafile = ROOT.TFile( 'dataFixedGridRho_2018.root' )
+            if '2017' in sample: self.datafile = ROOT.TFile( 'dataFixedGridRho_2017.root' )
+            elif '2018' in sample: self.datafile = ROOT.TFile( 'dataFixedGridRho_2018.root' )
             self.datahist = self.datafile.Get('h')
             self.datahist.Scale( 1 / self.datahist.Integral() )
 
@@ -200,6 +199,11 @@ class DiphotonAnalysis(Module):
         if diph_mass > 350: return True
         else: return False
 
+    # Apply hoe cut
+    def hoe_cut(self,pho1,pho2):
+        if pho1.hoe >= 0.8 and pho2.hoe >= 0.8: return True
+        else: return False
+
     # Apply acoplanarity cut
     def acop_cut(self,acop):
         if acop < 0.005: return True
@@ -207,11 +211,7 @@ class DiphotonAnalysis(Module):
 
     # Apply photon ID
     def photon_id(self,pho1,pho2):
-        if pho1.mvaID_WP90 == 1 and pho2.mvaID_WP90 == 1: return True         # loose MVA ID
-        #if pho1.mvaID_WP80 == 1 and pho2.mvaID_WP80 == 1: return True        # tight MVA ID
-        #if pho1.cutBasedBitmap >= 1 and pho2.cutBasedBitmap >= 1: return True # loose cutBased ID
-        #if pho1.cutBasedBitmap >= 3 and pho2.cutBasedBitmap >= 3: return True # medium cutBased ID
-        #if pho1.cutBasedBitmap >= 7 and pho2.cutBasedBitmap >= 7: return True # tight cutBased ID
+        if pho1.mvaID_WP90 == 1 and pho2.mvaID_WP90 == 1: return True # loose MVA ID
         else: return False
         return True
 
@@ -250,11 +250,11 @@ class DiphotonAnalysis(Module):
         bin_x = min( max( self.photon_map.GetXaxis().FindBin( eta_sc ), 1 ), self.photon_map.GetXaxis().GetNbins() )
         bin_y = min( max( self.photon_map.GetYaxis().FindBin( pt ), 1 ), self.photon_map.GetYaxis().GetNbins() )
         id_sf = self.photon_map.GetBinContent( bin_x, bin_y )
-        if '2017' in selection:
+        if '2017' in sample:
             if eta_sc <= 1.4442: bin_r9 = 2 if r9 > 0.94 else 3
             else: bin_r9 = 5 if r9 > 0.94 else 6
             csev_sf = self.csev_map.GetBinContent( bin_r9 ) 
-        if '2018' in selection:
+        elif '2018' in sample:
             bin_x = min( max( self.csev_map.GetXaxis().FindBin( eta_sc ), 1 ), self.photon_map.GetXaxis().GetNbins() )
             bin_y = min( max( self.csev_map.GetYaxis().FindBin( pt ), 1 ), self.photon_map.GetYaxis().GetNbins() )
             csev_sf = self.csev_map.GetBinContent( bin_x, bin_y )
@@ -356,6 +356,7 @@ class DiphotonAnalysis(Module):
             if not self.eta_cut(pho1,pho2): return
             if pho1.pt < 100 or pho2.pt < 100: return
             if not self.mass_cut(diph_mass): return
+            if not self.hoe_cut(pho1,pho2): return
         if nSelect > 2: # ID
             if not self.photon_id(pho1,pho2): return
             if not self.electron_veto(pho1,pho2): return
@@ -474,9 +475,10 @@ elif sample == 'data2018':
         "Skims/nanoAOD_Run2018B_Skim.root",
         "Skims/nanoAOD_Run2018C_Skim.root",
         "Skims/nanoAOD_Run2018D_Skim.root",
+    ]
 else: 
     files=[
-        "Skims/nanoAOD_"+sample+"2017_Skim.root"
+        "Skims/nanoAOD_"+sample+"_Skim.root"
     ]
 p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="histOut_"+sample+"_"+selection+".root",histDirName="plots")
 p.run()

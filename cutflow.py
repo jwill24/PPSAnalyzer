@@ -1,6 +1,3 @@
-# 1. SetMinimum(0)
-# 2. Change order of bgs to match plotKinematics (fix legend)
-
 #!/usr/bin/env python
 import os, sys
 from itertools import combinations
@@ -13,7 +10,8 @@ from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
 
-selections = [['HLTpuUp','After HLT'], ['QualitypuUp','Preselection'], ['ElasticpuUp','Elastic selection'], ['XipuUp', 'Tight #xi']]
+selections = [['HLT','After HLT'], ['Preselection','Preselection'], ['ID', 'Preselc. + ID'], ['Elastic','Elastic selection'], ['Xi', 'Tight #xi']]
+year = '2017'
 
 lightBlue, red, yellow, purple, darkGreen, green = ROOT.kCyan-9, 208, ROOT.kYellow-9, 38, ROOT.kTeal+3, ROOT.kGreen-9
 
@@ -99,8 +97,8 @@ def setPlot(h, color):
     return h
 
 for selection in selections:
-    dataFile = TFile('outputHists/histOut_data_'+selection[0]+'_2017.root') 
-    aqgcFile = TFile('outputHists/histOut_aqgc_'+selection[0]+'_2017.root') 
+    dataFile = TFile('outputHists/'+year+'/histOut_data'+year+'_'+selection[0]+'.root') 
+    aqgcFile = TFile('outputHists/'+year+'/histOut_aqgc'+year+'_'+selection[0]+'.root') 
 
     thisBin = selections.index(selection)+1
 
@@ -109,7 +107,7 @@ for selection in selections:
 
     for bg in bgs:
 
-        f = TFile('outputHists/histOut_'+str(bg[0])+'_'+selection[0]+'_2017.root') 
+        f = TFile('outputHists/'+year+'/histOut_'+str(bg[0])+year+'_'+selection[0]+'.root') 
         hist = f.Get('plots/h_diph_mass')
         bg[1].SetBinContent( thisBin, hist.Integral() )
 
@@ -119,7 +117,7 @@ for bg in bgs:
     h_stack.Add(bg[1])
     v_hist.append(bg[1])
     if h_mc_err == 0: h_mc_err = bg[1].Clone()
-    else: h_mc_err.Add(bg[1])
+else: h_mc_err.Add(bg[1])
 
 c = Canvas('c')
 
