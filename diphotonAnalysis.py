@@ -40,8 +40,8 @@ rel_xi_err = 0.08
 sample = str( sys.argv[1] )
 selection = str( sys.argv[2] )
 
-mcs = [ ['ggj2017', 134.3, 3883535],['g+j2017',873.7,79243357],['qcd2017',117500,20622034],['wg2017',191.1,25918966],['zg2017',55.47,30490034],['tt2017',725.5,154280331],['aqgc2017',3.86e-5,300000],
-        ['ggj2018', 118.0, 3760030],['g+j2018',875.4,10205533],['qcd2018',117200,10895375],['wg2018',191.6,27933663],['zg2018',55.48,13946364],['tt2018',749.9,304627424] ]
+mc_file = open('datasets.txt','r')
+mcs = [[n.rstrip('\n') for n in line.split(',')] for line in mc_file]
 selections = [ ['HLT', 1], ['Preselection', 2], ['ReverseElastic', 2.5], ['ID', 3], ['Elastic', 4], ['Xi', 5] ]
 
 for sel in selections:
@@ -52,8 +52,11 @@ for mc in mcs:
         xsec, n_events = 1, 1
         data_ = True
     elif sample == mc[0]:
-        xsec, n_events = mc[1], mc[2]
+        xsec, n_events = float(mc[1]), float(mc[2])
         data_ = False
+
+print 'xs:', xsec, 'ev:', n_events
+sys.exit()
 
 if data_: sample_weight = 1
 else: sample_weight = xsec*lumi/n_events
@@ -105,8 +108,9 @@ class DiphotonAnalysis(Module):
     def beginJob(self,histFile=None,histDirName=None):
 	Module.beginJob(self,histFile,histDirName)
         
-        self.h_num_pho=ROOT.TH1F('h_num_pho', 'Number Of Photons', 10, 0, 8)
+        self.h_num_pho=ROOT.TH1F('h_num_pho', 'Number Of Photons', 8, 0, 8)
         self.h_diph_mass=ROOT.TH1F('h_diph_mass', 'Diphoton Mass', 100, 100 if nSelect==1 else 350, 2500.) # aqgc - 3000, data - 2500
+        self.h_diph_rap=ROOT.TH1F('h_diph_rap', 'Diphoton Rapidity', 100, -2, 2)
         self.h_acop=ROOT.TH1F('h_acop', 'Diphoton Acoplanarity', 100, 0., 0.25 if nSelect < 4 else 0.01) # aqgc - 0.01, data - 0.25 if nSelect < 4 else 0.01
         self.h_pt_ratio=ROOT.TH1F('h_pt_ratio', 'Diphoton p_{T} Ratio', 100, 0, 2)
         self.h_single_eta=ROOT.TH1F('h_single_eta', 'Single Photon Eta', 100, -3.0, 3.0)
@@ -118,20 +122,21 @@ class DiphotonAnalysis(Module):
         self.h_single_r9=ROOT.TH1F('h_single_r9', 'Single Photon R_{9}', 100, 0.5 if nSelect < 4 else 0.8, 1) # aqgc - 0.8, data - 0.5 if nSelect < 4 else 0.8
         self.h_lead_r9=ROOT.TH1F('h_lead_r9', 'Lead Photon R_{9}', 100, 0.5 if nSelect < 4 else 0.8, 1)
         self.h_sub_r9=ROOT.TH1F('h_sub_r9', 'Sublead Photon R_{9}', 100, 0.5 if nSelect < 4 else 0.8, 1)
-        self.h_single_hoe=ROOT.TH1F('h_single_hoe', 'Single Photon H/E', 100, 0, 1)
-        self.h_eb_hoe=ROOT.TH1F('h_eb_hoe', 'Lead Photon H/E', 100, 0, 1 if nSelect == 1 else 0.1)
-        self.h_ee_hoe=ROOT.TH1F('h_ee_hoe', 'Sublead Photon H/E', 100, 0, 1 if nSelect == 1 else 0.1)
+        self.h_single_hoe=ROOT.TH1F('h_single_hoe', 'Single Photon H/E', 100, 0, 1 if nSelect==1 else 0.15)
+        self.h_eb_hoe=ROOT.TH1F('h_eb_hoe', 'Lead Photon H/E', 100, 0, 1 if nSelect == 1 else 0.15)
+        self.h_ee_hoe=ROOT.TH1F('h_ee_hoe', 'Sublead Photon H/E', 100, 0, 1 if nSelect == 1 else 0.15)
         self.h_single_sieie=ROOT.TH1F('h_single_sieie', 'Single Photon #sigma_{i#etai#eta}', 100, 0, 0.1)
         self.h_eb_sieie=ROOT.TH1F('h_eb_sieie', 'Lead Photon #sigma_{i#etai#eta}', 100, 0, 0.1)
         self.h_ee_sieie=ROOT.TH1F('h_ee_sieie', 'Sublead Photon #sigma_{i#etai#eta}', 100, 0, 0.1)
         self.h_single_electronVeto=ROOT.TH1F('h_single_electronVeto', 'Single Photon Electron Veto', 2, 0, 1)
         self.h_lead_electronVeto=ROOT.TH1F('h_lead_electronVeto', 'Lead Photon Electron Veto', 2, 0, 1)
         self.h_sub_electronVeto=ROOT.TH1F('h_sub_electronVeto', 'Sublead Photon Electron Veto', 2, 0, 1)
+        self.h_isEEEE=ROOT.TH1F('h_isEEEE', 'EEEE', 2, 0, 1)
         self.h_xip=ROOT.TH1F('h_xip', '#xi _{#gamma#gamma}^{+}', 100, 0., 0.25)
         self.h_xim=ROOT.TH1F('h_xim', '#xi _{#gamma#gamma}^{-}', 100, 0., 0.25)
         self.h_nvtx=ROOT.TH1F('h_nvtx','Number Of Vertices', 75, 0., 75.)
         self.h_vtx_z=ROOT.TH1F('h_vtx_z', 'Vtx z position', 100,-15,15)
-        self.h_fgr=ROOT.TH1F('h_fgr', 'fixedGridRho', 100, 0, 58)
+        self.h_fgr=ROOT.TH1F('h_fgr', 'fixedGridRho', 58, 0, 58)
 
         self.h_num_pro=ROOT.TH1F('h_num_pro', 'Number of Protons', 15, 0, 15)
         self.h_detType=ROOT.TH1F('h_detType', 'PPS Detector Type', 2, 3, 4)
@@ -149,13 +154,15 @@ class DiphotonAnalysis(Module):
         self.gr_xim_matching=ROOT.TGraphErrors('gr_xim_matching')
         self.gr_xim_matching.SetName('gr_xim_matching')
 
-        self.addObject( self.h_num_pho ), self.addObject( self.h_diph_mass ), self.addObject( self.h_acop ), self.addObject( self.h_pt_ratio )
+        self.addObject( self.h_num_pho ), self.addObject( self.h_diph_mass ), self.addObject( self.h_diph_rap )
+        self.addObject( self.h_acop ), self.addObject( self.h_pt_ratio )
         self.addObject( self.h_single_eta ), self.addObject( self.h_lead_eta ), self.addObject( self.h_sub_eta ) 
         self.addObject( self.h_single_pt ), self.addObject( self.h_lead_pt ), self.addObject( self.h_sub_pt )
         self.addObject( self.h_single_r9 ), self.addObject( self.h_lead_r9 ), self.addObject( self.h_sub_r9 )
         self.addObject( self.h_single_hoe ), self.addObject( self.h_eb_hoe ), self.addObject( self.h_ee_hoe )
         self.addObject( self.h_single_sieie ), self.addObject( self.h_eb_sieie ), self.addObject( self.h_ee_sieie )
         self.addObject( self.h_single_electronVeto ), self.addObject( self.h_lead_electronVeto ), self.addObject( self.h_sub_electronVeto )
+        self.addObject( self.h_isEEEE )
         self.addObject( self.h_xip ), self.addObject( self.h_xim )
         self.addObject( self.h_nvtx ), self.addObject( self.h_vtx_z ), self.addObject( self.h_fgr )
 
@@ -201,7 +208,7 @@ class DiphotonAnalysis(Module):
 
     # Apply hoe cut
     def hoe_cut(self,pho1,pho2):
-        if pho1.hoe >= 0.8 and pho2.hoe >= 0.8: return True
+        if pho1.hoe >= 0.1 and pho2.hoe >= 0.1: return True
         else: return False
 
     # Apply acoplanarity cut
@@ -326,9 +333,9 @@ class DiphotonAnalysis(Module):
         if data_: protons = Collection(event, "Proton_singleRP")
         #if data_: protons = Collection(event, "Proton_multiRP")
         photons = Collection(event, "Photon")
-        if data_: pu_weight, vtxWeight, eff_pho1, eff_pho2 = 1, 1, 1, 1
-        else: pu_weight, vtxWeight = event.puWeightUp, self.rhoReweight(event.Pileup_nPU)
-        s_weight = sample_weight*pu_weight
+        if data_: pu_weight, vtxWeight, prefWeight, eff_pho1, eff_pho2 = 1, 1, 1, 1, 1
+        else: pu_weight, vtxWeight, prefWeight = event.puWeightUp, self.rhoReweight(event.Pileup_nPU), event.PrefireWeight_Down
+        s_weight = sample_weight*pu_weight*prefWeight
         
         if len(photons) < 2: return
                 
@@ -337,7 +344,6 @@ class DiphotonAnalysis(Module):
         pho1, pho2 = photons[0], photons[1]
         for combo in combinations(range(0,len(photons)),2):
             p1, p2 = photons[combo[0]], photons[combo[1]]
-            if p1.pt < 75 or p2.pt < 75: return
             tmp_acop =  1 - abs( p1.p4().DeltaPhi(p2.p4()) ) / PI
             if tmp_acop > acop: continue
             acop = tmp_acop
@@ -353,14 +359,14 @@ class DiphotonAnalysis(Module):
 
         # Make selection cuts
         if nSelect > 1: # Preselection
-            if not self.eta_cut(pho1,pho2): return
-            if pho1.pt < 100 or pho2.pt < 100: return
+            if p1.pt < 100 or p2.pt < 100: return  # Trigger safe pT cut
+            if not self.hoe_cut(pho1,pho2): return # Trigger safe hoe cut
+            if not self.eta_cut(pho1,pho2): return 
             if not self.mass_cut(diph_mass): return
-            if not self.hoe_cut(pho1,pho2): return
         if nSelect > 2: # ID
             if not self.photon_id(pho1,pho2): return
             if not self.electron_veto(pho1,pho2): return
-        if nSelect == 2.5: 
+        if nSelect == 2.5: # Reverse Elastic
             if acop < 0.005: return
         if nSelect > 3: # Elastic
             if not self.acop_cut(acop): return
@@ -368,6 +374,7 @@ class DiphotonAnalysis(Module):
             if not self.xi_cut(xip,xim): return
 
         # Print high-mass event kinematics
+        '''
         if data_ and diph_mass > 1700:
             with open('events.txt', 'a') as f:
                 print >> f, 'R:L:E', str(event.run)+':'+str(event.luminosityBlock)+':'+str(event.event), 'npho:', len(photons), 'nvtx:', event.PV_npvs, 'vtx_z:', event.PV_z
@@ -378,6 +385,7 @@ class DiphotonAnalysis(Module):
                 if len(protons) > 0: 
                     for i in range(0,len(protons)-1): print >> f,  'proton'+str(i), 'xi:', protons[i].xi
                 print >> f, ''
+        '''
 
         # Fill diphoton tree for background estimation
         if data_: 
@@ -396,23 +404,26 @@ class DiphotonAnalysis(Module):
             weight = s_weight * ( eff_pho1*eff_pho2 )
 
         # Fill single photon hists
-        self.h_single_eta.Fill(pho1.eta,s_weight*eff_pho1),                   self.h_single_eta.Fill(pho2.eta,s_weight*eff_pho2)
-        self.h_lead_eta.Fill(pho1.eta,s_weight*eff_pho1),                     self.h_sub_eta.Fill(pho2.eta,s_weight*eff_pho2)
-        self.h_single_pt.Fill(pho1.pt,s_weight*eff_pho1),                     self.h_single_pt.Fill(pho2.pt,s_weight*eff_pho2)
-        self.h_lead_pt.Fill(pho1.pt,s_weight*eff_pho1),                       self.h_sub_pt.Fill(pho2.pt,s_weight*eff_pho2)
-        self.h_single_r9.Fill(pho1.r9,s_weight*eff_pho1),                     self.h_single_r9.Fill(pho2.r9,s_weight*eff_pho2)
-        self.h_lead_r9.Fill(pho1.r9,s_weight*eff_pho1),                       self.h_sub_r9.Fill(pho2.r9,s_weight*eff_pho2)
-        self.h_single_hoe.Fill(pho1.hoe,s_weight*eff_pho1),                   self.h_single_hoe.Fill(pho2.hoe,s_weight*eff_pho2)
-        self.h_single_sieie.Fill(pho1.sieie,s_weight*eff_pho1),               self.h_single_sieie.Fill(pho2.sieie,s_weight*eff_pho2)
+        self.h_single_eta.Fill(pho1.eta,s_weight*eff_pho1), self.h_single_eta.Fill(pho2.eta,s_weight*eff_pho2)
+        self.h_lead_eta.Fill(pho1.eta,s_weight*eff_pho1), self.h_sub_eta.Fill(pho2.eta,s_weight*eff_pho2)
+        self.h_single_pt.Fill(pho1.pt,s_weight*eff_pho1), self.h_single_pt.Fill(pho2.pt,s_weight*eff_pho2)
+        self.h_lead_pt.Fill(pho1.pt,s_weight*eff_pho1), self.h_sub_pt.Fill(pho2.pt,s_weight*eff_pho2)
+        self.h_single_r9.Fill(pho1.r9,s_weight*eff_pho1), self.h_single_r9.Fill(pho2.r9,s_weight*eff_pho2)
+        self.h_lead_r9.Fill(pho1.r9,s_weight*eff_pho1), self.h_sub_r9.Fill(pho2.r9,s_weight*eff_pho2)
+        self.h_single_hoe.Fill(pho1.hoe,s_weight*eff_pho1), self.h_single_hoe.Fill(pho2.hoe,s_weight*eff_pho2)
+        self.h_single_sieie.Fill(pho1.sieie,s_weight*eff_pho1), self.h_single_sieie.Fill(pho2.sieie,s_weight*eff_pho2)
         self.h_single_electronVeto.Fill(pho1.electronVeto,s_weight*eff_pho1), self.h_single_electronVeto.Fill(pho2.electronVeto,s_weight*eff_pho2) 
-        self.h_lead_electronVeto.Fill(pho1.electronVeto,s_weight*eff_pho1),   self.h_sub_electronVeto.Fill(pho2.electronVeto,s_weight*eff_pho2) 
+        self.h_lead_electronVeto.Fill(pho1.electronVeto,s_weight*eff_pho1), self.h_sub_electronVeto.Fill(pho2.electronVeto,s_weight*eff_pho2) 
         if pho1.isScEtaEB: self.h_eb_hoe.Fill(pho1.hoe,s_weight*eff_pho1), self.h_eb_sieie.Fill(pho1.sieie,s_weight*eff_pho1)
         else: self.h_ee_hoe.Fill(pho1.hoe,s_weight*eff_pho1), self.h_ee_sieie.Fill(pho1.sieie,s_weight*eff_pho1)
         if pho2.isScEtaEB: self.h_eb_hoe.Fill(pho2.hoe,s_weight*eff_pho2), self.h_eb_sieie.Fill(pho2.sieie,s_weight*eff_pho2)
         else: self.h_ee_hoe.Fill(pho2.hoe,s_weight*eff_pho2), self.h_ee_sieie.Fill(pho2.sieie,s_weight*eff_pho2)
+        if pho1.isScEtaEE and pho2.isScEtaEE: self.h_isEEEE.Fill(True)
+        else: self.h_isEEEE.Fill(False)
 
         # Fill diphoton hists
         self.h_diph_mass.Fill(diph_mass,weight) 
+        self.h_diph_rap.Fill(diph_rap,weight)
         self.h_acop.Fill(acop,weight) 
         self.h_pt_ratio.Fill(pho1.pt/pho2.pt, weight)
         self.h_xip.Fill(xip,weight), self.h_xim.Fill(xim,weight)
@@ -463,11 +474,11 @@ class DiphotonAnalysis(Module):
 preselection=""
 if sample == 'data2017':
     files=[
-        "Skims/nanoAOD_Run2017B_Skim.root",
-        "Skims/nanoAOD_Run2017C_Skim.root",
-        "Skims/nanoAOD_Run2017D_Skim.root",
-        "Skims/nanoAOD_Run2017E_Skim.root",
-        "Skims/nanoAOD_Run2017F_Skim.root"
+        "Skims/nanoAOD_Run2017B_noLPC_Skim.root",
+        "Skims/nanoAOD_Run2017C_noLPC_Skim.root",
+        "Skims/nanoAOD_Run2017D_noLPC_Skim.root",
+        "Skims/nanoAOD_Run2017E_noLPC_Skim.root",
+        "Skims/nanoAOD_Run2017F_noLPC_Skim.root"
     ]
 elif sample == 'data2018':
     files=[
@@ -478,7 +489,7 @@ elif sample == 'data2018':
     ]
 else: 
     files=[
-        "Skims/nanoAOD_"+sample+"_Skim.root"
+        "Skims/nanoAOD_"+sample+"_withLPC_Skim.root"
     ]
 p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="histOut_"+sample+"_"+selection+".root",histDirName="plots")
 p.run()

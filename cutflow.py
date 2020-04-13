@@ -102,13 +102,13 @@ for selection in selections:
 
     thisBin = selections.index(selection)+1
 
-    h_data.SetBinContent( thisBin, dataFile.Get('plots/h_diph_mass').Integral() )
-    h_aqgc.SetBinContent( thisBin, aqgcFile.Get('plots/h_diph_mass').Integral() )
+    h_data.SetBinContent( thisBin, dataFile.Get('plots/h_num_pho').Integral() )
+    h_aqgc.SetBinContent( thisBin, aqgcFile.Get('plots/h_num_pho').Integral() )
 
     for bg in bgs:
 
         f = TFile('outputHists/'+year+'/histOut_'+str(bg[0])+year+'_'+selection[0]+'.root') 
-        hist = f.Get('plots/h_diph_mass')
+        hist = f.Get('plots/h_num_pho')
         bg[1].SetBinContent( thisBin, hist.Integral() )
 
 h_mc_err = 0
@@ -189,4 +189,4 @@ l1.Draw(), l2.Draw(), l3.Draw(), #l4.Draw(), l5.Draw()
 Prettify( h_ratio )
 
 
-c.SaveAs('cutflow.png')
+c.SaveAs('cutflow_.png')
