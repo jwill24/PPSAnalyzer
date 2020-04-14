@@ -10,26 +10,25 @@ from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
 
-lab = 'Reverse Elastic'
-selection = 'ReverseElastic'
-year = 2018
+lab = '#xi #in PPS'
+selection = 'Xi'
+year = '2017'
 
 lumi = 37200.0 # pb
 
 lightBlue, red, yellow, purple, darkGreen, green = ROOT.kCyan-9, 208, ROOT.kYellow-9, 38, ROOT.kTeal+3, ROOT.kGreen-9
 
-ggj =  ['outputHists/'+year+'/histOut_ggj_'+selection+year+'.root',138.5,4000000,red]
-gj =   ['outputHists/'+year+'/histOut_g+j_'+selection+year+'.root',873.7,80000000, darkGreen]
-qcd =  ['outputHists/'+year+'/histOut_qcd_'+selection+year+'.root',117500,4000000, lightBlue]
-wg =   ['outputHists/'+year+'/histOut_wg_'+selection+year+'.root',465,6300000, purple] 
-zg =   ['outputHists/'+year+'/histOut_zg_'+selection+year+'.root',55.47,30000000, yellow]
-tt =   ['outputHists/'+year+'/histOut_tt_'+selection+year+'.root',494.9,8026103, green]
-aqgc = ['outputHists/'+year+'/histOut_aqgc_'+selection+year+'.root',3.86e-5,300000, 92] 
+ggj =  ['outputHists/'+year+'/histOut_ggj'+year+'_'+selection+'.root',red]
+gj =   ['outputHists/'+year+'/histOut_g+j'+year+'_'+selection+'.root',darkGreen]
+qcd =  ['outputHists/'+year+'/histOut_qcd'+year+'_'+selection+'.root',lightBlue]
+wg =   ['outputHists/'+year+'/histOut_wg'+year+'_'+selection+'.root',purple] 
+zg =   ['outputHists/'+year+'/histOut_zg'+year+'_'+selection+'.root',yellow]
+tt =   ['outputHists/'+year+'/histOut_tt'+year+'_'+selection+'.root',green]
+aqgc = ['outputHists/'+year+'/histOut_aqgc'+year+'_'+selection+'.root',92] 
 
 
 # Histogram files
-dataFile = TFile('outputHists/2017/histOut_data_'+selection+'_2017.root')
-#dataFile = TFile('outputHists/2017/histOut_data_ReverseElastic_2017.root')
+dataFile = TFile('outputHists/'+year+'/histOut_data'+year+'_'+selection+'.root')
 ggjFile  = TFile(ggj[0])
 gjFile   = TFile(gj[0])
 qcdFile  = TFile(qcd[0])
@@ -143,7 +142,7 @@ def plotRatio(name, h1, v_hist, hs, log):
     Prettify( h_ratio )
 
     c.SaveAs('plots/'+year+'/'+name+'_'+selection+'.png')
-
+    
 def asym_error_bars(hist):
     alpha = 1 - 0.6827
     g = ROOT.TGraphAsymmErrors(hist)
@@ -219,12 +218,11 @@ def makeLegend(h1,v_hist,hs):
     legend.AddEntry(hs,'AQGC #times 100','l')
     return legend
     
-def setPlot(h, color, rbin, xs, nevts):
+def setPlot(h, color, rbin):
     h.SetTitle('')
     h.Rebin(rbin)
     h.SetFillColorAlpha(color,0.4)
     h.SetLineColor(color)    
-    #h.Scale(xs*lumi/nevts)
     return h
 
 def makePlot(inName, outName, xTitle, rbin, log):
@@ -238,25 +236,25 @@ def makePlot(inName, outName, xTitle, rbin, log):
     h_data.SetMarkerSize(0.7)
 
     h_ggj = ggjFile.Get('plots/' + inName)
-    setPlot(h_ggj, ggj[3], rbin, ggj[1], ggj[2])
+    setPlot(h_ggj, ggj[1], rbin)
     
     h_gj = gjFile.Get('plots/' + inName)
-    setPlot(h_gj, gj[3], rbin, gj[1], gj[2])
+    setPlot(h_gj, gj[1], rbin)
 
     h_qcd = qcdFile.Get('plots/' + inName)
-    setPlot(h_qcd, qcd[3], rbin, qcd[1], qcd[2])
+    setPlot(h_qcd, qcd[1], rbin)
 
     h_wg = wgFile.Get('plots/' + inName)
-    setPlot(h_wg, wg[3], rbin, wg[1], wg[2])
+    setPlot(h_wg, wg[1], rbin)
 
     h_zg = zgFile.Get('plots/' + inName)
-    setPlot(h_zg, zg[3], rbin, zg[1], zg[2])
+    setPlot(h_zg, zg[1], rbin)
 
     h_tt = ttFile.Get('plots/' + inName)
-    setPlot(h_tt, tt[3], rbin, tt[1], tt[2])
+    setPlot(h_tt, tt[1], rbin)
 
     h_aqgc = aqgcFile.Get('plots/' + inName)
-    setPlot(h_aqgc, aqgc[3], rbin, aqgc[1], aqgc[2])
+    setPlot(h_aqgc, aqgc[1], rbin)
     h_aqgc.SetFillColor(0), h_aqgc.Scale(100)
 
     v.append(h_tt), 
@@ -282,25 +280,24 @@ def makeProtonPlot(name, xTitle, rbin, log):
 
 #-----------------------
 
-'''
+
 makePlot('h_diph_mass', 'h_mass_comp', 'm_{#gamma#gamma} GeV', 4, True)
-makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
-makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 1, True)
+#makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
+#makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 1, True)
 makePlot('h_lead_pt', 'h_lead_pt_comp', 'Leading p_{T}^{#gamma} GeV', 2, True)
-makePlot('h_sub_pt', 'h_sub_pt_comp', 'Subleading p_{T}^{#gamma} GeV', 2, True)
-makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 1, False)
-makePlot('h_lead_eta', 'h_lead_eta_comp', 'Leading #eta ^{#gamma}', 4, False)
-makePlot('h_sub_eta', 'h_sub_eta_comp', 'Subleading #eta ^{#gamma}', 4, False)
-makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 2, True)
-makePlot('h_lead_r9', 'h_lead_r9_comp', 'Leading R_{9} ^{#gamma}', 2, True)
-makePlot('h_sub_r9', 'h_sub_r9_comp', 'Subleading R_{9} ^{#gamma}', 2, True)
-makePlot('h_eb_hoe', 'h_eb_hoe_comp', 'EB H/E', 1, True)
-makePlot('h_eb_sieie', 'h_eb_sieie_comp', 'EB #sigma_{i#etai#eta}', 1, True)
-makePlot('h_nvtx', 'h_nvtx_comp', 'Number of vertices', 1, True)
-makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
-'''
-makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
-makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 4, True)
+#makePlot('h_sub_pt', 'h_sub_pt_comp', 'Subleading p_{T}^{#gamma} GeV', 2, True)
+#makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 1, False)
+#makePlot('h_lead_eta', 'h_lead_eta_comp', 'Leading #eta ^{#gamma}', 4, False)
+#makePlot('h_sub_eta', 'h_sub_eta_comp', 'Subleading #eta ^{#gamma}', 4, False)
+#makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 2, True)
+#makePlot('h_lead_r9', 'h_lead_r9_comp', 'Leading R_{9} ^{#gamma}', 2, True)
+#makePlot('h_sub_r9', 'h_sub_r9_comp', 'Subleading R_{9} ^{#gamma}', 2, True)
+#makePlot('h_eb_hoe', 'h_eb_hoe_comp', 'EB H/E', 1, True)
+#makePlot('h_eb_sieie', 'h_eb_sieie_comp', 'EB #sigma_{i#etai#eta}', 1, True)
+#makePlot('h_nvtx', 'h_nvtx_comp', 'Number of vertices', 1, True)
+#makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
+#makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
+#makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 4, True)
 #makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
 #makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, True)
 

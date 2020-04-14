@@ -1,6 +1,3 @@
-# Things To Do
-#   1. Implement proton errors when available
-
 #!/usr/bin/env python
 import os, sys, re
 from itertools import combinations
@@ -9,10 +6,8 @@ from array import array
 import math
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
-
 from importlib import import_module
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
-
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeightProducer, puWeight_2017
@@ -55,8 +50,6 @@ for mc in mcs:
         xsec, n_events = float(mc[1]), float(mc[2])
         data_ = False
 
-print 'xs:', xsec, 'ev:', n_events
-sys.exit()
 
 if data_: sample_weight = 1
 else: sample_weight = xsec*lumi/n_events
@@ -236,7 +229,7 @@ class DiphotonAnalysis(Module):
     # Apply eta veto
     def eta_cut(self,pho1,pho2):
         if abs(pho1.eta) > 2.5 or abs(pho2.eta) > 2.5: return False # Out of fiducial range
-        #if pho1.isScEtaEE and pho2.isScEtaEE: return False          # EEEE events
+        #if pho1.isScEtaEE and pho2.isScEtaEE: return False         # EEEE events
         if pho1.eta > 1.4442 and pho1.eta < 1.566: return False     # transition region
         if pho1.eta < -1.442 and pho1.eta > -1.566: return False    # transition region
         if pho2.eta > 1.4442 and pho2.eta < 1.566: return False     # transition region
@@ -318,7 +311,7 @@ class DiphotonAnalysis(Module):
         else: return False
 
     def getEra(self,run):
-        if run > 297023 and run < 299330: return '2017B'
+        if run > 297023 and run < 299330:   return '2017B'
         elif run > 299359 and run < 302045: return '2017C'
         elif run > 302111 and run < 302679: return '2017D'
         elif run > 303708 and run < 304798: return '2017E'
