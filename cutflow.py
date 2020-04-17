@@ -10,8 +10,10 @@ from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
 
-selections = [['HLT','After HLT'], ['Preselection','Preselection'], ['ID', 'Preselc. + ID'], ['Elastic','Elastic selection'], ['Xi', 'Tight #xi']]
-year = '2017'
+selections = [['HLT','After HLT'], ['Preselection','Preselection'], ['ID', 'Preselc. + ID'], ['Elastic','Diphoton selection'], ['Xi', 'Tight #xi']]
+#selections = [['Preselection','Preselection'], ['ID', 'Preselc. + ID'], ['Elastic','Elastic selection'], ['Xi', 'Tight #xi']]
+years = ['2017','2018']
+scale2018 = 55.72/37.2
 
 lightBlue, red, yellow, purple, darkGreen, green = ROOT.kCyan-9, 208, ROOT.kYellow-9, 38, ROOT.kTeal+3, ROOT.kGreen-9
 
@@ -70,7 +72,10 @@ def lumiLabel():
     label.SetBorderSize(0)
     label.SetLineWidth(0)
     label.SetLineStyle(0)
-    label.AddText( "37.19 fb^{-1} (13 TeV)" )
+    if len(years) == 1 and years[0] == '2017': luminosity = '37.19'
+    elif years[0] == '2018': luminosity = '57.72'
+    elif len(years) == 2: luminosity = '94.91'
+    label.AddText( luminosity+" fb^{-1} (13 TeV)" )
     label.SetTextSize(0.048)
     label.SetTextAlign(11)
     label.SetTextFont(42)
@@ -90,26 +95,35 @@ def prelimLabel():
     label.SetTextColor( 1 )
     return label
 
-def setPlot(h, color):
+def setPlot(h, color): 
     h.SetTitle('')
     h.SetFillColorAlpha(color,0.001)
     h.SetLineColor(color)    
     return h
 
 for selection in selections:
-    dataFile = TFile('outputHists/'+year+'/histOut_data'+year+'_'+selection[0]+'.root') 
-    aqgcFile = TFile('outputHists/'+year+'/histOut_aqgc'+year+'_'+selection[0]+'.root') 
+    for i, year in enumerate(years): 
+        dataFile = TFile('outputHists/'+year+'/histOut_data'+year+'_'+selection[0]+'.root') 
+        aqgcFile = TFile('outputHists/'+'2017'+'/histOut_aqgc'+'2017'+'_'+selection[0]+'.root') # FIXME: waiting on 2018 samples
 
-    thisBin = selections.index(selection)+1
+        thisBin = selections.index(selection)+1
+        
+        if i == 0:
+            h_data.SetBinContent( thisBin, dataFile.Get('plots/h_num_pho').Integral() )
+            h_aqgc.SetBinContent( thisBin, aqgcFile.Get('plots/h_num_pho').Integral() )
+        else:
+            h_data.SetBinContent( thisBin, h_data.GetBinContent(thisBin)+dataFile.Get('plots/h_num_pho').Integral() )
+            h_aqgc.SetBinContent( thisBin, h_aqgc.GetBinContent(thisBin)+aqgcFile.Get('plots/h_num_pho').Integral() )
 
-    h_data.SetBinContent( thisBin, dataFile.Get('plots/h_num_pho').Integral() )
-    h_aqgc.SetBinContent( thisBin, aqgcFile.Get('plots/h_num_pho').Integral() )
+        for bg in bgs:
 
-    for bg in bgs:
-
-        f = TFile('outputHists/'+year+'/histOut_'+str(bg[0])+year+'_'+selection[0]+'.root') 
-        hist = f.Get('plots/h_num_pho')
-        bg[1].SetBinContent( thisBin, hist.Integral() )
+            f = TFile('outputHists/'+year+'/histOut_'+str(bg[0])+year+'_'+selection[0]+'.root') 
+            hist = f.Get('plots/h_num_pho')
+            
+            if i == 0: bg[1].SetBinContent( thisBin, hist.Integral() )
+            else: bg[1].SetBinContent( thisBin, bg[1].GetBinContent(thisBin)+hist.Integral() )
+            
+        if year == '2018': bg[1].Scale( scale2018 ) # FIXME: correcting for wrong lumi in diphotonAnalyzer
 
 h_mc_err = 0
 for bg in bgs:
@@ -150,7 +164,7 @@ h_stack.SetMinimum(1)
 h_data.SetMarkerStyle(20)
 h_data.SetMarkerSize(0.7)
 h_data.Draw('p same')
-h_aqgc.SetLineColor(92), h_aqgc.SetFillColor(0), h_aqgc.Scale(100)
+h_aqgc.SetLineColor(92), h_aqgc.SetFillColor(0), h_aqgc.Scale(100) if year == '2017' else h_aqgc.Scale(100*94.91/37.2) # FIXME
 h_aqgc.Draw('HIST same')
 lLabel, pLabel = lumiLabel(), prelimLabel()
 lLabel.Draw(), pLabel.Draw()

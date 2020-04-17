@@ -1,3 +1,5 @@
+# Make protonPlot compatible with multiple years
+
 #!/usr/bin/env python
 import os, sys
 from itertools import combinations
@@ -12,30 +14,14 @@ gStyle.SetOptStat(0)
 
 lab = '#xi #in PPS'
 selection = 'Xi'
-year = '2017'
-
-lumi = 37200.0 # pb
-
+years = ['2017','2018']
+scale2018 = 57.72/37.20
 lightBlue, red, yellow, purple, darkGreen, green = ROOT.kCyan-9, 208, ROOT.kYellow-9, 38, ROOT.kTeal+3, ROOT.kGreen-9
-
-ggj =  ['outputHists/'+year+'/histOut_ggj'+year+'_'+selection+'.root',red]
-gj =   ['outputHists/'+year+'/histOut_g+j'+year+'_'+selection+'.root',darkGreen]
-qcd =  ['outputHists/'+year+'/histOut_qcd'+year+'_'+selection+'.root',lightBlue]
-wg =   ['outputHists/'+year+'/histOut_wg'+year+'_'+selection+'.root',purple] 
-zg =   ['outputHists/'+year+'/histOut_zg'+year+'_'+selection+'.root',yellow]
-tt =   ['outputHists/'+year+'/histOut_tt'+year+'_'+selection+'.root',green]
-aqgc = ['outputHists/'+year+'/histOut_aqgc'+year+'_'+selection+'.root',92] 
-
-
-# Histogram files
-dataFile = TFile('outputHists/'+year+'/histOut_data'+year+'_'+selection+'.root')
-ggjFile  = TFile(ggj[0])
-gjFile   = TFile(gj[0])
-qcdFile  = TFile(qcd[0])
-wgFile   = TFile(wg[0])
-zgFile   = TFile(zg[0])
-ttFile   = TFile(tt[0])
-aqgcFile = TFile(aqgc[0])
+samples = ['data','ggj','g+j','qcd','wg','zg','tt','aqgc']
+v_files = []
+for year in years:
+    for s in samples:
+        v_files.append( (s+year, TFile('outputHists/'+year+'/histOut_'+s+year+'_'+selection+'.root')) )
 
 def Canvas(name):
     c = TCanvas(name,'c',750,600)
@@ -64,7 +50,7 @@ def plotRatio(name, h1, v_hist, hs, log):
     h_sum = TH1F('h_sum','sum',h1.GetNbinsX(), h1.GetXaxis().GetXmin(), h1.GetXaxis().GetXmax())
     for h in v_hist: h_sum.Add(h)
  
-    pad1 = TPad('pad1', 'pad1', 0., 0.3, 1., 1.)
+    pad1 = TPad('pad1', 'pad1', 0.0, 0.3, 1., 1.)
     pad1.SetBottomMargin(0.005)
     pad1.SetTicks(1,1)
     pad1.Draw()
@@ -141,8 +127,9 @@ def plotRatio(name, h1, v_hist, hs, log):
 
     Prettify( h_ratio )
 
-    c.SaveAs('plots/'+year+'/'+name+'_'+selection+'.png')
-    
+    if len(years) == 1: c.SaveAs('plots/'+years[0]+'/'+name+'_'+selection+'.png')
+    else: c.SaveAs('plots/combined/'+name+'_'+selection+'.png')
+
 def asym_error_bars(hist):
     alpha = 1 - 0.6827
     g = ROOT.TGraphAsymmErrors(hist)
@@ -196,7 +183,8 @@ def lumiLabel(ratio):
     label.SetBorderSize(0)
     label.SetLineWidth(0)
     label.SetLineStyle(0)
-    label.AddText( "37.19 fb^{-1} (13 TeV)" )
+    luminosity = '37.19' if 2017 else '57.72'
+    label.AddText( luminosity+" fb^{-1} (13 TeV)" )
     if ratio: label.SetTextSize( 0.048 )
     else: label.SetTextSize( 0.034 )
     label.SetTextAlign(11)
@@ -222,44 +210,75 @@ def setPlot(h, color, rbin):
     h.SetTitle('')
     h.Rebin(rbin)
     h.SetFillColorAlpha(color,0.4)
-    h.SetLineColor(color)    
+    h.SetLineColor(color) 
+    return h
+
+def getHist(sample, year, name):
+    for s in v_files:
+        if sample+year == s[0]: h = s[1].Get('plots/'+name)
     return h
 
 def makePlot(inName, outName, xTitle, rbin, log):
     v = []
-    h_data = dataFile.Get('plots/' + inName)
+        
+    for i, year in enumerate(years):
+
+        if i == 0:
+            h_standard = getHist('data',year,inName)
+            bins = h_standard.GetNbinsX()
+            first = h_standard.GetXaxis().GetXmin()
+            last = h_standard.GetXaxis().GetXmax()
+            
+            h_data = TH1F('h_data', '', bins, first, last)
+            h_ggj = TH1F('h_ggj', '', bins, first, last)
+            h_gj = TH1F('h_gj', '', bins, first, last)
+            h_qcd = TH1F('h_qcd', '', bins, first, last)
+            h_wg = TH1F('h_wg', '', bins, first, last)
+            h_zg = TH1F('h_zg', '', bins, first, last)
+            h_tt = TH1F('h_tt', '', bins, first, last)
+            h_aqgc = TH1F('h_aqgc', '', bins, first, last)
+
+        h_data.Add( getHist('data',year,inName) )
+        h_tmp = getHist('ggj',year,inName)
+        if year == '2018': h_tmp.Scale( scale2018 )
+        h_ggj.Add( h_tmp )
+        h_tmp = getHist('g+j',year,inName)
+        if year == '2018': h_tmp.Scale( scale2018 )
+        h_gj.Add( h_tmp )
+        h_tmp = getHist('qcd',year,inName)
+        if year == '2018': h_tmp.Scale( scale2018 )
+        h_qcd.Add( h_tmp )
+        h_tmp = getHist('wg',year,inName)
+        if year == '2018': h_tmp.Scale( scale2018 )
+        h_wg.Add( h_tmp )
+        h_tmp = getHist('zg',year,inName)
+        if year == '2018': h_tmp.Scale( scale2018 )
+        h_zg.Add( h_tmp )
+        h_tmp = getHist('tt',year,inName)
+        if year == '2018': h_tmp.Scale( scale2018 )
+        h_tt.Add( h_tmp )
+        h_tmp = getHist('aqgc','2017',inName)
+        if year == '2018': h_tmp.Scale( scale2018 )
+        h_aqgc.Add( h_tmp )
+
     h_data.SetTitle('')
     h_data.SetXTitle(xTitle)
     h_data.SetYTitle('Events')
     h_data.Rebin(rbin)
     h_data.SetMarkerStyle(20)
     h_data.SetMarkerSize(0.7)
-
-    h_ggj = ggjFile.Get('plots/' + inName)
-    setPlot(h_ggj, ggj[1], rbin)
-    
-    h_gj = gjFile.Get('plots/' + inName)
-    setPlot(h_gj, gj[1], rbin)
-
-    h_qcd = qcdFile.Get('plots/' + inName)
-    setPlot(h_qcd, qcd[1], rbin)
-
-    h_wg = wgFile.Get('plots/' + inName)
-    setPlot(h_wg, wg[1], rbin)
-
-    h_zg = zgFile.Get('plots/' + inName)
-    setPlot(h_zg, zg[1], rbin)
-
-    h_tt = ttFile.Get('plots/' + inName)
-    setPlot(h_tt, tt[1], rbin)
-
-    h_aqgc = aqgcFile.Get('plots/' + inName)
-    setPlot(h_aqgc, aqgc[1], rbin)
-    h_aqgc.SetFillColor(0), h_aqgc.Scale(100)
-
+    setPlot(h_ggj, red, rbin)
+    setPlot(h_gj, darkGreen, rbin)
+    setPlot(h_qcd, lightBlue, rbin)
+    setPlot(h_wg, purple, rbin)
+    setPlot(h_zg, yellow, rbin)
+    setPlot(h_tt, green, rbin)
+    setPlot(h_aqgc, 92, rbin)
+    h_aqgc.SetFillColor(0)
+        
     v.append(h_tt), 
     v.append(h_zg), v.append(h_wg), v.append(h_gj), v.append(h_ggj), v.append(h_qcd)
-    
+        
     plotRatio(outName, h_data, v, h_aqgc, log)
     
 def makeProtonPlot(name, xTitle, rbin, log):
@@ -282,24 +301,24 @@ def makeProtonPlot(name, xTitle, rbin, log):
 
 
 makePlot('h_diph_mass', 'h_mass_comp', 'm_{#gamma#gamma} GeV', 4, True)
-#makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
+makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
 #makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 1, True)
 makePlot('h_lead_pt', 'h_lead_pt_comp', 'Leading p_{T}^{#gamma} GeV', 2, True)
 #makePlot('h_sub_pt', 'h_sub_pt_comp', 'Subleading p_{T}^{#gamma} GeV', 2, True)
-#makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 1, False)
+makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 1, False)
 #makePlot('h_lead_eta', 'h_lead_eta_comp', 'Leading #eta ^{#gamma}', 4, False)
 #makePlot('h_sub_eta', 'h_sub_eta_comp', 'Subleading #eta ^{#gamma}', 4, False)
-#makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 2, True)
+makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 2, True)
 #makePlot('h_lead_r9', 'h_lead_r9_comp', 'Leading R_{9} ^{#gamma}', 2, True)
 #makePlot('h_sub_r9', 'h_sub_r9_comp', 'Subleading R_{9} ^{#gamma}', 2, True)
-#makePlot('h_eb_hoe', 'h_eb_hoe_comp', 'EB H/E', 1, True)
-#makePlot('h_eb_sieie', 'h_eb_sieie_comp', 'EB #sigma_{i#etai#eta}', 1, True)
-#makePlot('h_nvtx', 'h_nvtx_comp', 'Number of vertices', 1, True)
-#makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
-#makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
-#makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 4, True)
-#makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
-#makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, True)
+makePlot('h_eb_hoe', 'h_eb_hoe_comp', 'EB H/E', 1, True)
+makePlot('h_eb_sieie', 'h_eb_sieie_comp', 'EB #sigma_{i#etai#eta}', 1, True)
+makePlot('h_nvtx', 'h_nvtx_comp', 'Number of vertices', 1, True)
+makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
+makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
+makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 4, True)
+makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
+makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, True)
 
 
 

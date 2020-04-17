@@ -28,6 +28,7 @@ mystruct = MyStruct()
 PI = 3.14159265358979323846
 sqrts = 13000
 lumi = 37200 # 2017 data
+#lumi =  55.72 # 2018 data
 rel_mass_err = 0.02
 rel_rap_err = 0.074
 rel_xi_err = 0.08
@@ -35,7 +36,7 @@ rel_xi_err = 0.08
 sample = str( sys.argv[1] )
 selection = str( sys.argv[2] )
 
-mc_file = open('datasets.txt','r')
+mc_file = open('/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/datasets.txt','r') 
 mcs = [[n.rstrip('\n') for n in line.split(',')] for line in mc_file]
 selections = [ ['HLT', 1], ['Preselection', 2], ['ReverseElastic', 2.5], ['ID', 3], ['Elastic', 4], ['Xi', 5] ]
 
@@ -50,7 +51,6 @@ for mc in mcs:
         xsec, n_events = float(mc[1]), float(mc[2])
         data_ = False
 
-
 if data_: sample_weight = 1
 else: sample_weight = xsec*lumi/n_events
 
@@ -59,6 +59,7 @@ print 'Sample:', sample, 'Selection:', selection, 'nSelect:', nSelect
 print '----------------------------------'
 print ''
 
+
 class DiphotonAnalysis(Module):
     def __init__(self):
         self.writeHistFile=True
@@ -66,18 +67,18 @@ class DiphotonAnalysis(Module):
         # Get SF hists for ID and CSEV
         self.photonmapname = "EGamma_SF2D"        
         if '2017' in sample: 
-            self.photon_file = self.open_root("2017_PhotonsMVAwp90.root")
-            self.csev_file = self.open_root("CSEV_ScaleFactors_2017.root")
+            self.photon_file = self.open_root("/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/2017_PhotonsMVAwp90.root")
+            self.csev_file = self.open_root("/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/CSEV_ScaleFactors_2017.root")
             self.csevmapname = "MVA_ID"
         elif '2018' in sample:
-            self.photon_file = self.open_root("2018_PhotonsMVAwp90.root")
-            self.csev_file = self.open_root("CSEV_2018.root")
+            self.photon_file = self.open_root("/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/2018_PhotonsMVAwp90.root")
+            self.csev_file = self.open_root("/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/CSEV_2018.root")
             self.csevmapname = "eleVeto_SF"
         self.csev_map = self.get_root_obj(self.csev_file, self.csevmapname)
         self.photon_map = self.get_root_obj(self.photon_file, self.photonmapname)
 
         # Initialize objects for toy matching file
-        self.diphoton_file = ROOT.TFile('diphotonEvents.root', 'RECREATE')
+        self.diphoton_file = ROOT.TFile('/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/diphotonEvents.root', 'RECREATE')
         self.diphoton_tree = ROOT.TTree('tree','Tree with diphoton events')
         self.v_mass, self.v_rap, self.v_xip, self.v_xim, self.v_era, self.v_xangle = array('f', []), array('f', []), array('f', []), array('f', []), array('f', []), array('f', [])
         self.diphoton_tree.Branch('mass', ROOT.AddressOf( mystruct, 'mass'), 'mass/F')
@@ -124,7 +125,7 @@ class DiphotonAnalysis(Module):
         self.h_single_electronVeto=ROOT.TH1F('h_single_electronVeto', 'Single Photon Electron Veto', 2, 0, 1)
         self.h_lead_electronVeto=ROOT.TH1F('h_lead_electronVeto', 'Lead Photon Electron Veto', 2, 0, 1)
         self.h_sub_electronVeto=ROOT.TH1F('h_sub_electronVeto', 'Sublead Photon Electron Veto', 2, 0, 1)
-        self.h_isEEEE=ROOT.TH1F('h_isEEEE', 'EEEE', 2, 0, 1)
+        self.h_isEEEE=ROOT.TH1F('h_isEEEE', 'EEEE', 2, 0, 2)
         self.h_xip=ROOT.TH1F('h_xip', '#xi _{#gamma#gamma}^{+}', 100, 0., 0.25)
         self.h_xim=ROOT.TH1F('h_xim', '#xi _{#gamma#gamma}^{-}', 100, 0., 0.25)
         self.h_nvtx=ROOT.TH1F('h_nvtx','Number Of Vertices', 75, 0., 75.)
@@ -169,14 +170,14 @@ class DiphotonAnalysis(Module):
 
 
         if not data_:
-            self.mcfile = ROOT.TFile( 'Skims/nanoAOD_'+sample+'_Skim.root' )
-            self.mchist = ROOT.TH1F('mchist', 'fixedGridRho', 100, 0, 58)
+            self.mcfile = ROOT.TFile( '/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_'+sample+'_Skim.root' )
+            self.mchist = ROOT.TH1F('mchist', 'fixedGridRho', 58, 0, 58) 
             self.mctree = self.mcfile.Events
             self.mctree.Project('mchist', 'fixedGridRhoFastjetAll')
             self.mchist.Scale( 1 / self.mchist.Integral() )
 
-            if '2017' in sample: self.datafile = ROOT.TFile( 'dataFixedGridRho_2017.root' )
-            elif '2018' in sample: self.datafile = ROOT.TFile( 'dataFixedGridRho_2018.root' )
+            if '2017' in sample: self.datafile = ROOT.TFile( '/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/dataFixedGridRho_2017.root' )
+            elif '2018' in sample: self.datafile = ROOT.TFile( '/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/dataFixedGridRho_2018.root' )
             self.datahist = self.datafile.Get('h')
             self.datahist.Scale( 1 / self.datahist.Integral() )
 
@@ -246,7 +247,7 @@ class DiphotonAnalysis(Module):
         
     # Get the SFs for MCs
     def efficiency(self,pt,eta_sc,r9):
-        if nSelect != 2.5 and nSelect < 3: return 1
+        if nSelect != 2.5 and nSelect < 3: return 1.0
         bin_x = min( max( self.photon_map.GetXaxis().FindBin( eta_sc ), 1 ), self.photon_map.GetXaxis().GetNbins() )
         bin_y = min( max( self.photon_map.GetYaxis().FindBin( pt ), 1 ), self.photon_map.GetYaxis().GetNbins() )
         id_sf = self.photon_map.GetBinContent( bin_x, bin_y )
@@ -255,8 +256,8 @@ class DiphotonAnalysis(Module):
             else: bin_r9 = 5 if r9 > 0.94 else 6
             csev_sf = self.csev_map.GetBinContent( bin_r9 ) 
         elif '2018' in sample:
-            bin_x = min( max( self.csev_map.GetXaxis().FindBin( eta_sc ), 1 ), self.photon_map.GetXaxis().GetNbins() )
-            bin_y = min( max( self.csev_map.GetYaxis().FindBin( pt ), 1 ), self.photon_map.GetYaxis().GetNbins() )
+            bin_x = min( max( self.csev_map.GetXaxis().FindBin( eta_sc ), 1 ), self.csev_map.GetXaxis().GetNbins() )
+            bin_y = min( max( self.csev_map.GetYaxis().FindBin( pt ), 1 ), self.csev_map.GetYaxis().GetNbins() )
             csev_sf = self.csev_map.GetBinContent( bin_x, bin_y )
         return id_sf*csev_sf 
 
@@ -326,18 +327,18 @@ class DiphotonAnalysis(Module):
         if data_: protons = Collection(event, "Proton_singleRP")
         #if data_: protons = Collection(event, "Proton_multiRP")
         photons = Collection(event, "Photon")
-        if data_: pu_weight, vtxWeight, prefWeight, eff_pho1, eff_pho2 = 1, 1, 1, 1, 1
-        else: pu_weight, vtxWeight, prefWeight = event.puWeightUp, self.rhoReweight(event.Pileup_nPU), event.PrefireWeight_Down
+        if data_: pu_weight, vtxWeight, prefWeight, eff_pho1, eff_pho2 = 1.0, 1.0, 1.0, 1.0, 1.0
+        else: pu_weight, vtxWeight, prefWeight = event.puWeightUp, self.rhoReweight(event.Pileup_nPU), event.PrefireWeight if '2017' in sample else 1.0
         s_weight = sample_weight*pu_weight*prefWeight
         
         if len(photons) < 2: return
                 
         # Choose the best diphoton candidate
-        acop = 999
+        acop = 999.0
         pho1, pho2 = photons[0], photons[1]
         for combo in combinations(range(0,len(photons)),2):
             p1, p2 = photons[combo[0]], photons[combo[1]]
-            tmp_acop =  1 - abs( p1.p4().DeltaPhi(p2.p4()) ) / PI
+            tmp_acop =  1.0 - abs( p1.p4().DeltaPhi(p2.p4()) ) / PI
             if tmp_acop > acop: continue
             acop = tmp_acop
             pho1, pho2 = p1, p2
@@ -346,13 +347,13 @@ class DiphotonAnalysis(Module):
         diph_mass = diph_p4.M()
         diph_rap = diph_p4.Rapidity()
         delta_phi = pho1.p4().DeltaPhi(pho2.p4())
-        xip = 1/13000.*( pho1.pt*math.exp(pho1.eta)+pho2.pt*math.exp(pho2.eta) )
-        xim = 1/13000.*( pho1.pt*math.exp(-1*pho1.eta)+pho2.pt*math.exp(-1*pho2.eta) )
+        xip = 1/13000.0*( pho1.pt*math.exp(pho1.eta)+pho2.pt*math.exp(pho2.eta) )
+        xim = 1/13000.0*( pho1.pt*math.exp(-1*pho1.eta)+pho2.pt*math.exp(-1*pho2.eta) )
         if data_: weight = 1
 
         # Make selection cuts
         if nSelect > 1: # Preselection
-            if p1.pt < 100 or p2.pt < 100: return  # Trigger safe pT cut
+            if p1.pt < 100.0 or p2.pt < 100.0: return  # Trigger safe pT cut
             if not self.hoe_cut(pho1,pho2): return # Trigger safe hoe cut
             if not self.eta_cut(pho1,pho2): return 
             if not self.mass_cut(diph_mass): return
@@ -367,21 +368,19 @@ class DiphotonAnalysis(Module):
             if not self.xi_cut(xip,xim): return
 
         # Print high-mass event kinematics
-        '''
-        if data_ and diph_mass > 1700:
-            with open('events.txt', 'a') as f:
-                print >> f, 'R:L:E', str(event.run)+':'+str(event.luminosityBlock)+':'+str(event.event), 'npho:', len(photons), 'nvtx:', event.PV_npvs, 'vtx_z:', event.PV_z
-                print >> f, 'mass:', diph_mass, 'Acoplanarity:', acop
-                print >> f, 'pt1:', pho1.pt, 'pt2:', pho2.pt, 'eta1:', pho1.eta, 'eta2:', pho2.eta
-                print >> f, 'R9_1:', pho1.r9, 'R9_2:', pho2.r9, 'xip:', xip, 'xim:', xim
-                print >> f, 'Num protons:', len(protons)
-                if len(protons) > 0: 
-                    for i in range(0,len(protons)-1): print >> f,  'proton'+str(i), 'xi:', protons[i].xi
-                print >> f, ''
-        '''
-
-        # Fill diphoton tree for background estimation
         if data_: 
+            if nSelect == 5 and diph_mass > 1700:
+                with open('/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/events_2018.txt', 'a') as f:
+                    print >> f, 'R:L:E', str(event.run)+':'+str(event.luminosityBlock)+':'+str(event.event), 'npho:', len(photons), 'nvtx:', event.PV_npvs, 'vtx_z:', event.PV_z
+                    print >> f, 'mass:', diph_mass, 'Acoplanarity:', acop
+                    print >> f, 'pt1:', pho1.pt, 'pt2:', pho2.pt, 'eta1:', pho1.eta, 'eta2:', pho2.eta
+                    print >> f, 'R9_1:', pho1.r9, 'R9_2:', pho2.r9, 'xip:', xip, 'xim:', xim
+                    print >> f, 'Num protons:', len(protons)
+                    if len(protons) > 0: 
+                        for i in range(0,len(protons)-1): print >> f,  'proton'+str(i), 'xi:', protons[i].xi
+                    print >> f, ''
+
+            # Fill diphoton tree for background estimation
             if nSelect == 2.5 or nSelect == 5: # tight xi selection 
                 mystruct.mass = diph_mass
                 mystruct.rap = diph_rap
@@ -392,8 +391,7 @@ class DiphotonAnalysis(Module):
                 self.diphoton_tree.Fill()
 
         if not data_:
-            eff_pho1 = self.efficiency(pho1.pt,pho1.eta,pho1.r9)
-            eff_pho2 = self.efficiency(pho2.pt,pho2.eta,pho2.r9)
+            eff_pho1, eff_pho2 = self.efficiency(pho1.pt,pho1.eta,pho1.r9), self.efficiency(pho2.pt,pho2.eta,pho2.r9)
             weight = s_weight * ( eff_pho1*eff_pho2 )
 
         # Fill single photon hists
@@ -411,8 +409,8 @@ class DiphotonAnalysis(Module):
         else: self.h_ee_hoe.Fill(pho1.hoe,s_weight*eff_pho1), self.h_ee_sieie.Fill(pho1.sieie,s_weight*eff_pho1)
         if pho2.isScEtaEB: self.h_eb_hoe.Fill(pho2.hoe,s_weight*eff_pho2), self.h_eb_sieie.Fill(pho2.sieie,s_weight*eff_pho2)
         else: self.h_ee_hoe.Fill(pho2.hoe,s_weight*eff_pho2), self.h_ee_sieie.Fill(pho2.sieie,s_weight*eff_pho2)
-        if pho1.isScEtaEE and pho2.isScEtaEE: self.h_isEEEE.Fill(True)
-        else: self.h_isEEEE.Fill(False)
+        if pho1.isScEtaEE: self.h_isEEEE.Fill( pho2.isScEtaEE, weight )
+
 
         # Fill diphoton hists
         self.h_diph_mass.Fill(diph_mass,weight) 
@@ -467,24 +465,29 @@ class DiphotonAnalysis(Module):
 preselection=""
 if sample == 'data2017':
     files=[
-        "Skims/nanoAOD_Run2017B_noLPC_Skim.root",
-        "Skims/nanoAOD_Run2017C_noLPC_Skim.root",
-        "Skims/nanoAOD_Run2017D_noLPC_Skim.root",
-        "Skims/nanoAOD_Run2017E_noLPC_Skim.root",
-        "Skims/nanoAOD_Run2017F_noLPC_Skim.root"
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017B_noLPC_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017C_noLPC_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017D_noLPC_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017E_noLPC_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017F_noLPC_Skim.root"
     ]
 elif sample == 'data2018':
     files=[
-        "Skims/nanoAOD_Run2018A_Skim.root",
-        "Skims/nanoAOD_Run2018B_Skim.root",
-        "Skims/nanoAOD_Run2018C_Skim.root",
-        "Skims/nanoAOD_Run2018D_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2018A_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2018B_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2018C_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2018D_Skim.root",
     ]
 else: 
-    files=[
-        "Skims/nanoAOD_"+sample+"_withLPC_Skim.root"
-    ]
-p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="histOut_"+sample+"_"+selection+".root",histDirName="plots")
+    if '2017' in sample:
+        files=[
+            "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_"+sample+"_withLPC_Skim.root"
+        ]
+    elif '2018' in sample:
+        files=[
+            "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_"+sample+"_Skim.root"
+        ]
+p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/histOut_"+sample+"_"+selection+".root",histDirName="plots")
 p.run()
 
 

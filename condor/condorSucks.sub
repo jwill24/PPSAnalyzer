@@ -1,0 +1,6 @@
+	executable              = $(filename)
+	arguments               = $Fnx(filename)
+	output                  = $Fpn(filename).$(ClusterId).$(ProcId).out
+	error                   = $Fpn(filename).$(ClusterId).$(ProcId).err
+	log                     = $Fp(filename)/$(ClusterID).log
+	queue filename matching (sub_*2018_*.sh)
