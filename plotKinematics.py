@@ -8,41 +8,24 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 from ROOT import TCanvas, TPad, TFile, TPaveLabel, TPaveText, TAttText, TLine, TLegend, TBox, TColor, THStack, TGaxis, TH1F
-from ROOT import gROOT, gStyle
+from ROOT import gROOT, gStyle, kBlack
+from common import sampleColors, Canvas, Prettify, lumiLabel, makeLegend, asym_error_bars
 
 gStyle.SetOptStat(0)
 
-lab = '#xi #in PPS'
-selection = 'Xi'
+lab = 'After HLT'
+selection = 'HLT'
 years = ['2017','2018']
+s_years = '+'.join(years)
 scale2018 = 57.72/37.20
-lightBlue, red, yellow, purple, darkGreen, green = ROOT.kCyan-9, 208, ROOT.kYellow-9, 38, ROOT.kTeal+3, ROOT.kGreen-9
-samples = ['data','ggj','g+j','qcd','wg','zg','tt','aqgc']
+samples = sampleColors()
+samples.append(['aqgc',92,92])
+samples.append(['data',kBlack,kBlack])
 v_files = []
 for year in years:
     for s in samples:
-        v_files.append( (s+year, TFile('outputHists/'+year+'/histOut_'+s+year+'_'+selection+'.root')) )
+        v_files.append( (s[0]+year, TFile('outputHists/'+year+'/histOut_'+s[0]+year+'_'+selection+'.root')) )
 
-def Canvas(name):
-    c = TCanvas(name,'c',750,600)
-    return c
-
-def Prettify( hist ):
-    x = hist.GetXaxis()
-    x.SetTitleSize(20)
-    x.SetTitleFont(43)
-    x.SetTitleOffset(4)
-    x.SetLabelFont(43)
-    x.SetLabelSize(20)
-    x.SetTickLength(0.05)
-    y = hist.GetYaxis()
-    y.SetTitle('Data / MC')
-    y.SetNdivisions(505)
-    y.SetTitleSize(20)
-    y.SetTitleFont(43)
-    y.SetTitleOffset(1.55)
-    y.SetLabelFont(43)
-    y.SetLabelSize(20)
 
 def plotRatio(name, h1, v_hist, hs, log):
     c = Canvas('c')
@@ -85,15 +68,15 @@ def plotRatio(name, h1, v_hist, hs, log):
         ymax=stack.GetMaximum()*2 if log else stack.GetMaximum()*1.2
         ymax2=h_data.GetMaximum()*2 if log else h_data.GetMaximum()*1.2
     else:
-        ymax=stack.GetMaximum()*10 if log else stack.GetMaximum()*1.2
-        ymax2=h_data.GetMaximum()*10 if log else h_data.GetMaximum()*1.6
+        ymax=stack.GetMaximum()*100 if log else stack.GetMaximum()*1.2
+        ymax2=h_data.GetMaximum()*100 if log else h_data.GetMaximum()*1.6
     stack.SetMaximum(max(ymax,ymax2))
     if log: stack.SetMinimum(1)
     #stack.GetHistogram().GetYaxis().SetTitleSize(20)
     #stack.GetHistogram().GetYaxis().SetTitleFont(43)
     #stack.GetHistogram().GetYaxis().SetTitleOffset(4)
     stack.GetHistogram().GetYaxis().SetTitle('Events')
-    pLabel, sLabel, lLabel = prelimLabel(log,h1.GetMaximum()), selectionLabel(lab,True,log,h1.GetMaximum()), lumiLabel(True)
+    pLabel, sLabel, lLabel = prelimLabel(log,h1.GetMaximum()), selectionLabel(lab,True,log,h1.GetMaximum()), lumiLabel(True,years)
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
     legend = makeLegend(h1,v_hist,hs)
     legend.Draw()
@@ -128,21 +111,7 @@ def plotRatio(name, h1, v_hist, hs, log):
     Prettify( h_ratio )
 
     if len(years) == 1: c.SaveAs('plots/'+years[0]+'/'+name+'_'+selection+'.png')
-    else: c.SaveAs('plots/combined/'+name+'_'+selection+'.png')
-
-def asym_error_bars(hist):
-    alpha = 1 - 0.6827
-    g = ROOT.TGraphAsymmErrors(hist)
-    for i in range(0,g.GetN()):
-        N = g.GetY()[i]
-        if N == 0: continue
-        L = 0. if N == 0 else ( ROOT.Math.gamma_quantile( 0.5*alpha, N, 1. ) )
-        U = ( ROOT.Math.gamma_quantile_c( alpha, N+1, 1 ) ) if N == 0 else ( ROOT.Math.gamma_quantile_c( 0.5*alpha, N+1, 1 ) )
-        g.SetPointEXlow( i, 0. )
-        g.SetPointEXhigh( i, 0. )
-        g.SetPointEYlow( i, N-L )
-        g.SetPointEYhigh( i, U-N )
-    return g
+    else: c.SaveAs('plots/combined/'+name+'_'+selection+'_'+s_years+'.png')
 
 def prelimLabel(log,maximum):
     if not log and maximum > 10e4: label = TPaveText( 0.15, 0.76, 0.2, 0.84, 'NB NDC' )
@@ -177,40 +146,12 @@ def selectionLabel(text,ratio,log,maximum):
     label.SetTextColor( 1 )
     return label
 
-def lumiLabel(ratio):
-    label = TPaveText( 0.70, 0.9, 0.8, 0.92, 'NB NDC' )
-    label.SetFillStyle(0)
-    label.SetBorderSize(0)
-    label.SetLineWidth(0)
-    label.SetLineStyle(0)
-    luminosity = '37.19' if 2017 else '57.72'
-    label.AddText( luminosity+" fb^{-1} (13 TeV)" )
-    if ratio: label.SetTextSize( 0.048 )
-    else: label.SetTextSize( 0.034 )
-    label.SetTextAlign(11)
-    label.SetTextFont( 42 )
-    label.SetTextColor( 1 )
-    return label
-
-def makeLegend(h1,v_hist,hs):
-    legend = TLegend(0.65, 0.55, 0.82, 0.85) 
-    legend.SetBorderSize(0)
-    legend.SetFillColor(0)
-    legend.SetFillStyle(0)
-    legend.SetTextFont(42)
-    legend.SetTextSize(0.038)
-    legend.AddEntry(h1,'Data', 'lep')
-    backgrounds = ['t#bar{t} + j (NLO)', 'Incl. Z + #gamma', 'Incl. W + #gamma', '#gamma + j', 'Incl. #gamma#gamma + j (NLO)', 'QCD (e#gamma enriched)']
-    for i in range( len(backgrounds) ):
-        legend.AddEntry(v_hist[i],backgrounds[i],'f')
-    legend.AddEntry(hs,'AQGC #times 100','l')
-    return legend
-    
-def setPlot(h, color, rbin):
+def setPlot(h, sample, rbin):
+    fill, line = getColors(sample)
     h.SetTitle('')
     h.Rebin(rbin)
-    h.SetFillColorAlpha(color,0.4)
-    h.SetLineColor(color) 
+    h.SetFillColorAlpha(fill,0.4)
+    h.SetLineColor(line) 
     return h
 
 def getHist(sample, year, name):
@@ -267,19 +208,25 @@ def makePlot(inName, outName, xTitle, rbin, log):
     h_data.Rebin(rbin)
     h_data.SetMarkerStyle(20)
     h_data.SetMarkerSize(0.7)
-    setPlot(h_ggj, red, rbin)
-    setPlot(h_gj, darkGreen, rbin)
-    setPlot(h_qcd, lightBlue, rbin)
-    setPlot(h_wg, purple, rbin)
-    setPlot(h_zg, yellow, rbin)
-    setPlot(h_tt, green, rbin)
-    setPlot(h_aqgc, 92, rbin)
+
+    setPlot(h_ggj, 'ggj', rbin)
+    setPlot(h_gj, 'g+j', rbin)
+    setPlot(h_qcd, 'qcd', rbin)
+    setPlot(h_wg, 'wg', rbin)
+    setPlot(h_zg, 'zg', rbin)
+    setPlot(h_tt, 'tt', rbin)
+    setPlot(h_aqgc, 'aqgc', rbin)
     h_aqgc.SetFillColor(0)
         
     v.append(h_tt), 
     v.append(h_zg), v.append(h_wg), v.append(h_gj), v.append(h_ggj), v.append(h_qcd)
         
     plotRatio(outName, h_data, v, h_aqgc, log)
+
+def getColors(sample):
+    for s in samples:
+        if sample == s[0]:
+            return s[1], s[2]
     
 def makeProtonPlot(name, xTitle, rbin, log):
     c = Canvas('c')
@@ -301,24 +248,24 @@ def makeProtonPlot(name, xTitle, rbin, log):
 
 
 makePlot('h_diph_mass', 'h_mass_comp', 'm_{#gamma#gamma} GeV', 4, True)
-makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
+#makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
 #makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 1, True)
-makePlot('h_lead_pt', 'h_lead_pt_comp', 'Leading p_{T}^{#gamma} GeV', 2, True)
+#makePlot('h_lead_pt', 'h_lead_pt_comp', 'Leading p_{T}^{#gamma} GeV', 2, True)
 #makePlot('h_sub_pt', 'h_sub_pt_comp', 'Subleading p_{T}^{#gamma} GeV', 2, True)
-makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 1, False)
+#makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 1, False)
 #makePlot('h_lead_eta', 'h_lead_eta_comp', 'Leading #eta ^{#gamma}', 4, False)
 #makePlot('h_sub_eta', 'h_sub_eta_comp', 'Subleading #eta ^{#gamma}', 4, False)
-makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 2, True)
+#makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 2, True)
 #makePlot('h_lead_r9', 'h_lead_r9_comp', 'Leading R_{9} ^{#gamma}', 2, True)
 #makePlot('h_sub_r9', 'h_sub_r9_comp', 'Subleading R_{9} ^{#gamma}', 2, True)
-makePlot('h_eb_hoe', 'h_eb_hoe_comp', 'EB H/E', 1, True)
-makePlot('h_eb_sieie', 'h_eb_sieie_comp', 'EB #sigma_{i#etai#eta}', 1, True)
-makePlot('h_nvtx', 'h_nvtx_comp', 'Number of vertices', 1, True)
-makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
-makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
-makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 4, True)
-makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
-makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, True)
+#makePlot('h_eb_hoe', 'h_eb_hoe_comp', 'EB H/E', 1, True)
+#makePlot('h_eb_sieie', 'h_eb_sieie_comp', 'EB #sigma_{i#etai#eta}', 1, True)
+#makePlot('h_nvtx', 'h_nvtx_comp', 'Number of vertices', 1, True)
+#makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
+#makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
+#makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 4, True)
+#makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
+#makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, True)
 
 
 

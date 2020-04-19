@@ -7,15 +7,15 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 from ROOT import TCanvas, TPad, TFile, TPaveLabel, TPaveText, TAttText, TLine, TLegend, TBox, TColor, THStack, TGaxis, TH1F
 from ROOT import gROOT, gStyle
+from common import sampleColors, Canvas, Prettify, lumiLabel, makeLegend, asym_error_bars
 
 gStyle.SetOptStat(0)
 
-selections = [['HLT','After HLT'], ['Preselection','Preselection'], ['ID', 'Preselc. + ID'], ['Elastic','Diphoton selection'], ['Xi', 'Tight #xi']]
-#selections = [['Preselection','Preselection'], ['ID', 'Preselc. + ID'], ['Elastic','Elastic selection'], ['Xi', 'Tight #xi']]
+#selections = [['HLT','After HLT'], ['Preselection','Preselection'], ['ID', 'Preselc. + ID'], ['ReverseElastic','Reverse'], ['Elastic','Diphoton selection'], ['Xi', 'Tight #xi']]
+selections = [['HLT','After HLT'], ['ID','Presel. + ID'], ['Elastic','Diphoton selection'], ['Xi', 'Tight #xi']]
 years = ['2017','2018']
+s_years = '+'.join(years)
 scale2018 = 55.72/37.2
-
-lightBlue, red, yellow, purple, darkGreen, green = ROOT.kCyan-9, 208, ROOT.kYellow-9, 38, ROOT.kTeal+3, ROOT.kGreen-9
 
 h_data =  ROOT.TH1F('h_data', '', len(selections), 0, len(selections))
 h_ggj =   ROOT.TH1F('h_ggj', '', len(selections), 0, len(selections))
@@ -26,61 +26,13 @@ h_zg =    ROOT.TH1F('h_zg', '', len(selections), 0, len(selections))
 h_tt =    ROOT.TH1F('h_tt', '', len(selections), 0, len(selections))
 h_aqgc =  ROOT.TH1F('h_aqgc', '', len(selections), 0, len(selections))
 h_stack = ROOT.THStack('norm_stack','')
+vec = [h_tt, h_zg, h_wg, h_gj, h_ggj, h_qcd]
 
-bgs = [['tt',h_tt, green], ['zg',h_zg,yellow], ['wg',h_wg,purple], ['g+j',h_gj,darkGreen], ['ggj',h_ggj,red], ['qcd',h_qcd,lightBlue]]
+bgs = sampleColors()
+for i, bg in enumerate(bgs): bg.insert(1,vec[i]) 
 v_hist = []
 
-def Canvas(name):
-    c = TCanvas(name,'c',750,600)
-    return c
 
-def Prettify( hist ):
-    x = hist.GetXaxis()
-    x.SetTitleSize(20)
-    x.SetTitleFont(43)
-    x.SetTitleOffset(4)
-    x.SetLabelOffset(0.04)
-    x.SetLabelFont(43)
-    x.SetLabelSize(15)
-    x.SetTickLength(0.05)
-    y = hist.GetYaxis()
-    y.SetTitle('Data / MC')
-    y.SetNdivisions(505)
-    y.SetTitleSize(20)
-    y.SetTitleFont(43)
-    y.SetTitleOffset(1.55)
-    y.SetLabelFont(43)
-    y.SetLabelSize(20)
-
-def makeLegend(h1,v_hist,hs):
-    legend = TLegend(0.63, 0.55, 0.8, 0.85) 
-    legend.SetBorderSize(0)
-    legend.SetFillColor(0)
-    legend.SetFillStyle(0)
-    legend.SetTextFont(42)
-    legend.SetTextSize(0.038)
-    legend.AddEntry(h1,'Data', 'lep')
-    backgrounds = ['t#bar{t} + j (NLO)', 'Incl. Z + #gamma', 'Incl. W + #gamma', '#gamma + j', 'Incl. #gamma#gamma + j (NLO)', 'QCD (e#gamma enriched)']
-    for i in range( len(backgrounds) ):
-        legend.AddEntry(v_hist[i],backgrounds[i],'f')
-    legend.AddEntry(hs,'AQGC #times 100','l')
-    return legend
-
-def lumiLabel():
-    label = TPaveText( 0.7, 0.91, 0.8, 0.93, 'NB NDC' )
-    label.SetFillStyle(0)
-    label.SetBorderSize(0)
-    label.SetLineWidth(0)
-    label.SetLineStyle(0)
-    if len(years) == 1 and years[0] == '2017': luminosity = '37.19'
-    elif years[0] == '2018': luminosity = '57.72'
-    elif len(years) == 2: luminosity = '94.91'
-    label.AddText( luminosity+" fb^{-1} (13 TeV)" )
-    label.SetTextSize(0.048)
-    label.SetTextAlign(11)
-    label.SetTextFont(42)
-    label.SetTextColor(1)
-    return label
 
 def prelimLabel():
     label = TPaveText( 0.1, 0.91, 0.2, 0.93, 'NB NDC' )
@@ -95,10 +47,10 @@ def prelimLabel():
     label.SetTextColor( 1 )
     return label
 
-def setPlot(h, color): 
+def setPlot(h, fill, line): 
     h.SetTitle('')
-    h.SetFillColorAlpha(color,0.001)
-    h.SetLineColor(color)    
+    h.SetFillColorAlpha(fill,0.001)
+    h.SetLineColor(line)    
     return h
 
 for selection in selections:
@@ -119,15 +71,14 @@ for selection in selections:
 
             f = TFile('outputHists/'+year+'/histOut_'+str(bg[0])+year+'_'+selection[0]+'.root') 
             hist = f.Get('plots/h_num_pho')
-            
+            if year == '2018': hist.Scale( scale2018 ) # FIXME: temporary until I redo 2018 samples
             if i == 0: bg[1].SetBinContent( thisBin, hist.Integral() )
             else: bg[1].SetBinContent( thisBin, bg[1].GetBinContent(thisBin)+hist.Integral() )
-            
-        if year == '2018': bg[1].Scale( scale2018 ) # FIXME: correcting for wrong lumi in diphotonAnalyzer
+
 
 h_mc_err = 0
 for bg in bgs:
-    setPlot(bg[1], bg[2])
+    setPlot(bg[1], bg[2], bg[3])
     h_stack.Add(bg[1])
     v_hist.append(bg[1])
     if h_mc_err == 0: h_mc_err = bg[1].Clone()
@@ -161,12 +112,13 @@ h_stack.GetHistogram().GetYaxis().SetTitle('Events')
 h_stack.GetHistogram().GetXaxis().SetLabelSize(0.04)
 h_stack.SetMaximum( h_data.GetMaximum()*5 )
 h_stack.SetMinimum(1)
-h_data.SetMarkerStyle(20)
-h_data.SetMarkerSize(0.7)
-h_data.Draw('p same')
+h_asym_data = asym_error_bars(h_data) # testing
+h_asym_data.SetMarkerStyle(20)
+h_asym_data.SetMarkerSize(0.7)
+h_asym_data.Draw('p e2 same') # testing e2
 h_aqgc.SetLineColor(92), h_aqgc.SetFillColor(0), h_aqgc.Scale(100) if year == '2017' else h_aqgc.Scale(100*94.91/37.2) # FIXME
 h_aqgc.Draw('HIST same')
-lLabel, pLabel = lumiLabel(), prelimLabel()
+lLabel, pLabel = lumiLabel(True,years), prelimLabel()
 lLabel.Draw(), pLabel.Draw()
 leg = makeLegend(h_data,v_hist,h_aqgc)
 leg.Draw()
@@ -198,9 +150,9 @@ l3 = TLine(h_ratio.GetXaxis().GetXmin(), 0.5, h_ratio.GetXaxis().GetXmax(), 0.5)
 l4 = TLine(h_ratio.GetXaxis().GetXmin(), 0., h_ratio.GetXaxis().GetXmax(), 0.)
 l5 = TLine(h_ratio.GetXaxis().GetXmin(), 2, h_ratio.GetXaxis().GetXmax(), 2.)
 l2.SetLineStyle(3), l3.SetLineStyle(3), l4.SetLineStyle(3), l5.SetLineStyle(3)
-l1.Draw(), l2.Draw(), l3.Draw(), #l4.Draw(), l5.Draw()
+l1.Draw(), l2.Draw(), l3.Draw(), l4.Draw(), l5.Draw()
 
 Prettify( h_ratio )
 
 
-c.SaveAs('cutflow_.png')
+c.SaveAs('cutflow_'+s_years+'.png')
