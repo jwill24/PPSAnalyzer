@@ -51,6 +51,7 @@ def setPlot(h, fill, line):
     h.SetTitle('')
     h.SetFillColorAlpha(fill,0.001)
     h.SetLineColor(line)    
+    h.SetLineWidth(2)
     return h
 
 for selection in selections:
