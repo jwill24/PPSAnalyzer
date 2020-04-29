@@ -104,7 +104,7 @@ def sampleColors():
     return samples
 
 def Canvas(name):
-    c = TCanvas(name,'c',750,600)
+    c = TCanvas(name,'c',600,600)
     return c
 
 def Prettify( hist ):
@@ -113,19 +113,20 @@ def Prettify( hist ):
     x.SetTitleFont(43)
     x.SetTitleOffset(4)
     x.SetLabelFont(43)
-    x.SetLabelSize(18)
+    x.SetLabelOffset(0.03)
+    x.SetLabelSize(20)
     x.SetTickLength(0.05)
     y = hist.GetYaxis()
-    y.SetTitle('Data / MC')
-    y.SetNdivisions(505)
+    y.SetTitle('Data / Pred.')
+    y.SetNdivisions(507)
     y.SetTitleSize(20)
     y.SetTitleFont(43)
-    y.SetTitleOffset(1.55)
+    y.SetTitleOffset(1.3)
     y.SetLabelFont(43)
-    y.SetLabelSize(20)
+    y.SetLabelSize(18)
 
 def lumiLabel(ratio,years):
-    label = TPaveText( 0.70, 0.9, 0.8, 0.92, 'NB NDC' )
+    label = TPaveText( 0.65, 0.91, 0.75, 0.93, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
@@ -142,15 +143,14 @@ def lumiLabel(ratio,years):
     return label
 
 def makeLegend(h1,v_hist,hs):
-    legend = TLegend(0.65, 0.55, 0.82, 0.85)
+    legend = TLegend(0.6, 0.55, 0.77, 0.85)
     legend.SetBorderSize(0)
     legend.SetFillColor(0)
     legend.SetFillStyle(0)
     legend.SetTextFont(42)
     legend.SetTextSize(0.038)
-    legend.AddEntry(h1,'Data', 'lep')
-    backgrounds = ['t#bar{t} + j (NLO)', 'Incl. Z + #gamma', 'Incl. W + #gamma', '#gamma + j', 'Incl. #gamma#gamma + j\
- (NLO)', 'QCD (e#gamma enriched)']
+    legend.AddEntry(h1,'Data', 'lp')
+    backgrounds = ['t#bar{t} + j (NLO)', 'Incl. Z + #gamma (NLO)', 'Incl. W + #gamma (NLO)', '#gamma + j', 'Incl. #gamma#gamma + j (NLO)', 'QCD (e#gamma enriched)']
     for i in range( len(backgrounds) ):
         legend.AddEntry(v_hist[i],backgrounds[i],'f')
     legend.AddEntry(hs,'AQGC #times 100','l')

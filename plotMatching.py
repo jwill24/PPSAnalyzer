@@ -10,8 +10,17 @@ from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
 
-#file = TFile( "outputHists/2017/histOut_data_Xi_2017.root" )
-file = TFile( "outputHists/2017/histOut_data_ReverseElastic_2017.root" )
+#years = ['2017','2018']
+years = ['2017']
+s_years = '+'.join(years)
+files = [['2017',TFile('outputHists/2017/histOut_data2017_Xi.root')],
+         ['2018',TFile('outputHists/2018/histOut_data2018_Xi.root')]]
+#files = [['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic.root')],
+#         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic.root')]]
+#files = [['2017',TFile('outputHists/2017/histOut_data2017_Xi_multiRP.root')],
+#         ['2018',TFile('outputHists/2018/histOut_data2018_Xi_multiRP.root')]]
+#files = [['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic_multiRP.root')],
+#         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic_multiRP.root')]]
 
 
 def Canvas(name):
@@ -66,26 +75,46 @@ def lumiLabel():
     label.SetBorderSize(0)
     label.SetLineWidth(0)
     label.SetLineStyle(0)
-    label.AddText( "37.19 fb^{-1} (13 TeV)" )
+    if len(years) == 1 and years[0] == '2017': luminosity = '37.19'
+    elif years[0] == '2018': luminosity = '55.72'
+    elif len(years) == 2: luminosity = '92.91'
+    label.AddText( luminosity+" fb^{-1} (13 TeV)" )
     label.SetTextSize( 0.033 )
     label.SetTextAlign(11)
     label.SetTextFont( 42 )
     label.SetTextColor( 1 )
     return label
     
+def getGraph(year,kind='none'):
+    for f in files:
+        if year == f[0]: 
+            if kind == 'none': g = f[1].Get('plots/gr_matching')
+            elif kind == 'xim': g = f[1].Get('plots/gr_xim_matching')
+            elif kind == 'xip': g = f[1].Get('plots/gr_xip_matching')
+    return g
 
 def massrap_matching(blinded):
     c = Canvas("c")
     c.cd()
-
-    gr = file.Get("plots/gr_matching")
+    c.SetTicks(1,1)
+    
+    gr = ROOT.TGraphErrors('gr')
+    gr.SetName('gr')
     count_20, count_5, count_3, count_2, x, y = 0, 0, 0, 0, ROOT.Double(0), ROOT.Double(0)
-    for i in range(gr.GetN()):
-        gr.GetPoint(i,x,y)
-        if abs(x) < 20 and abs(y) < 20: count_20 += 1
-        if abs(x) < 5 and abs(y) < 5: count_5 += 1
-        if abs(x) < 3 and abs(y) < 3: count_3 += 1
-        if abs(x) < 2 and abs(y) < 2: count_2 += 1
+    for i, year in enumerate(years): 
+        g = getGraph(year)
+        n_gr = gr.GetN() if i > 0 else 0
+        for j in range(g.GetN()):
+            g.GetPoint(j,x,y)
+            ex = g.GetErrorX(j)
+            ey = g.GetErrorY(j)
+            gr.SetPoint(n_gr+j,x,y)
+            gr.SetPointError(n_gr+j,ex,ey)
+            if abs(x) < 20 and abs(y) < 20: count_20 += 1
+            if abs(x) < 5 and abs(y) < 5: count_5 += 1
+            if abs(x) < 3 and abs(y) < 3: count_3 += 1
+            if abs(x) < 2 and abs(y) < 2: count_2 += 1
+
     print 'Total events:', gr.GetN(), '20sig:', count_20, '5sig:', count_5, '3sig:', count_3, '2sig:', count_2
 
     gr.SetLineColor(ROOT.kBlack)
@@ -124,52 +153,172 @@ def massrap_matching(blinded):
     sLabel.Draw()
     lLabel = lumiLabel()
     lLabel.Draw()
-    c.SaveAs("plots/matching/massrap_matching.png")
+    c.SaveAs("plots/matching/massrap_matching_reverse_"+s_years+"_multiRP.png")
 
 
 def xi_matching(sector):
     c = Canvas("c")
     c.cd()
+    c.SetTicks(1,1)
 
-    gr_xi_matching = file.Get("plots/gr_xi"+sector+"_matching")
-    ymax = gr_xi_matching.GetYaxis().GetXmax()
-    gr_xi_matching.GetXaxis().SetLimits(0,0.25)
-    gr_xi_matching.GetYaxis().SetRangeUser(0,ymax)
-    gr_xi_matching.SetLineColor(ROOT.kBlack)
-    gr_xi_matching.SetTitle('')
+    gr = ROOT.TGraphErrors('gr')
+    gr_m = ROOT.TGraphErrors('gr_m')
+    gr.SetName('gr')
+    gr_m.SetName('gr_m')
+    x, y = ROOT.Double(0), ROOT.Double(0)
+    for i, year in enumerate(years):
+
+        g = getGraph(year,'xi'+sector)
+        n_grm = gr_m.GetN() if i > 0 else 0
+        n_gr = gr.GetN() if i > 0 else 0
+        for j in range(g.GetN()):
+            g.GetPoint(j,x,y)
+            ex = g.GetErrorX(j) # FIXME?
+            ey = g.GetErrorY(j)
+            diff = abs(y-x)
+            if diff < 0.003:
+                gr_m.SetPoint(n_grm+j,x,y) 
+                gr_m.SetPointError(n_grm+j,ex,ey)
+            else:
+                gr.SetPoint(n_gr+j,x,y) 
+                gr.SetPointError(n_gr+j,ex,ey)
+ 
+
+    gr.SetMarkerSize(0.6)
+    gr.SetMarkerStyle(24)
+    gr_m.SetMarkerSize(0.6)
+    gr_m.SetMarkerStyle(24) 
+    gr_m.SetMarkerColor(ROOT.kRed)
+    gr_multi = ROOT.TMultiGraph('gr_multi','')
+    gr_multi.Add(gr,'AP')
+    gr_multi.Add(gr_m,'AP')
+    c.SetGrid()
+    min, max = 0.0001, 0.25
+    c.DrawFrame(min,min,max,max)
+    gr_multi.Draw()
+    gr_multi.GetXaxis().SetTitleOffset(1.3)
+    gr_multi.GetYaxis().SetTitleOffset(1.3)
     if sector == 'm':
-        gr_xi_matching.GetXaxis().SetTitle("#xi(p)"+"^{-}")
-        gr_xi_matching.GetYaxis().SetTitle("#xi(#gamma#gamma)"+"^{-}")
+        gr_multi.GetXaxis().SetTitle("#xi(p)"+"^{-}")
+        gr_multi.GetYaxis().SetTitle("#xi(#gamma#gamma)"+"^{-}")
     elif sector == 'p':
-        gr_xi_matching.GetXaxis().SetTitle("#xi(p)"+"^{+}")
-        gr_xi_matching.GetYaxis().SetTitle("#xi(#gamma#gamma)"+"^{+}")
-    gr_xi_matching.GetXaxis().SetTitleOffset(1.5)
-    gr_xi_matching.GetYaxis().SetTitleOffset(1.5)
-    gr_xi_matching.SetMarkerSize(0.6)
-    gr_xi_matching.SetMarkerStyle(24)
-    gr_xi_matching.Draw("AP")
-
-
+        gr_multi.GetXaxis().SetTitle("#xi(p)"+"^{+}")
+        gr_multi.GetYaxis().SetTitle("#xi(#gamma#gamma)"+"^{+}")
+    
     # Draw y = x line
-    l = TLine(0, 0, 0.25, ymax)
+    l = TLine(min, min, max, max)
     l.SetLineStyle(2)
     l.SetLineWidth(2)
     l.Draw()
 
     # Draw shaded region for no acceptance
-    b = TBox(0, 0, 0.015, ymax)
+    b = TBox(min, min, 0.015, max)
     b.SetFillStyle(3001)
     b.SetFillColor(ROOT.kGray)
     b.SetLineColor(1)
     b.Draw()
 
+    # Make legend
+    legend = TLegend(0.65,0.45,0.8,0.6)
+    legend.SetBorderSize(0)
+    legend.SetTextFont(42)
+    legend.SetTextSize(0.038)
+    legend.AddEntry(b,"No acceptance",'f')
+    legend.AddEntry(gr,"Not matching",'p')
+    legend.AddEntry(gr_m,"Matching at 2#sigma",'p')
+    legend.Draw()
+
     pLabel, sLabel, lLabel = prelimLabel(), selectionLabel("Tight #xi selection"), lumiLabel()
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
-    c.SaveAs("plots/matching/xi"+sector+"_matching_reverse.png")
+    c.SaveAs("plots/matching/xi"+sector+"_matching_"+s_years+".pdf")
+
+def oneDim_matching(blinded):
+    c1 = Canvas("c1")
+    c2 = Canvas("c2")
+
+    h_mass = ROOT.TH1F('h_mass', '', 40, -20, 20)
+    h_rap = ROOT.TH1F('h_rap', '', 40, -20, 20)
+    x, y = ROOT.Double(0), ROOT.Double(0)
+    for i, year in enumerate(years):
+        g = getGraph(year)
+        for j in range(g.GetN()):
+            g.GetPoint(j,x,y)
+            ex = g.GetErrorX(j)
+            ey = g.GetErrorY(j)
+            h_mass.Fill(x)
+            h_rap.Fill(y)
+
+    c1.cd()
+    c1.SetTicks(1,1)
+    h_mass.GetXaxis().SetTitle('(m_{pp}-m_{#gamma#gamma})/#sigma(m_{pp}-m_{#gamma#gamma}}')
+    h_mass.GetYaxis().SetTitle('Events')
+    h_mass.SetMarkerStyle(24)
+    h_mass.SetLineColor( ROOT.kBlack )
+    h_mass.Sumw2()
+    min, max = h_mass.GetMinimum(), h_mass.GetMaximum()+3
+    h_mass.SetMaximum(max)
+    h_mass.Draw('p')
+    '''
+    l1 = TLine(-2,h_mass.GetMinimum(),-2,max)
+    l1.SetLineColor( ROOT.kRed+1 )
+    l1.SetLineStyle(2)
+    l1.SetLineWidth(2)
+    l2 = TLine(2,h_mass.GetMinimum(),2,max)
+    l2.SetLineColor( ROOT.kRed+1 )
+    l2.SetLineStyle(2)
+    l2.SetLineWidth(2)
+    l3 = TLine(-3,h_mass.GetMinimum(),-3,max)
+    l3.SetLineColor( ROOT.kRed+1 )
+    l3.SetLineStyle(1)
+    l3.SetLineWidth(2)
+    l4 = TLine(3,h_mass.GetMinimum(),3,max)
+    l4.SetLineColor( ROOT.kRed+1 )
+    l4.SetLineStyle(1)
+    l4.SetLineWidth(2)
+    '''
+    b2 = TBox(-3, min, 3, max-0.05)
+    if not blinded: b2.SetFillStyle(3001) # transparent
+    b2.SetFillColor(5)
+    b2.SetLineColor(1)
+    b2.Draw()
+    b1 = TBox(-2, min, 2, max-0.05)
+    if not blinded: b1.SetFillStyle(3001) # transparent
+    b1.SetFillColor(3)
+    b1.SetLineColor(1)
+    b1.Draw()
+    pLabel, sLabel, lLabel = prelimLabel(), selectionLabel("Tight #xi selection"), lumiLabel()
+    pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
+    legend = TLegend(0.7,0.8,0.9,0.9)
+    legend.AddEntry(b1,"2#sigma matching",'f')
+    legend.AddEntry(b2,"3#sigma matching",'f')
+    legend.Draw()
+    c1.SaveAs('h_mass_1d.png')
+    c2.cd()
+    c2.SetTicks(1,1)
+    h_rap.GetXaxis().SetTitle('(y_{pp}-y_{#gamma#gamma})/#sigma(y_{pp}-y_{#gamma#gamma}}')
+    h_rap.GetYaxis().SetTitle('Events')
+    h_rap.SetMarkerStyle(24)
+    h_rap.SetLineColor( ROOT.kBlack )
+    h_rap.Sumw2()
+    h_rap.SetMaximum(max)
+    h_rap.Draw('p')
+    b2.Draw()
+    b1.Draw()
+    pLabel, sLabel, lLabel = prelimLabel(), selectionLabel("Tight #xi selection"), lumiLabel()
+    pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
+    legend = TLegend(0.7,0.8,0.9,0.9)
+    legend.AddEntry(b1,"2#sigma matching",'f')
+    legend.AddEntry(b2,"3#sigma matching",'f')
+    legend.Draw()
+    c2.SaveAs('h_rap_1d.png')
+
+    
 
 #------------------------------------------------
 
-massrap_matching(False)
+#massrap_matching(False)
+
+oneDim_matching(True)
 
 #xi_matching('m')
 #xi_matching('p')

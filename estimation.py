@@ -18,6 +18,7 @@ gROOT.ProcessLine(
    Float_t   xip;\
    Long64_t  xangle;\
    Char_t    era[5];\
+   Float_t   weight;\
 };");
 
 gROOT.ProcessLine(
@@ -34,16 +35,19 @@ pro_struct  = proStruct()
 
 
 # Flags
-experiments = 100000     # number of iterations
+experiments = 100     # number of iterations
 plotting = False     # make matching plot for each experiment
 testing  = False    # only run over a few events
 test_events = 10    # number of events to use for testing
-method = 'singleRP' # singleRP or multiRP reconstruction
+method = 'multiRP' # singleRP or multiRP reconstruction
 
-
-diphoton_file = TFile( 'estimation/diphotonEvents_'+method+'.root' )
+#diphoton_file = TFile( 'estimation/diphotonEvents_data2017_Xi_'+method+'.root' ) # data
+diphoton_file = TFile( 'estimation/diphotonEvents_mc2017.root' ) # 2017 MC
 proton_file = TFile( 'estimation/protonEvents_'+method+'.root' )
 
+data_ = False
+v_eras = ['2017B', '2017C', '2017D', '2017E', '2017F']
+v_xangles = [120.0, 130.0, 140.0, 150.0]
 
 diphoton_tree = diphoton_file.Get( 'tree' )
 diphoton_tree.SetBranchAddress('mass', AddressOf( diph_struct, 'mass'))
@@ -52,6 +56,7 @@ diphoton_tree.SetBranchAddress('xim', AddressOf( diph_struct, 'xim'))
 diphoton_tree.SetBranchAddress('xip', AddressOf( diph_struct, 'xip'))
 diphoton_tree.SetBranchAddress('xangle', AddressOf( diph_struct, 'xangle'))
 diphoton_tree.SetBranchAddress('era', AddressOf( diph_struct, 'era'))
+diphoton_tree.SetBranchAddress('weight', AddressOf( diph_struct, 'weight'))
 
 tree_B_120 = proton_file.Get( 'tree_B_120' )
 tree_B_120.SetBranchAddress('num_m', AddressOf( pro_struct, 'num_m'))
@@ -298,19 +303,28 @@ def lumiLabel():
 entries = diphoton_tree.GetEntries()
 if testing: entries, experiments = test_events, 1
 
+#print 'entries:', entries
+
 v_count, v_20sig, v_3sig, v_2sig = [], [], [], []
 
 for e in range(experiments):
 
     count, matching_2sig, matching_3sig, matching_20sig = 0, 0, 0, 0
-    #plotting = True
+    plotting = False
     gr_estimate.Set(0)
 
     for i in range(entries):
         diphoton_tree.GetEntry(i)
-
+        
         v_xim, v_xip = [], []
     
+        if not data_:
+            diph_struct.xangle = random.choice(v_xangles)
+            diph_struct.era = random.choice(v_eras)
+
+
+        #print 'Era:', diph_struct.xangle, 'xangle:', diph_struct.era
+
         # Get entry by era and xangle
         if diph_struct.era == '2017B':
             if diph_struct.xangle == 120: tree_B_120.GetEntry( random.randrange(0,tree_B_120.GetEntries()) )        
@@ -340,6 +354,8 @@ for e in range(experiments):
 
         if pro_struct.num_m == 0 or pro_struct.num_p == 0: continue
 
+        #print '---> i:', i, '2 opposite-side protons!'
+
         for j in range(pro_struct.num_m): v_xim.append( pro_struct.xim[j] )
         for j in range(pro_struct.num_p): v_xip.append( pro_struct.xip[j] )
         pro_xim, pro_xip = find_nearest(v_xim, diph_struct.xim), find_nearest(v_xip, diph_struct.xip) 
@@ -355,16 +371,16 @@ for e in range(experiments):
         if plotting: gr_estimate.SetPoint( gr_estimate.GetN(), mass_match, rap_match )
         h2_estimate.Fill(mass_match, rap_match)
 
-        count += 1
-        if abs(mass_match) < 20 and abs(rap_match) < 20: matching_20sig += 1
-        if abs(mass_match) < 3 and abs(rap_match) < 3: matching_3sig += 1
-        if abs(mass_match) < 2 and abs(rap_match) < 2: matching_2sig += 1
+        count += diph_struct.weight
+        if abs(mass_match) < 20 and abs(rap_match) < 20: matching_20sig += diph_struct.weight
+        if abs(mass_match) < 3 and abs(rap_match) < 3: matching_3sig += diph_struct.weight
+        if abs(mass_match) < 2 and abs(rap_match) < 2: matching_2sig += diph_struct.weight
 
 
     #print 'Experiment number:', e, 'Number of 3-sigma matching:', matching_3sig, 'Number of 2-sigma matching:', matching_2sig
-    if e%1000 == 0: print str(100*e/experiments)+'% done'
+    if e*100%experiments == 0: print str(100*e/experiments)+'% done'
     v_20sig.append(matching_20sig), v_3sig.append(matching_3sig), v_2sig.append(matching_2sig), v_count.append(count)
-    #if matching_2sig > 3 or matching_3sig > 7: plotting = False
+    if matching_2sig > 3 or matching_3sig > 7: plotting = False
     if plotting: plot_estimate( gr_estimate, 'background_estimate_%d.png' % e )
 
 print ''
@@ -384,12 +400,12 @@ print 'Average num events:', getAverage(v_count)
 
 # Plotting for cross checks
 
-c = TCanvas('c','',750,600)
-c.cd()
-h2_estimate.GetXaxis().SetTitle("(m_{pp}-m_{#gamma#gamma})/#sigma(m_{pp}-m_{#gamma#gamma})")
-h2_estimate.GetYaxis().SetTitle("(y_{pp} - y_{#gamma#gamma})/#sigma(y_{pp} - y_{#gamma#gamma})")
-h2_estimate.Draw('colz')
-c.SaveAs('h2_estimate.png')
+#c = TCanvas('c','',750,600)
+#c.cd()
+#h2_estimate.GetXaxis().SetTitle("(m_{pp}-m_{#gamma#gamma})/#sigma(m_{pp}-m_{#gamma#gamma})")
+#h2_estimate.GetYaxis().SetTitle("(y_{pp} - y_{#gamma#gamma})/#sigma(y_{pp} - y_{#gamma#gamma})")
+#h2_estimate.Draw('colz')
+#c.SaveAs('h2_estimate.png')
 
 '''    
 c1 = TCanvas('c1','',750,600)

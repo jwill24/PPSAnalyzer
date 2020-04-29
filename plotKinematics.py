@@ -13,11 +13,11 @@ from common import sampleColors, Canvas, Prettify, lumiLabel, makeLegend, asym_e
 
 gStyle.SetOptStat(0)
 
-lab = 'Diphoton selection'
-selection = 'Elastic'
+lab = 'Preselection'
+selection = 'Preselection'
 years = ['2017','2018']
+#years = ['2018']
 s_years = '+'.join(years)
-scale2018 = 57.72/37.20
 samples = sampleColors()
 samples.append(['aqgc',92,92])
 samples.append(['data',kBlack,kBlack])
@@ -64,19 +64,12 @@ def plotRatio(name, h1, v_hist, hs, log):
     h_data.SetLineWidth(2)
     h_data.Draw('p e2 same')
     hs.Draw('HIST same')
-    #if any(['Elastic' in lab, 'Xi' in lab]):
-    #    ymax=stack.GetMaximum()*2 if log else stack.GetMaximum()*1.2
-    #    ymax2=h_data.GetMaximum()*2 if log else h_data.GetMaximum()*1.2
-    #else:
-    #    ymax=stack.GetMaximum()*100 if log else stack.GetMaximum()*1.2
-    #    ymax2=h_data.GetMaximum()*100 if log else h_data.GetMaximum()*1.6
-    #stack.SetMaximum(max(ymax,ymax2))
-    ymax = h1.GetMaximum()*pow(10,1.2) if log else h1.GetMaximum()*1.5 
+    ymax = h1.GetMaximum()*pow(10,1.0) if log else h1.GetMaximum()*1.5 
     stack.SetMaximum(ymax)
     if log: stack.SetMinimum(1)
-    #stack.GetHistogram().GetYaxis().SetTitleSize(20)
     #stack.GetHistogram().GetYaxis().SetTitleFont(43)
-    #stack.GetHistogram().GetYaxis().SetTitleOffset(4)
+    stack.GetHistogram().GetYaxis().SetTitleOffset(1.0)
+    stack.GetHistogram().GetYaxis().SetTitleSize(0.05)
     stack.GetHistogram().GetYaxis().SetTitle('Events')
     pLabel, sLabel, lLabel = prelimLabel(log,h1.GetMaximum()), selectionLabel(lab,True,log,h1.GetMaximum()), lumiLabel(True,years)
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
@@ -92,7 +85,7 @@ def plotRatio(name, h1, v_hist, hs, log):
     h_ratio.SetMaximum(2.499)
     h_ratio.SetLineColor(ROOT.kBlack)
     h_ratio.SetMarkerStyle(20)
-    h_ratio.SetMarkerColorAlpha(ROOT.kBlack,1)
+    h_ratio.SetMarkerColor(ROOT.kBlack)
     h_ratio.SetMarkerSize(0.7)
     h_ratio.Draw('p same')
     denom_err, denom_err2 = h_mc_err.Clone(), h_mc_err.Clone()
@@ -113,7 +106,7 @@ def plotRatio(name, h1, v_hist, hs, log):
     Prettify( h_ratio )
 
     if len(years) == 1: c.SaveAs('plots/'+years[0]+'/'+name+'_'+selection+'.png')
-    else: c.SaveAs('plots/combined/'+name+'_'+selection+'_'+s_years+'.png')
+    else: c.SaveAs('plots/combined/'+name+'_'+selection+'_'+s_years+'.pdf') # saving as pdf
 
 def prelimLabel(log,maximum):
     if not log and maximum > 10e4: label = TPaveText( 0.15, 0.76, 0.2, 0.84, 'NB NDC' )
@@ -152,14 +145,16 @@ def setPlot(h, sample, rbin):
     fill, line = getColors(sample)
     h.SetTitle('')
     h.Rebin(rbin)
-    h.SetFillColorAlpha(fill,0.4)
+    #h.SetFillColorAlpha(fill,0.4)
+    h.SetFillColor(fill)
     h.SetLineColor(line) 
     h.SetLineWidth(2)
     return h
 
 def getHist(sample, year, name):
     for s in v_files:
-        if sample+year == s[0]: h = s[1].Get('plots/'+name)
+        if sample+year == s[0]: 
+            h = s[1].Get('plots/'+name)
     return h
 
 def makePlot(inName, outName, xTitle, rbin, log):
@@ -183,27 +178,13 @@ def makePlot(inName, outName, xTitle, rbin, log):
             h_aqgc = TH1F('h_aqgc', '', bins, first, last)
 
         h_data.Add( getHist('data',year,inName) )
-        h_tmp = getHist('ggj',year,inName)
-        if year == '2018': h_tmp.Scale( scale2018 )
-        h_ggj.Add( h_tmp )
-        h_tmp = getHist('g+j',year,inName)
-        if year == '2018': h_tmp.Scale( scale2018 )
-        h_gj.Add( h_tmp )
-        h_tmp = getHist('qcd',year,inName)
-        if year == '2018': h_tmp.Scale( scale2018 )
-        h_qcd.Add( h_tmp )
-        h_tmp = getHist('wg',year,inName)
-        if year == '2018': h_tmp.Scale( scale2018 )
-        h_wg.Add( h_tmp )
-        h_tmp = getHist('zg',year,inName)
-        if year == '2018': h_tmp.Scale( scale2018 )
-        h_zg.Add( h_tmp )
-        h_tmp = getHist('tt',year,inName)
-        if year == '2018': h_tmp.Scale( scale2018 )
-        h_tt.Add( h_tmp )
-        h_tmp = getHist('aqgc','2017',inName)
-        if year == '2018': h_tmp.Scale( scale2018 )
-        h_aqgc.Add( h_tmp )
+        h_ggj.Add( getHist('ggj',year,inName) )
+        h_gj.Add( getHist('g+j',year,inName) )
+        h_qcd.Add( getHist('qcd',year,inName) )
+        h_wg.Add( getHist('wg',year,inName) )
+        h_zg.Add( getHist('zg',year,inName) )
+        h_tt.Add( getHist('tt',year,inName) )
+        h_aqgc.Add( getHist('aqgc','2017',inName) ) # FIXME: year -> '2017'
 
     h_data.SetTitle('')
     h_data.SetXTitle(xTitle)
@@ -220,9 +201,9 @@ def makePlot(inName, outName, xTitle, rbin, log):
     setPlot(h_tt, 'tt', rbin)
     setPlot(h_aqgc, 'aqgc', rbin)
     h_aqgc.SetFillColor(0)
+    h_aqgc.Scale(100)
         
-    v.append(h_tt), 
-    v.append(h_zg), v.append(h_wg), v.append(h_gj), v.append(h_ggj), v.append(h_qcd)
+    v.append(h_tt), v.append(h_zg), v.append(h_wg), v.append(h_gj), v.append(h_ggj), v.append(h_qcd)
         
     plotRatio(outName, h_data, v, h_aqgc, log)
 
@@ -250,26 +231,26 @@ def makeProtonPlot(name, xTitle, rbin, log):
 #-----------------------
 
 
-makePlot('h_diph_mass', 'h_mass_comp', 'm_{#gamma#gamma} GeV', 4, True)
-makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
-makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 1, True)
+#makePlot('h_diph_mass', 'h_mass_comp', 'm_{#gamma#gamma} GeV', 4, True)
+#makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
+#makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 4, True)
 #makePlot('h_lead_pt', 'h_lead_pt_comp', 'Leading p_{T}^{#gamma} GeV', 2, True)
 #makePlot('h_sub_pt', 'h_sub_pt_comp', 'Subleading p_{T}^{#gamma} GeV', 2, True)
-makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 1, False)
+#makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 2, False)
 #makePlot('h_lead_eta', 'h_lead_eta_comp', 'Leading #eta ^{#gamma}', 4, False)
 #makePlot('h_sub_eta', 'h_sub_eta_comp', 'Subleading #eta ^{#gamma}', 4, False)
-#makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 2, True)
+makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 1, True)
 #makePlot('h_lead_r9', 'h_lead_r9_comp', 'Leading R_{9} ^{#gamma}', 2, True)
 #makePlot('h_sub_r9', 'h_sub_r9_comp', 'Subleading R_{9} ^{#gamma}', 2, True)
 #makePlot('h_eb_hoe', 'h_eb_hoe_comp', 'EB H/E', 1, True)
 #makePlot('h_eb_sieie', 'h_eb_sieie_comp', 'EB #sigma_{i#etai#eta}', 1, True)
-makePlot('h_nvtx', 'h_nvtx_comp', 'Number of vertices', 1, True)
-makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
-makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
-makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 4, True)
-makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
-makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, True)
-
+#makePlot('h_nvtx', 'h_nvtx_comp', 'Number of vertices', 1, True)
+#makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
+#makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
+#makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 4, True)
+#makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
+#makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, True)
+#makePlot('h_r9_3x3', 'h_r9_3x3', 'R_{9}^{3x3}', 1, True) # FIXME: testing
 
 
 #makeProtonPlot('h_num_pro', 'Number of protons', 1, False)
