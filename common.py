@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 import os, sys
+import math
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 from ROOT import gROOT, gStyle, TColor, TCanvas, TPaveText, TLegend
 
 lightBlue, red, yellow, purple, darkGreen, green = ROOT.kCyan-9, 208, ROOT.kYellow-9, 38, ROOT.kTeal+3, ROOT.kGreen-9
+sqrts = 13000.0
+rel_xi_err = 0.08
 
 class Color(int):
     __slots__ = ["object", "name"]
@@ -169,3 +172,110 @@ def asym_error_bars(hist):
         g.SetPointEYlow( i, N-L )
         g.SetPointEYhigh( i, U-N )
     return g
+
+def open_root(path):
+    r_file = ROOT.TFile.Open(path)
+    if not r_file.__nonzero__() or not r_file.IsOpen(): raise NameError('File ' + path + ' not open')
+    return r_file
+
+def get_root_obj(root_file, obj_name):
+    r_obj = root_file.Get(obj_name)
+    if not r_obj.__nonzero__(): raise NameError('Root Object ' + obj_name + ' not found')
+    return r_obj
+
+# Apply mass cut
+def mass_cut(diph_mass):
+    if diph_mass > 350: return True
+    else: return False
+
+# Apply hoe cut
+def hoe_cut(pho1,pho2):
+    if pho1.hoe <= 0.1 and pho2.hoe <= 0.1: return True
+    else: return False
+
+## Apply hoe cut
+#def hoe_cut(pho1,pho2):
+#    if pho1.isScEtaEB and pho1.hoe > 0.082: return False
+#    if pho1.isScEtaEE and pho1.hoe > 0.075: return False
+#    if pho2.isScEtaEB and pho2.hoe > 0.082: return False
+#    if pho2.isScEtaEE and pho2.hoe > 0.075: return False
+#    return True
+
+# Apply acoplanarity cut
+def acop_cut(acop):
+    if acop < 0.005: return True
+    else: return False
+
+# Apply photon ID
+def photon_id(pho1,pho2):
+    if pho1.mvaID_WP90 == 1 and pho2.mvaID_WP90 == 1: return True # loose MVA ID                                                                                                                     
+    else: return False
+
+# Apply electron veto
+def electron_veto(pho1,pho2):
+    if pho1.electronVeto == 1 and pho2.electronVeto == 1: return True
+    else: return False
+
+# Tight xi cut
+def xi_cut(xip,xim):
+    if xip < 0.015 or xip > 0.2: return False
+    if xim < 0.015 or xim > 0.2: return False
+    return True
+
+# Apply eta veto
+def eta_cut(pho1,pho2):
+    if abs(pho1.eta) > 2.5 or abs(pho2.eta) > 2.5: return False # Out of fiducial range
+    #if pho1.isScEtaEE and pho2.isScEtaEE: return False         # EEEE events
+    if pho1.eta > 1.4442 and pho1.eta < 1.566: return False     # transition region
+    if pho1.eta < -1.442 and pho1.eta > -1.566: return False    # transition region
+    if pho2.eta > 1.4442 and pho2.eta < 1.566: return False     # transition region
+    if pho2.eta < -1.442 and pho2.eta > -1.566: return False    # transition region
+    return True
+
+# Check for two opposite-side protons
+def two_protons(protons):
+    if len(protons) >= 2:
+        proton_45 = proton_56 = False
+        for proton in protons:
+            if proton.sector45 == 1: proton_45 = True
+            elif proton.sector56 == 1: proton_56 = True
+        if proton_45 and proton_56: return True
+        else: return False
+    else: return False
+
+def mass(xi1,xi2):
+    if xi1 < 0 or xi2 < 0:
+        print '---> Weird. Negtative xi value. xi1:', xi1, 'xi2:', xi2
+        return -1
+    else: return sqrts*math.sqrt(xi1*xi2)
+
+def rapidity(xi1,xi2):
+    if xi1 < 0 or xi2 < 0: return -999
+    else: return 0.5*math.log(xi1/xi2)
+
+def mass_err(pro1,pro2):
+    return mass(pro1.xi,pro2.xi) * rapidity_err(pro1,pro2)
+
+def rapidity_err(pro1,pro2):
+    xi1_err, xi2_err = pro1.xi*rel_xi_err, pro2.xi*rel_xi_err
+    return 0.5 * math.sqrt( pow(xi1_err/pro1.xi,2) + pow(xi2_err/pro2.xi,2) )
+
+def mass_matching(mp):
+    if abs(mp) <= 3: return True
+    else: return False
+
+def rap_matching(rp):
+    if abs(rp) <= 3: return True
+    else: return False
+
+def getEra(run):
+    if run > 297023 and run < 299330:   return '2017B'
+    elif run > 299359 and run < 302045: return '2017C'
+    elif run > 302111 and run < 302679: return '2017D'
+    elif run > 303708 and run < 304798: return '2017E'
+    elif run > 305016 and run < 306462: return '2017F'
+    elif run > 305016 and run < 306462: return '2018A'
+    elif run > 305016 and run < 306462: return '2018B'
+    elif run > 305016 and run < 306462: return '2018C'
+    elif run > 305016 and run < 306462: return '2018D'
+    else: return 'none'

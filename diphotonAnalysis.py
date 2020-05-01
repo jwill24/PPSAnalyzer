@@ -12,6 +12,9 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collect
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeightProducer, puWeight_2017
 
+from common import open_root, get_root_obj, mass_cut, hoe_cut, acop_cut, photon_id, electron_veto, xi_cut, eta_cut, two_protons
+from common import mass, rapidity, mass_err, rapidity_err, mass_matching, rap_matching, getEra
+
 ROOT.gROOT.ProcessLine(
 "struct MyStruct {\
    Float_t     mass;\
@@ -26,13 +29,11 @@ ROOT.gROOT.ProcessLine(
 from ROOT import MyStruct
 mystruct = MyStruct()
 
-PI = 3.14159265358979323846
-sqrts = 13000
+PI = 3.1415926535897932643383279
 lumi2017 = 37190 # 2017 data
 lumi2018 =  55720 # 2018 data
 rel_mass_err = 0.02
 rel_rap_err = 0.074
-rel_xi_err = 0.08
 
 sample = str( sys.argv[1] )
 selection = str( sys.argv[2] )
@@ -70,20 +71,19 @@ class DiphotonAnalysis(Module):
         # Get SF hists for ID and CSEV
         self.photonmapname = "EGamma_SF2D"        
         if '2017' in sample: 
-            #self.photon_file = self.open_root("/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/data/2017_PhotonsMVAwp90.root")
-            self.photon_file = self.open_root("/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/data/egammaEffi.txt_EGM2D_PHO_MVA90_UL17.root") # Updated 2017UL SFs
-            self.csev_file = self.open_root("/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/data/CSEV_ScaleFactors_2017.root")
+            self.photon_file = open_root("/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/data/egammaEffi.txt_EGM2D_PHO_MVA90_UL17.root")
+            self.csev_file = open_root("/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/data/CSEV_ScaleFactors_2017.root")
             self.csevmapname = "MVA_ID"
         elif '2018' in sample:
-            self.photon_file = self.open_root("/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/data/2018_PhotonsMVAwp90.root")
-            self.csev_file = self.open_root("/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/data/CSEV_2018.root")
+            self.photon_file = open_root("/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/data/2018_PhotonsMVAwp90.root")
+            self.csev_file = open_root("/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/data/CSEV_2018.root")
             self.csevmapname = "eleVeto_SF"
-        self.csev_map = self.get_root_obj(self.csev_file, self.csevmapname)
-        self.photon_map = self.get_root_obj(self.photon_file, self.photonmapname)
+        self.csev_map = get_root_obj(self.csev_file, self.csevmapname)
+        self.photon_map = get_root_obj(self.photon_file, self.photonmapname)
 
         if nSelect == 2.5 or nSelect == 5:
             # Initialize objects for toy matching file
-            self.diphoton_file = ROOT.TFile('/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/diphotonEvents_'+sample+'_Xi_multiRP.root', 'RECREATE')
+            self.diphoton_file = ROOT.TFile('/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/tmp/diphotonEvents_'+sample+'_'+selection+'_multiRP.root', 'RECREATE')
             self.diphoton_tree = ROOT.TTree('tree','Tree with diphoton events')
             self.v_mass, self.v_rap, self.v_xip, self.v_xim, self.v_era, self.v_xangle = array('f', []), array('f', []), array('f', []), array('f', []), array('f', []), array('f', [])
             self.diphoton_tree.Branch('mass', ROOT.AddressOf( mystruct, 'mass'), 'mass/F')
@@ -93,18 +93,7 @@ class DiphotonAnalysis(Module):
             self.diphoton_tree.Branch('xangle', ROOT.AddressOf( mystruct, 'xangle'), 'xangle/L')
             self.diphoton_tree.Branch('era', ROOT.AddressOf( mystruct, 'era'), 'era/C')
             self.diphoton_tree.Branch('weight', ROOT.AddressOf( mystruct, 'weight'), 'weight/F')
-            
 
-    def open_root(self, path):
-        r_file = ROOT.TFile.Open(path)
-        if not r_file.__nonzero__() or not r_file.IsOpen(): raise NameError('File ' + path + ' not open')
-        return r_file
-
-    def get_root_obj(self, root_file, obj_name):
-        r_obj = root_file.Get(obj_name)
-        if not r_obj.__nonzero__(): raise NameError('Root Object ' + obj_name + ' not found')
-        return r_obj
-        
     def beginJob(self,histFile=None,histDirName=None):
 	Module.beginJob(self,histFile,histDirName)
         
@@ -140,8 +129,8 @@ class DiphotonAnalysis(Module):
 
         self.h_num_pro=ROOT.TH1F('h_num_pro', 'Number of Protons', 15, 0, 15)
         self.h_detType=ROOT.TH1F('h_detType', 'PPS Detector Type', 2, 3, 4)
-        self.h_pro_xip=ROOT.TH1F('h_pro_xip', 'Proton #xi ^{+}', 100, 0.01, 0.25)
-        self.h_pro_xim=ROOT.TH1F('h_pro_xim', 'Proton #xi ^{-}', 100, 0.01, 0.25)
+        self.h_pro_xip=ROOT.TH1F('h_pro_xip', 'Proton #xi ^{+}', 100, 0.00, 0.25)
+        self.h_pro_xim=ROOT.TH1F('h_pro_xim', 'Proton #xi ^{-}', 100, 0.00, 0.25)
         self.h_pro_xi_45f=ROOT.TH1F('h_pro_xi_45f', 'Proton #xi 45F', 100, 0., 0.25)
         self.h_pro_xi_45n=ROOT.TH1F('h_pro_xi_45n', 'Proton #xi 45N', 100, 0., 0.25)
         self.h_pro_xi_56n=ROOT.TH1F('h_pro_xi_56n', 'Proton #xi 56N', 100, 0., 0.25)
@@ -201,57 +190,6 @@ class DiphotonAnalysis(Module):
             self.diphoton_file.Write()
             self.diphoton_file.Close()
 
-
-    # Apply mass cut
-    def mass_cut(self,diph_mass):
-        if diph_mass > 350: return True
-        else: return False
-
-    # Apply hoe cut
-    def hoe_cut(self,pho1,pho2):
-        if pho1.hoe >= 0.1 and pho2.hoe >= 0.1: return True
-        else: return False
-
-    # Apply acoplanarity cut
-    def acop_cut(self,acop):
-        if acop < 0.005: return True
-        else: return False
-
-    # Apply photon ID
-    def photon_id(self,pho1,pho2):
-        if pho1.mvaID_WP90 == 1 and pho2.mvaID_WP90 == 1: return True # loose MVA ID
-        else: return False
-        return True
-
-    # Apply electron veto
-    def electron_veto(self,pho1,pho2):
-        if pho1.electronVeto == 1 and pho2.electronVeto == 1: return True
-        else: return False
-
-    # Tight xi cut
-    def xi_cut(self,xip,xim):
-        if xip < 0.015 or xip > 0.2: return False
-        if xim < 0.015 or xim > 0.2: return False
-        return True
-
-    # Apply eta veto
-    def eta_cut(self,pho1,pho2):
-        if abs(pho1.eta) > 2.5 or abs(pho2.eta) > 2.5: return False # Out of fiducial range
-        #if pho1.isScEtaEE and pho2.isScEtaEE: return False         # EEEE events
-        if pho1.eta > 1.4442 and pho1.eta < 1.566: return False     # transition region
-        if pho1.eta < -1.442 and pho1.eta > -1.566: return False    # transition region
-        if pho2.eta > 1.4442 and pho2.eta < 1.566: return False     # transition region
-        if pho2.eta < -1.442 and pho2.eta > -1.566: return False    # transition region
-        return True
-
-    # Apply hoe cut
-    def hoe_cut(self,pho1,pho2):
-        if pho1.isScEtaEB and pho1.hoe > 0.082: return False
-        if pho1.isScEtaEE and pho1.hoe > 0.075: return False
-        if pho2.isScEtaEB and pho2.hoe > 0.082: return False
-        if pho2.isScEtaEE and pho2.hoe > 0.075: return False
-        return True 
-        
     # Get the SFs for MCs
     def efficiency(self,pt,eta_sc,r9):
         if nSelect != 2.5 and nSelect < 3: return 1.0
@@ -282,53 +220,6 @@ class DiphotonAnalysis(Module):
                 w = 1 
         return w
 
-    # Check for two opposite-side protons
-    def two_protons(self,protons):
-        if len(protons) >= 2:
-            proton_45 = proton_56 = False
-            for proton in protons:
-                if proton.sector45 == 1: proton_45 = True
-                elif proton.sector56 == 1: proton_56 = True
-            if proton_45 and proton_56: return True
-            else: return False 
-        else: return False
-
-    def mass(self,xi1,xi2):
-        if xi1 < 0 or xi2 < 0: 
-            print '---> Weird. Negtative xi value. xi1:', xi1, 'xi2:', xi2
-            return -1
-        else: return sqrts*math.sqrt(xi1*xi2)
-
-    def rapidity(self,xi1,xi2):
-        if xi1 < 0 or xi2 < 0: return -999
-        else: return 0.5*math.log(xi1/xi2)
-
-    def mass_err(self,pro1,pro2):
-        return self.mass(pro1.xi,pro2.xi) * self.rapidity_err(pro1,pro2)
-        
-    def rapidity_err(self,pro1,pro2):
-        xi1_err, xi2_err = pro1.xi*rel_xi_err, pro2.xi*rel_xi_err
-        return 0.5 * math.sqrt( pow(xi1_err/pro1.xi,2) + pow(xi2_err/pro2.xi,2) )
-
-    def mass_matching(self,mp):
-        if abs(mp) <= 3: return True
-        else: return False
-
-    def rap_matching(self,rp):
-        if abs(rp) <= 3: return True
-        else: return False
-
-    def getEra(self,run):
-        if run > 297023 and run < 299330:   return '2017B'
-        elif run > 299359 and run < 302045: return '2017C'
-        elif run > 302111 and run < 302679: return '2017D'
-        elif run > 303708 and run < 304798: return '2017E'
-        elif run > 305016 and run < 306462: return '2017F'
-        elif run > 305016 and run < 306462: return '2018A'
-        elif run > 305016 and run < 306462: return '2018B'
-        elif run > 305016 and run < 306462: return '2018C'
-        elif run > 305016 and run < 306462: return '2018D'
-        else: return 'none'
 
     def analyze(self, event):
         #if data_: protons = Collection(event, "Proton_singleRP")
@@ -345,6 +236,7 @@ class DiphotonAnalysis(Module):
         pho1, pho2 = photons[0], photons[1]
         for combo in combinations(range(0,len(photons)),2):
             p1, p2 = photons[combo[0]], photons[combo[1]]
+            if p1.pt < 100.0 or p2.pt < 100.0: continue
             tmp_acop =  1.0 - abs( p1.p4().DeltaPhi(p2.p4()) ) / PI
             if tmp_acop > acop: continue
             acop = tmp_acop
@@ -359,20 +251,20 @@ class DiphotonAnalysis(Module):
         if data_: weight = 1
 
         # Make selection cuts
-        if nSelect > 1:                                # Preselection
-            if p1.pt < 100.0 or p2.pt < 100.0: return  # Trigger safe pT cut
-            if not self.hoe_cut(pho1,pho2): return     # Trigger safe hoe cut
-            if not self.eta_cut(pho1,pho2): return 
-            if not self.mass_cut(diph_mass): return
-        if nSelect > 2:                                # ID
-            if not self.photon_id(pho1,pho2): return
-            if not self.electron_veto(pho1,pho2): return
-        if nSelect == 2.5:                             # Reverse Elastic
-            if acop < 0.005: return
-        if nSelect > 3:                                # Elastic
-            if not self.acop_cut(acop): return
-        if nSelect > 4 or nSelect == 2.5:              # Tight xi or reverse elastic
-            if not self.xi_cut(xip,xim): return
+        if nSelect > 1:                                   # Preselection
+            if pho1.pt < 100.0 or pho2.pt < 100.0: return
+            if not hoe_cut(pho1,pho2): return
+            if not eta_cut(pho1,pho2): return 
+            if not mass_cut(diph_mass): return
+        if nSelect > 2:                                   # ID
+            if not photon_id(pho1,pho2): return
+            if not electron_veto(pho1,pho2): return
+        if nSelect == 2.5:                                # Reverse Elastic
+            if acop_cut(acop): return
+        if nSelect > 3:                                   # Elastic
+            if not acop_cut(acop): return
+        if nSelect > 4 or nSelect == 2.5:                 # Tight xi or reverse elastic
+            if not xi_cut(xip,xim): return
 
         # Print high-mass event kinematics
         if data_: 
@@ -400,7 +292,7 @@ class DiphotonAnalysis(Module):
             mystruct.weight = weight
             if data_:
                 mystruct.xangle = event.LHCInfo_xangle
-                mystruct.era = self.getEra(event.run)
+                mystruct.era = getEra(event.run)
             else: # FIXME
                 mystruct.xangle = 150.0
                 mystruct.era = '2017E' if '2017' in sample else '2018D'
@@ -452,7 +344,7 @@ class DiphotonAnalysis(Module):
             #else: print 'Proton not in known det id:', proton.decDetId       # not available for multiRP
 
         # Choose the best diproton candidate
-        if not self.two_protons(protons): return
+        if not two_protons(protons): return
         v45, v56 = [], []
         for proton in protons:
             if proton.sector45: v45.append(proton)
@@ -463,8 +355,8 @@ class DiphotonAnalysis(Module):
 
 
         # SetPoint for matching plot
-        pps_mass, pps_rap = self.mass(pro_m.xi,pro_p.xi), self.rapidity(pro_m.xi,pro_p.xi)
-        pps_mass_err, pps_rap_err = self.mass_err(pro_m, pro_p), self.rapidity_err(pro_m, pro_p)
+        pps_mass, pps_rap = mass(pro_m.xi,pro_p.xi), rapidity(pro_m.xi,pro_p.xi)
+        pps_mass_err, pps_rap_err = mass_err(pro_m, pro_p), rapidity_err(pro_m, pro_p)
         mass_point = (pps_mass - diph_mass) / (pps_mass_err + diph_mass*rel_mass_err) 
         rap_point = (pps_rap - diph_rap) / (pps_rap_err + rel_rap_err*diph_rap)
         self.gr_matching.SetPoint( self.gr_matching.GetN(), mass_point, rap_point )
@@ -496,7 +388,7 @@ else:
     elif '2018' in sample:
         files=["/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_"+sample+"_Skim.root"]
         
-p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/histOut_"+sample+"_"+selection+"_multiRP.root",histDirName="plots")
+p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/tmp/histOut_"+sample+"_"+selection+"_multiRP.root",histDirName="plots")
 p.run()
 
 
