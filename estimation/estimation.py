@@ -35,19 +35,26 @@ pro_struct  = proStruct()
 
 
 # Flags
-experiments = 100     # number of iterations
+experiments = 100000     # number of iterations
 plotting = False     # make matching plot for each experiment
 testing  = False    # only run over a few events
 test_events = 10    # number of events to use for testing
-method = 'multiRP' # singleRP or multiRP reconstruction
+method = 'singleRP' # singleRP or multiRP reconstruction
 
-#diphoton_file = TFile( 'estimation/diphotonEvents_data2017_Xi_'+method+'.root' ) # data
-diphoton_file = TFile( 'estimation/diphotonEvents_mc2017.root' ) # 2017 MC
+diphoton_file = TFile( 'estimation/diphotonEvents_data2017_Xi_'+method+'.root' ) # data
+#diphoton_file = TFile( 'estimation/diphotonEvents_mc2017.root' ) # 2017 MC
 proton_file = TFile( 'estimation/protonEvents_'+method+'.root' )
 
-data_ = False
-v_eras = ['2017B', '2017C', '2017D', '2017E', '2017F']
-v_xangles = [120.0, 130.0, 140.0, 150.0]
+if 'data' in diphoton_file.GetName():
+    data_ = True
+    sample_string = 'data'
+else:
+    data_ = False
+    sample_string = 'mc'
+    v_eras = ['2017B', '2017C', '2017D', '2017E', '2017F']
+    #v_eras = [['2017B',0.0915], ['2017C',0.3318], ['2017D',0.1584], ['2017E',0.1019], ['2017F',0.3164]] # weights from HLT
+    #v_eras = [['2017B',0.0541], ['2017C',0.3419], ['2017D',0.1311], ['2017E',0.1054], ['2017F',0.3675]] # weights from Xi
+    v_xangles = [120.0, 130.0, 140.0, 150.0]
 
 diphoton_tree = diphoton_file.Get( 'tree' )
 diphoton_tree.SetBranchAddress('mass', AddressOf( diph_struct, 'mass'))
@@ -164,12 +171,23 @@ tree_F_150.SetBranchAddress('xim', AddressOf( pro_struct, 'xim'))
 tree_F_150.SetBranchAddress('xip', AddressOf( pro_struct, 'xip'))
 
 gr_estimate = TGraphErrors('gr_estimate')
+#gr_converge = ROOT.TGraph('gr_converge')
+#gr_converge.SetName('gr_converge')
 h2_estimate = TH2F( 'h2_estimate', '', 100, -20, 20, 100, -20, 20)
 h2_xim = TH2F( 'h2_xim', '', 100, 0, 0.2, 100, 0, 0.2 )
 h2_xip = TH2F( 'h2_xip', '', 100, 0, 0.2, 100, 0, 0.2 )
 
 h_xip = TH1F('h_xip', '#xi ^{+}', 100, 0., 0.25)
 h_xim = TH1F('h_xim', '#xi ^{-}', 100, 0., 0.25)
+
+converge = []
+points = [100000]
+for i in range(1,10):
+    for j in range(5):
+        point = i*math.pow(10,j)
+        points.append(int(point))
+points.sort()
+
 
 #----------------------------------
 
@@ -181,7 +199,7 @@ def find_nearest(array, value):
 
 def getMass(xim,xip):
     if xim < 0 or xip < 0: return -1
-    else: return 13000 * math.sqrt(xim*xip)
+    else: return 13000.0 * math.sqrt(xim*xip)
 
 #----------------------------------
 
@@ -210,7 +228,31 @@ def isMatching(cms_mass,cms_rap,pro_xim,pro_xip):
 
 #----------------------------------
 
+def weighted_choice(choices):
+   total = sum(w for c, w in choices)
+   r = random.uniform(0, total)
+   upto = 0
+   for c, w in choices:
+      if upto + w >= r:
+         return c
+      upto += w
+   assert False, "Shouldn't get here"
+
+#----------------------------------
+
+def getXangle(era):
+    if era == '2017B': choices = [['120',0.1716], ['130',0.1980], ['140',0.2981], ['150',0.3323]]
+    elif era == '2017C': choices = [['120',0.2199], ['130',0.2743], ['140',0.1844], ['150',0.3214]]
+    elif era == '2017D': choices = [['120',0.1614], ['130',0.2846], ['140',0.2614], ['150',0.2926]]
+    elif era == '2017E': choices = [['120',0.2932], ['130',0.3478], ['140',0.1355], ['150',0.1610]]
+    elif era == '2017F': choices = [['120',0.4090], ['130',0.2392], ['140',0.0403], ['150',0.3115]]
+    xangle = weighted_choice(choices)
+    return int(xangle)
+
+#----------------------------------
+
 def getAverage(v):
+    if len(v) == 0: return 0
     return float( sum(v) ) / float( len(v) )
 
 #----------------------------------
@@ -303,13 +345,11 @@ def lumiLabel():
 entries = diphoton_tree.GetEntries()
 if testing: entries, experiments = test_events, 1
 
-#print 'entries:', entries
-
-v_count, v_20sig, v_3sig, v_2sig = [], [], [], []
+v_count, v_20sig, v_5sig,  v_3sig, v_2sig = [], [], [], [], []
 
 for e in range(experiments):
 
-    count, matching_2sig, matching_3sig, matching_20sig = 0, 0, 0, 0
+    count, matching_2sig, matching_3sig, matching_5sig, matching_20sig = 0, 0, 0, 0, 0
     plotting = False
     gr_estimate.Set(0)
 
@@ -318,43 +358,45 @@ for e in range(experiments):
         
         v_xim, v_xip = [], []
     
-        if not data_:
-            diph_struct.xangle = random.choice(v_xangles)
-            diph_struct.era = random.choice(v_eras)
+        if data_:
+            era, xangle = diph_struct.era, diph_struct.xangle
+        else:
+            era = random.choice(v_eras)
+            xangle = random.choice(v_xangles)
+            #era = weighted_choice(v_eras)
+            #xangle = getXangle( diph_struct.era )
+            
+        #print 'Era:', era, 'xangle:', xangle
 
-
-        #print 'Era:', diph_struct.xangle, 'xangle:', diph_struct.era
 
         # Get entry by era and xangle
-        if diph_struct.era == '2017B':
-            if diph_struct.xangle == 120: tree_B_120.GetEntry( random.randrange(0,tree_B_120.GetEntries()) )        
-            if diph_struct.xangle == 130: tree_B_130.GetEntry( random.randrange(0,tree_B_130.GetEntries()) )        
-            if diph_struct.xangle == 140: tree_B_140.GetEntry( random.randrange(0,tree_B_140.GetEntries()) )        
-            if diph_struct.xangle == 150: tree_B_150.GetEntry( random.randrange(0,tree_B_150.GetEntries()) )        
-        elif diph_struct.era == '2017C':
-            if diph_struct.xangle == 120: tree_C_120.GetEntry( random.randrange(0,tree_C_120.GetEntries()) )        
-            if diph_struct.xangle == 130: tree_C_130.GetEntry( random.randrange(0,tree_C_130.GetEntries()) )        
-            if diph_struct.xangle == 140: tree_C_140.GetEntry( random.randrange(0,tree_C_140.GetEntries()) )        
-            if diph_struct.xangle == 150: tree_C_150.GetEntry( random.randrange(0,tree_C_150.GetEntries()) )        
-        elif diph_struct.era == '2017D':
-            if diph_struct.xangle == 120: tree_D_120.GetEntry( random.randrange(0,tree_D_120.GetEntries()) )        
-            if diph_struct.xangle == 130: tree_D_130.GetEntry( random.randrange(0,tree_D_130.GetEntries()) )        
-            if diph_struct.xangle == 140: tree_D_140.GetEntry( random.randrange(0,tree_D_140.GetEntries()) )        
-            if diph_struct.xangle == 150: tree_D_150.GetEntry( random.randrange(0,tree_D_150.GetEntries()) )        
-        elif diph_struct.era == '2017E':
-            if diph_struct.xangle == 120: tree_E_120.GetEntry( random.randrange(0,tree_E_120.GetEntries()) )        
-            if diph_struct.xangle == 130: tree_E_130.GetEntry( random.randrange(0,tree_E_130.GetEntries()) )        
-            if diph_struct.xangle == 140: tree_E_140.GetEntry( random.randrange(0,tree_E_140.GetEntries()) )        
-            if diph_struct.xangle == 150: tree_E_150.GetEntry( random.randrange(0,tree_E_150.GetEntries()) )        
-        elif diph_struct.era == '2017F':
-            if diph_struct.xangle == 120: tree_F_120.GetEntry( random.randrange(0,tree_F_120.GetEntries()) )        
-            if diph_struct.xangle == 130: tree_F_130.GetEntry( random.randrange(0,tree_F_130.GetEntries()) )        
-            if diph_struct.xangle == 140: tree_F_140.GetEntry( random.randrange(0,tree_F_140.GetEntries()) )        
-            if diph_struct.xangle == 150: tree_F_150.GetEntry( random.randrange(0,tree_F_150.GetEntries()) )        
+        if era == '2017B':
+            if xangle == 120: tree_B_120.GetEntry( random.randrange(0,tree_B_120.GetEntries()) )        
+            if xangle == 130: tree_B_130.GetEntry( random.randrange(0,tree_B_130.GetEntries()) )        
+            if xangle == 140: tree_B_140.GetEntry( random.randrange(0,tree_B_140.GetEntries()) )        
+            if xangle == 150: tree_B_150.GetEntry( random.randrange(0,tree_B_150.GetEntries()) )        
+        elif era == '2017C':
+            if xangle == 120: tree_C_120.GetEntry( random.randrange(0,tree_C_120.GetEntries()) )        
+            if xangle == 130: tree_C_130.GetEntry( random.randrange(0,tree_C_130.GetEntries()) )        
+            if xangle == 140: tree_C_140.GetEntry( random.randrange(0,tree_C_140.GetEntries()) )        
+            if xangle == 150: tree_C_150.GetEntry( random.randrange(0,tree_C_150.GetEntries()) )        
+        elif era == '2017D':
+            if xangle == 120: tree_D_120.GetEntry( random.randrange(0,tree_D_120.GetEntries()) )        
+            if xangle == 130: tree_D_130.GetEntry( random.randrange(0,tree_D_130.GetEntries()) )        
+            if xangle == 140: tree_D_140.GetEntry( random.randrange(0,tree_D_140.GetEntries()) )        
+            if xangle == 150: tree_D_150.GetEntry( random.randrange(0,tree_D_150.GetEntries()) )        
+        elif era == '2017E':
+            if xangle == 120: tree_E_120.GetEntry( random.randrange(0,tree_E_120.GetEntries()) )        
+            if xangle == 130: tree_E_130.GetEntry( random.randrange(0,tree_E_130.GetEntries()) )        
+            if xangle == 140: tree_E_140.GetEntry( random.randrange(0,tree_E_140.GetEntries()) )        
+            if xangle == 150: tree_E_150.GetEntry( random.randrange(0,tree_E_150.GetEntries()) )        
+        elif era == '2017F':
+            if xangle == 120: tree_F_120.GetEntry( random.randrange(0,tree_F_120.GetEntries()) )        
+            if xangle == 130: tree_F_130.GetEntry( random.randrange(0,tree_F_130.GetEntries()) )        
+            if xangle == 140: tree_F_140.GetEntry( random.randrange(0,tree_F_140.GetEntries()) )        
+            if xangle == 150: tree_F_150.GetEntry( random.randrange(0,tree_F_150.GetEntries()) )        
 
         if pro_struct.num_m == 0 or pro_struct.num_p == 0: continue
-
-        #print '---> i:', i, '2 opposite-side protons!'
 
         for j in range(pro_struct.num_m): v_xim.append( pro_struct.xim[j] )
         for j in range(pro_struct.num_p): v_xip.append( pro_struct.xip[j] )
@@ -373,41 +415,51 @@ for e in range(experiments):
 
         count += diph_struct.weight
         if abs(mass_match) < 20 and abs(rap_match) < 20: matching_20sig += diph_struct.weight
+        if abs(mass_match) < 5 and abs(rap_match) < 5: matching_5sig += diph_struct.weight
         if abs(mass_match) < 3 and abs(rap_match) < 3: matching_3sig += diph_struct.weight
         if abs(mass_match) < 2 and abs(rap_match) < 2: matching_2sig += diph_struct.weight
 
-
-    #print 'Experiment number:', e, 'Number of 3-sigma matching:', matching_3sig, 'Number of 2-sigma matching:', matching_2sig
-    if e*100%experiments == 0: print str(100*e/experiments)+'% done'
-    v_20sig.append(matching_20sig), v_3sig.append(matching_3sig), v_2sig.append(matching_2sig), v_count.append(count)
+    # Monitor experiments
+    if e*100%experiments == 0: print str(100*e/experiments)+'% done', '--- Averages', 'Total:', getAverage(v_count), '20 sigma:', getAverage(v_20sig), '5 sigma:', getAverage(v_5sig), '3 sigma:', getAverage(v_3sig), '2 sigma:', getAverage(v_2sig)
+    v_20sig.append(matching_20sig), v_5sig.append(matching_5sig), v_3sig.append(matching_3sig), v_2sig.append(matching_2sig), v_count.append(count)
     if matching_2sig > 3 or matching_3sig > 7: plotting = False
     if plotting: plot_estimate( gr_estimate, 'background_estimate_%d.png' % e )
 
+    if e+1 in points: 
+        converge.append([e+1,getAverage(v_3sig),getAverage(v_2sig)])
+
 print ''
 print ''
-print 'Average matching ----> 20 sigma:', getAverage(v_20sig), '3 sigma:', getAverage(v_3sig), '2 sigma:', getAverage(v_2sig)
+print ''
+print 'Average matching ----> 20 sigma:', getAverage(v_20sig), '5 sigma:', getAverage(v_5sig), '3 sigma:', getAverage(v_3sig), '2 sigma:', getAverage(v_2sig)
 print 'Average num events:', getAverage(v_count)
 
 
-#with open('2sigma.txt','w') as f2:
-#    for count in v_2sig:
-#        f2.write(str(count)+'\n')
+with open('estimation/2sigma_'+sample_string+'_'+method+'.txt','w') as f2:
+    for count in v_2sig:
+        f2.write(str(count)+'\n')
 
-#with open('3sigma.txt','w') as f3:
-#    for count in v_3sig:
-#        f3.write(str(count)+'\n')
+with open('estimation/3sigma_'+sample_string+'_'+method+'.txt','w') as f3:
+    for count in v_3sig:
+        f3.write(str(count)+'\n')
+
+with open('estimation/convergence_'+sample_string+'_'+method+'.txt','w') as f4:
+    for line in converge:
+        f4.write(str(line)+'\n')
 
 
+
+'''
 # Plotting for cross checks
 
-#c = TCanvas('c','',750,600)
-#c.cd()
-#h2_estimate.GetXaxis().SetTitle("(m_{pp}-m_{#gamma#gamma})/#sigma(m_{pp}-m_{#gamma#gamma})")
-#h2_estimate.GetYaxis().SetTitle("(y_{pp} - y_{#gamma#gamma})/#sigma(y_{pp} - y_{#gamma#gamma})")
-#h2_estimate.Draw('colz')
-#c.SaveAs('h2_estimate.png')
+c = TCanvas('c','',750,600)
+c.cd()
+h2_estimate.GetXaxis().SetTitle("(m_{pp}-m_{#gamma#gamma})/#sigma(m_{pp}-m_{#gamma#gamma})")
+h2_estimate.GetYaxis().SetTitle("(y_{pp} - y_{#gamma#gamma})/#sigma(y_{pp} - y_{#gamma#gamma})")
+h2_estimate.Draw('colz')
+c.SaveAs('h2_estimate.png')
 
-'''    
+
 c1 = TCanvas('c1','',750,600)
 c1.cd()
 h_xim.Draw()

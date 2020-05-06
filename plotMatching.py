@@ -13,12 +13,12 @@ gStyle.SetOptStat(0)
 #years = ['2017','2018']
 years = ['2017']
 s_years = '+'.join(years)
-files = [['2017',TFile('outputHists/2017/histOut_data2017_Xi.root')],
-         ['2018',TFile('outputHists/2018/histOut_data2018_Xi.root')]]
+#files = [['2017',TFile('outputHists/2017/histOut_data2017_Xi.root')],
+#         ['2018',TFile('outputHists/2018/histOut_data2018_Xi.root')]]
 #files = [['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic.root')],
 #         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic.root')]]
-#files = [['2017',TFile('outputHists/2017/histOut_data2017_Xi_multiRP.root')],
-#         ['2018',TFile('outputHists/2018/histOut_data2018_Xi_multiRP.root')]]
+files = [['2017',TFile('outputHists/2017/histOut_data2017_Xi_multiRP.root')],
+         ['2018',TFile('outputHists/2018/histOut_data2018_Xi_multiRP.root')]]
 #files = [['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic_multiRP.root')],
 #         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic_multiRP.root')]]
 
@@ -57,7 +57,7 @@ def prelimLabel():
     return label
 
 def selectionLabel(text):
-    label = TPaveText(0.08, 0.88, .6, 0.95, 'NB NDC' )
+    label = TPaveText(0.08, 0.89, .6, 0.95, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
@@ -70,7 +70,7 @@ def selectionLabel(text):
     return label
     
 def lumiLabel():
-    label = TPaveText( 0.7, 0.88, 0.8, 0.93, 'NB NDC' )
+    label = TPaveText( 0.7, 0.89, 0.8, 0.93, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
@@ -130,7 +130,7 @@ def massrap_matching(blinded):
     b3 = TBox(-5, -5, 5, 5)
     b3.SetLineColor(ROOT.kRed)
     b3.SetFillStyle(0)
-    b3.Draw()
+    #b3.Draw()
     b2 = TBox(-3, -3, 3, 3)
     if not blinded: b2.SetFillStyle(3001) # transparent
     b2.SetFillColor(5)
@@ -144,16 +144,17 @@ def massrap_matching(blinded):
     legend = TLegend(0.7,0.8,0.9,0.9)
     legend.AddEntry(b1,"2#sigma matching",'f')
     legend.AddEntry(b2,"3#sigma matching",'f')
-    legend.AddEntry(b3,"5#sigma matching",'l')
+    #legend.AddEntry(b3,"5#sigma matching",'l')
     legend.Draw()
     c.Update() 
     pLabel = prelimLabel()
     pLabel.Draw()
-    sLabel = selectionLabel("Tight #xi selection")
+    sLabel = selectionLabel("#xi^{#pm}_{#gamma#gamma} #in PPS")
+    #sLabel = selectionLabel("Reverse acop. selection")
     sLabel.Draw()
     lLabel = lumiLabel()
     lLabel.Draw()
-    c.SaveAs("plots/matching/massrap_matching_reverse_"+s_years+"_multiRP.png")
+    c.SaveAs("plots/matching/massrap_matching_"+s_years+"_singleRP.pdf")
 
 
 def xi_matching(sector):
@@ -286,13 +287,13 @@ def oneDim_matching(blinded):
     b1.SetFillColor(3)
     b1.SetLineColor(1)
     b1.Draw()
-    pLabel, sLabel, lLabel = prelimLabel(), selectionLabel("Tight #xi selection"), lumiLabel()
+    pLabel, sLabel, lLabel = prelimLabel(), selectionLabel("#xi^{#pm}_{#gamma#gamma} #in PPS"), lumiLabel()
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
     legend = TLegend(0.7,0.8,0.9,0.9)
     legend.AddEntry(b1,"2#sigma matching",'f')
     legend.AddEntry(b2,"3#sigma matching",'f')
     legend.Draw()
-    c1.SaveAs('h_mass_1d.png')
+    c1.SaveAs('h_mass_1d.pdf')
     c2.cd()
     c2.SetTicks(1,1)
     h_rap.GetXaxis().SetTitle('(y_{pp}-y_{#gamma#gamma})/#sigma(y_{pp}-y_{#gamma#gamma}}')
@@ -304,21 +305,21 @@ def oneDim_matching(blinded):
     h_rap.Draw('p')
     b2.Draw()
     b1.Draw()
-    pLabel, sLabel, lLabel = prelimLabel(), selectionLabel("Tight #xi selection"), lumiLabel()
+    pLabel, sLabel, lLabel = prelimLabel(), selectionLabel("#xi^{#pm}_{#gamma#gamma} #in PPS"), lumiLabel()
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
     legend = TLegend(0.7,0.8,0.9,0.9)
     legend.AddEntry(b1,"2#sigma matching",'f')
     legend.AddEntry(b2,"3#sigma matching",'f')
     legend.Draw()
-    c2.SaveAs('h_rap_1d.png')
+    c2.SaveAs('h_rap_1d.pdf')
 
     
 
 #------------------------------------------------
 
-#massrap_matching(False)
+massrap_matching(True)
 
-oneDim_matching(True)
+#oneDim_matching(True)
 
 #xi_matching('m')
 #xi_matching('p')

@@ -129,7 +129,7 @@ def Prettify( hist ):
     y.SetLabelSize(18)
 
 def lumiLabel(ratio,years):
-    label = TPaveText( 0.65, 0.91, 0.75, 0.93, 'NB NDC' )
+    label = TPaveText( 0.65, 0.92, 0.75, 0.94, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
