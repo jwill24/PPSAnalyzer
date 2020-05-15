@@ -1,3 +1,8 @@
+# To-Do
+
+# Add near-far xi for singleRP (https://indico.cern.ch/event/822389/contributions/3438443/attachments/1848268/3033176/proton_reconstruction_2018.pdf)
+
+
 #!/usr/bin/env python
 import os, sys, re
 from itertools import combinations
@@ -13,7 +18,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeightProducer, puWeight_2017
 
 from common import open_root, get_root_obj, mass_cut, hoe_cut, acop_cut, photon_id, electron_veto, xi_cut, eta_cut, two_protons
-from common import mass, rapidity, mass_err, rapidity_err, mass_matching, rap_matching, getEra
+from common import mass, rapidity, mass_err, rapidity_err, mass_matching, rap_matching, getEra, checkProton
 
 ROOT.gROOT.ProcessLine(
 "struct MyStruct {\
@@ -30,13 +35,13 @@ from ROOT import MyStruct
 mystruct = MyStruct()
 
 PI = 3.1415926535897932643383279
-lumi2017 = 37190 # 2017 data
-lumi2018 =  55720 # 2018 data
+lumi2017, lumi2018 = 37190, 55720 
 rel_mass_err = 0.02
 rel_rap_err = 0.074
 
 sample = str( sys.argv[1] )
 selection = str( sys.argv[2] )
+method = str( sys.argv[3] )
 
 mc_file = open('/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/datasets.txt','r') 
 mcs = [[n.rstrip('\n') for n in line.split(',')] for line in mc_file]
@@ -83,7 +88,7 @@ class DiphotonAnalysis(Module):
 
         if nSelect == 2.5 or nSelect == 5:
             # Initialize objects for toy matching file
-            self.diphoton_file = ROOT.TFile('/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/tmp/diphotonEvents_'+sample+'_'+selection+'_multiRP.root', 'RECREATE')
+            self.diphoton_file = ROOT.TFile('/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/tmp/diphotonEvents_'+sample+'_'+selection+'_'+method+'.root', 'RECREATE')
             self.diphoton_tree = ROOT.TTree('tree','Tree with diphoton events')
             self.v_mass, self.v_rap, self.v_xip, self.v_xim, self.v_era, self.v_xangle = array('f', []), array('f', []), array('f', []), array('f', []), array('f', []), array('f', [])
             self.diphoton_tree.Branch('mass', ROOT.AddressOf( mystruct, 'mass'), 'mass/F')
@@ -128,13 +133,16 @@ class DiphotonAnalysis(Module):
         self.h_fgr=ROOT.TH1F('h_fgr', 'fixedGridRho', 58, 0, 58)
 
         self.h_num_pro=ROOT.TH1F('h_num_pro', 'Number of Protons', 15, 0, 15)
-        self.h_detType=ROOT.TH1F('h_detType', 'PPS Detector Type', 2, 3, 4)
-        self.h_pro_xip=ROOT.TH1F('h_pro_xip', 'Proton #xi ^{+}', 100, 0.00, 0.25)
-        self.h_pro_xim=ROOT.TH1F('h_pro_xim', 'Proton #xi ^{-}', 100, 0.00, 0.25)
-        self.h_pro_xi_45f=ROOT.TH1F('h_pro_xi_45f', 'Proton #xi 45F', 100, 0., 0.25)
-        self.h_pro_xi_45n=ROOT.TH1F('h_pro_xi_45n', 'Proton #xi 45N', 100, 0., 0.25)
-        self.h_pro_xi_56n=ROOT.TH1F('h_pro_xi_56n', 'Proton #xi 56N', 100, 0., 0.25)
-        self.h_pro_xi_56f=ROOT.TH1F('h_pro_xi_56f', 'Proton #xi 56F', 100, 0., 0.25)
+        self.h_proton_side=ROOT.TH1F('h_proton_side', 'Proton side',4, 0, 4)
+        self.h_detType=ROOT.TH1F('h_detType', 'PPS Detector Type', 2, 3, 5)
+        self.h_pro_xip=ROOT.TH1F('h_pro_xip', 'Proton #xi ^{+}', 100, 0.00, 0.3)
+        self.h_pro_xim=ROOT.TH1F('h_pro_xim', 'Proton #xi ^{-}', 100, 0.00, 0.3)
+        self.h_pro_xi_45f=ROOT.TH1F('h_pro_xi_45f', 'Proton #xi 45F', 100, 0., 0.3)
+        self.h_pro_xi_45n=ROOT.TH1F('h_pro_xi_45n', 'Proton #xi 45N', 100, 0., 0.3)
+        self.h_pro_xi_56n=ROOT.TH1F('h_pro_xi_56n', 'Proton #xi 56N', 100, 0., 0.3)
+        self.h_pro_xi_56f=ROOT.TH1F('h_pro_xi_56f', 'Proton #xi 56F', 100, 0., 0.3)
+        self.h_hitmap45=ROOT.TH2F('h_hitmap45', 'sector45 hit map', 100, 0.0, 12.0, 100, -8.0, 8.0)
+        self.h_hitmap56=ROOT.TH2F('h_hitmap56', 'sector56 hit map', 100, 0.0, 12.0, 100, -8.0, 8.0)
 
         self.gr_matching=ROOT.TGraphErrors('gr_matching')
         self.gr_matching.SetName('gr_matching')
@@ -142,6 +150,7 @@ class DiphotonAnalysis(Module):
         self.gr_xip_matching.SetName('gr_xip_matching')
         self.gr_xim_matching=ROOT.TGraphErrors('gr_xim_matching')
         self.gr_xim_matching.SetName('gr_xim_matching')
+
 
         self.addObject( self.h_num_pho ), self.addObject( self.h_diph_mass ), self.addObject( self.h_diph_rap )
         self.addObject( self.h_acop ), self.addObject( self.h_pt_ratio )
@@ -156,12 +165,13 @@ class DiphotonAnalysis(Module):
         self.addObject( self.h_nvtx ), self.addObject( self.h_vtx_z ), self.addObject( self.h_fgr )
 
         if data_:
-            self.addObject( self.h_num_pro ), self.addObject( self.h_detType )
+            self.addObject( self.h_num_pro ), self.addObject( self.h_detType ), self.addObject( self.h_proton_side )
             self.addObject( self.h_pro_xip ), self.addObject( self.h_pro_xim )
             self.addObject( self.h_pro_xi_45f ), self.addObject( self.h_pro_xi_45n )
             self.addObject( self.h_pro_xi_56n ), self.addObject( self.h_pro_xi_56f )
             self.addObject( self.gr_matching )
             self.addObject( self.gr_xip_matching ), self.addObject( self.gr_xim_matching )
+            self.addObject( self.h_hitmap45 ), self.addObject( self.h_hitmap56 )
 
 
         if not data_:
@@ -222,8 +232,8 @@ class DiphotonAnalysis(Module):
 
 
     def analyze(self, event):
-        #if data_: protons = Collection(event, "Proton_singleRP")
-        if data_: protons = Collection(event, "Proton_multiRP")
+        if data_ and method == 'singleRP': protons, tracks = Collection(event, "Proton_singleRP"), Collection(event, "PPSLocalTrack_singleRP")
+        elif data_ and method == 'multiRP': protons, tracks = Collection(event, "Proton_multiRP"), Collection(event, "PPSLocalTrack_multiRP")
         photons = Collection(event, "Photon")
         if data_: pu_weight, vtxWeight, prefWeight, eff_pho1, eff_pho2 = 1.0, 1.0, 1.0, 1.0, 1.0
         else: pu_weight, vtxWeight, prefWeight = event.puWeightUp, self.rhoReweight(event.Pileup_nPU), event.PrefireWeight if '2017' in sample else 1.0
@@ -294,8 +304,8 @@ class DiphotonAnalysis(Module):
                 mystruct.xangle = event.LHCInfo_xangle
                 mystruct.era = getEra(event.run)
             else: # FIXME
-                mystruct.xangle = 150.0
-                mystruct.era = '2017E' if '2017' in sample else '2018D'
+                mystruct.xangle = 150.0 # random xangle
+                mystruct.era = '2017E' if '2017' in sample else '2018D' # random eras
             self.diphoton_tree.Fill()
 
         # Fill single photon hists
@@ -333,26 +343,34 @@ class DiphotonAnalysis(Module):
         # Fill proton hists 
         if not data_: return 
         self.h_num_pro.Fill( len(protons) )
-        for proton in protons:
-            #self.h_detType.Fill( proton.protonRPType )                       # not available for multiRP
-            if proton.sector45: self.h_pro_xip.Fill( proton.xi )
-            elif proton.sector56: self.h_pro_xim.Fill( proton.xi ) 
-            #if proton.decDetId == 3: self.h_pro_xi_45f.Fill( proton.xi )     # not available for multiRP
-            #elif proton.decDetId == 23: self.h_pro_xi_45n.Fill( proton.xi )  # not available for multiRP
-            #elif proton.decDetId == 103: self.h_pro_xi_56n.Fill( proton.xi ) # not available for multiRP
-            #elif proton.decDetId == 123: self.h_pro_xi_56f.Fill( proton.xi ) # not available for multiRP
-            #else: print 'Proton not in known det id:', proton.decDetId       # not available for multiRP
+        v45, v56 = [], []
+        for i, proton in enumerate(protons):
+            for t in tracks:
+                if t.protonIdx == i: track = t
+            if not checkProton(event.run,track.pixelRecoInfo,proton.sector45): continue # shorturl.at/hijJK
+            if proton.sector45:   v45.append(proton), self.h_pro_xip.Fill( proton.xi ), self.h_hitmap45.Fill(track.x, track.y)
+            elif proton.sector56: v56.append(proton), self.h_pro_xim.Fill( proton.xi ), self.h_hitmap56.Fill(track.x, track.y)
+            if method == 'singleRP':
+                self.h_detType.Fill( proton.protonRPType )                       # not available for multiRP
+                if proton.decDetId == 23: self.h_pro_xi_45f.Fill( proton.xi )    # not available for multiRP
+                elif proton.decDetId == 3: self.h_pro_xi_45n.Fill( proton.xi )   # not available for multiRP
+                elif proton.decDetId == 103: self.h_pro_xi_56n.Fill( proton.xi ) # not available for multiRP
+                elif proton.decDetId == 123: self.h_pro_xi_56f.Fill( proton.xi ) # not available for multiRP
+                else: print 'Proton not in known det id:', proton.decDetId       # not available for multiRP
+
+
+        #if not two_protons(protons): 
+        if len(v45) == 0 or len(v56) == 0: # check for two opposite-side protons
+            if len(v45) == 0 and len(v56) == 0: self.h_proton_side.Fill(0)
+            if len(v45) > 0 and len(v56) == 0:  self.h_proton_side.Fill(1)
+            if len(v56) > 0 and len(v45) == 0:  self.h_proton_side.Fill(2)
+            return
+
+        self.h_proton_side.Fill(3)
 
         # Choose the best diproton candidate
-        if not two_protons(protons): return
-        v45, v56 = [], []
-        for proton in protons:
-            if proton.sector45: v45.append(proton)
-            elif proton.sector56: v56.append(proton)
-
         pro_m = min(v45, key=lambda x:abs(x.xi-xim))
         pro_p = min(v56, key=lambda x:abs(x.xi-xip))
-
 
         # SetPoint for matching plot
         pps_mass, pps_rap = mass(pro_m.xi,pro_p.xi), rapidity(pro_m.xi,pro_p.xi)
@@ -388,7 +406,7 @@ else:
     elif '2018' in sample:
         files=["/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_"+sample+"_Skim.root"]
         
-p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/tmp/histOut_"+sample+"_"+selection+"_multiRP.root",histDirName="plots")
+p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/tmp/histOut_"+sample+"_"+selection+"_"+method+".root",histDirName="plots")
 p.run()
 
 

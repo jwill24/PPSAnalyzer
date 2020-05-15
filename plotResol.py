@@ -8,11 +8,14 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 from ROOT import TCanvas, TPad, TFile, TPaveLabel, TPaveText, TAttText, TLine, TLegend, TBox, TColor, THStack, TGaxis, TH1F
 from ROOT import gROOT, gStyle
 
+from common import Prettify
+
 gStyle.SetOptStat(0)
 
 color = 50
 
-aqgcFile = TFile('outputHists/histOut_resolution_aqgc.root')
+#aqgcFile = TFile('outputHists/histOut_resolution_aqgc.root')
+aqgcFile = TFile('histOut_signal_singleRP_2017postTS2.root')
 
 def Canvas(name):
     c = TCanvas(name,'c',750,600)
@@ -113,7 +116,7 @@ def plotDiff(variable, symbol, h):
     sampleText.Draw(), cLabel.Draw(), pLabel.Draw(), statsLabel.Draw()
     c.SaveAs('plots/resolution/'+variable + '_difference.png')
 
-
+'''
 h_mass_res = aqgcFile.Get('plots/h_mass_res')
 plotRes('mass', 'm', h_mass_res)
 
@@ -146,11 +149,58 @@ plotDiff('diphpt', 'p_{T}^{#gamma#gamma}', h_diphpt_diff)
 
 h_logxi_diff = aqgcFile.Get('plots/h_logxi_diff')
 plotDiff('logxi', 'log(1/#xi)', h_logxi_diff)
+'''
 
 
 
 
-
+c = Canvas('c')
+pad1 = TPad('pad1', 'pad1', 0., 0.3, 1., 1.)
+pad1.SetBottomMargin(0.005)
+pad1.SetTicks(1,1)
+pad1.Draw()
+c.cd()
+pad2 = TPad('pad2', 'pad2', 0., 0.05, 1., 0.28)
+pad2.SetTopMargin(0.005)
+pad2.SetBottomMargin(0.3)
+pad2.SetTicks(1,1)
+pad2.Draw()
+pad1.cd()
+pad1.SetGrid(1,1)
+h_total = aqgcFile.Get('plots/h_pro_xi_gen')
+h_total.GetYaxis().SetTitle('Events')
+h_total.SetLineColor(ROOT.kBlue)
+h_total.GetYaxis().SetTitle('Events')
+h_total.Draw('HIST')
+h_twopro = aqgcFile.Get('plots/h_pro_xi_gen_twopro')
+h_twopro.SetLineColor(ROOT.kRed)
+h_twopro.Draw('HIST same')
+legend = TLegend(0.2, 0.55, 0.37, 0.75)
+legend.SetBorderSize(0)
+legend.SetFillColor(0)
+legend.SetFillStyle(0)
+legend.SetTextFont(42)
+legend.SetTextSize(0.038)
+legend.AddEntry(h_twopro,'Both protons reconstructed','l')
+legend.AddEntry(h_total,'All events', 'l')
+legend.Draw()
+cLabel, pLabel = condLabel(), simLabel()
+cLabel.SetTextSize(0.049), pLabel.SetTextSize(0.049)
+cLabel.Draw(), pLabel.Draw()
+pad2.cd()
+pad2.SetGrid(1,1)
+h_new = h_twopro.Clone('h_new')
+h_new.Sumw2()
+h_new.Divide(h_total)
+h_new.SetMarkerStyle(20)
+h_new.SetMarkerSize(0.9)
+h_new.SetLineColor(ROOT.kBlack)
+h_new.GetXaxis().SetTitle('Gen #xi')
+h_new.Draw('p same')
+Prettify(h_new)
+h_new.GetXaxis().SetTitle('Generated #xi')
+h_new.GetYaxis().SetTitle('Red/Blue')
+c.SaveAs('test_efficiency.pdf')
 
 
 

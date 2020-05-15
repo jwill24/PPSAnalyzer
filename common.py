@@ -129,7 +129,7 @@ def Prettify( hist ):
     y.SetLabelSize(18)
 
 def lumiLabel(ratio,years):
-    label = TPaveText( 0.65, 0.92, 0.75, 0.94, 'NB NDC' )
+    label = TPaveText( 0.65, 0.90, 0.75, 0.92, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
@@ -279,3 +279,12 @@ def getEra(run):
     elif run > 305016 and run < 306462: return '2018C'
     elif run > 305016 and run < 306462: return '2018D'
     else: return 'none'
+
+def checkProton(run,recoInfo,sector45):
+    if (run>=300802 and run <=303337) or (run>=305169 and run<=307082):
+        if sector45:
+            if recoInfo != 0 and recoInfo != 2: return False
+    if (run>=305965 and run<=307802):
+        if not sector45:
+            if recoInfo != 0 and recoInfo != 2: return False
+    return True

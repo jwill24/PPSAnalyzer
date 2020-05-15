@@ -13,10 +13,10 @@ from common import sampleColors, Canvas, Prettify, lumiLabel, makeLegend, asym_e
 
 gStyle.SetOptStat(0)
 
-lab = '#xi^{#pm}_{#gamma#gamma} #in PPS'
-selection = 'Xi'
-years = ['2017','2018']
-#years = ['2017']
+lab = 'HLT selection'
+selection = 'HLT'
+#years = ['2017','2018']
+years = ['2017']
 s_years = '+'.join(years)
 samples = sampleColors()
 samples.append(['aqgc',92,92])
@@ -25,8 +25,6 @@ v_files = []
 for year in years:
     for s in samples:
         v_files.append( (s[0]+year, TFile('outputHists/'+year+'/histOut_'+s[0]+year+'_'+selection+'.root')) )
-protonFiles = [['2017',TFile('outputHists/2017/histOut_data2017_HLT.root')],
-               ['2018',TFile('outputHists/2018/histOut_data2018_HLT.root')]]
 
 
 def plotRatio(name, h1, v_hist, hs, log):
@@ -112,8 +110,7 @@ def plotRatio(name, h1, v_hist, hs, log):
 
 def prelimLabel(location,log,maximum):
     if location == 'left':
-        if not log and maximum > 10e4: label = TPaveText( 0.15, 0.76, 0.2, 0.84, 'NB NDC' )
-        else: label = TPaveText( 0.135, 0.76, 0.2, 0.84, 'NB NDC' )
+        label = TPaveText( 0.135, 0.76, 0.2, 0.84, 'NB NDC' )
         label.AddText( "#font[62]{CMS}" )
         label.AddText( "#scale[0.75]{#font[52]{Preliminary}}" )
     elif location == 'top':
@@ -134,8 +131,7 @@ def prelimLabel(location,log,maximum):
     return label
 
 def selectionLabel(text,ratio,log,maximum):
-    if not log and maximum > 10e4: label = TPaveText( 0.15, 0.92, 0.2, 0.94, 'NB NDC' )
-    else: label = TPaveText( 0.1, 0.92, 0.18, 0.94, 'NB NDC' )
+    label = TPaveText( 0.1, 0.9, 0.18, 0.92, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
@@ -219,80 +215,17 @@ def getColors(sample):
         if sample == s[0]:
             return s[1], s[2]
     
-def makeProtonPlot(name, xTitle, rbin, log):
-    c = Canvas('c')
-    c.cd()
-    c.SetTicks(1,1)
-    if log: c.SetLogy()
-    h = getHist('data',year,name)
-    h.SetTitle('')
-    h.SetXTitle(xTitle)
-    h.SetYTitle('Events')
-    h.Rebin(rbin)
-    h.SetFillColor(208)
-    h.SetLineColor(208)
-    if log: h.SetMaximum( h.GetMaximum()*30 )
-    else: h.SetMaximum( h.GetMaximum()*1.2 )
-    if 'detType' in name: h.GetXaxis().SetBinLabel(1,'Strip'), h.GetXaxis().SetBinLabel(2,'Pixel')
-    h.Draw('HIST')
-    pLabel, sLabel, lLabel = prelimLabel('left',log,h.GetMaximum()), selectionLabel(lab,False,log,h.GetMaximum()), lumiLabel(False,years)
-    pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
-    c.SaveAs('plots/'+year+'/'+name+'_'+selection+'.pdf')
 
 
-def makeXiComp(log):
-    c = Canvas('c')
-    c.cd()
-    c.SetTicks(1,1)
-    if log: c.SetLogy()
-    h_xi_pp = ROOT.TH1F('h_xi_pp', '', 100, 0.01, 0.25)
-    h_xi_cms = ROOT.TH1F('h_xi_cms', '', 100, 0.0, 0.25)
-    # Add hists
-    for year in years:
-        for pf in protonFiles:
-            if year == pf[0]: pfile = pf[1]
-        h_xi_pp.Add( pfile.Get('plots/h_pro_xim') )
-        h_xi_pp.Add( pfile.Get('plots/h_pro_xip') )
-        h_xi_cms.Add( getHist('data',year,'h_xim') )
-        h_xi_cms.Add( getHist('data',year,'h_xip') )
-    # Normalize
-    h_xi_pp.Scale( 1/h_xi_pp.Integral() )
-    h_xi_pp.Rebin( 5 )
-    h_xi_cms.Scale( 1/h_xi_cms.Integral() )
-    h_xi_cms.Rebin( 4 )
-    # Plot
-    h_xi_pp.SetLineColor( 216 )
-    #h_xi_pp.SetFillColorAlpha( 216, 0.8 )
-    h_xi_pp.GetYaxis().SetTitle('Percentage of events')
-    h_xi_pp.GetYaxis().SetTitleOffset(1.5)
-    h_xi_pp.GetXaxis().SetTitle('#xi')
-    if log: h_xi_pp.SetMaximum( h_xi_cms.GetMaximum()*10 )
-    else: h_xi_pp.SetMaximum( h_xi_cms.GetMaximum()*1.2 )
-    h_xi_pp.GetXaxis().SetRangeUser(0.0,0.25)
-    h_xi_cms.SetLineColor( 208 )
-    #h_xi_cms.SetFillColorAlpha( 208, 0.6 )
-    h_xi_pp.Draw('HIST')
-    h_xi_cms.Draw('HIST same')
-    legend = TLegend(0.6,0.6,0.8,0.8)
-    legend.SetTextSize(0.04)
-    legend.SetLineColor( 0 )
-    legend.SetFillColor( 0 )
-    legend.AddEntry(h_xi_pp,"#xi_{PPS}",'l')
-    legend.AddEntry(h_xi_cms,"#xi_{CMS}",'l')
-    legend.Draw()
-    pLabel, lLabel = prelimLabel('top',log,h_xi_pp.GetMaximum()), lumiLabel(False,years)
-    pLabel.Draw(), lLabel.Draw()
-    c.SaveAs('h_xi_comp.pdf')
-        
 #-----------------------
 
 
 makePlot('h_diph_mass', 'h_mass_comp', 'm_{#gamma#gamma} GeV', 4, True)
 #makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
-makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 4, True)
+#makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 4, True)
 #makePlot('h_lead_pt', 'h_lead_pt_comp', 'Leading p_{T}^{#gamma} GeV', 2, True)
 #makePlot('h_sub_pt', 'h_sub_pt_comp', 'Subleading p_{T}^{#gamma} GeV', 2, True)
-makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 2, False)
+#makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 2, False)
 #makePlot('h_lead_eta', 'h_lead_eta_comp', 'Leading #eta ^{#gamma}', 4, False)
 #makePlot('h_sub_eta', 'h_sub_eta_comp', 'Subleading #eta ^{#gamma}', 4, False)
 #makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 1, True)
@@ -304,17 +237,6 @@ makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 2, False)
 #makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
 #makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
 #makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 2, True)
-makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
+#makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
 #makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, True)
 
-
-#makeProtonPlot('h_num_pro', 'Number of protons', 1, False)
-#makeProtonPlot('h_detType', 'Proton Detector Type', 1, False)
-#makeProtonPlot('h_pro_xip', 'Proton #xi ^{+}', 1, True)
-#makeProtonPlot('h_pro_xim', 'Proton #xi ^{-}', 1, True)
-#makeProtonPlot('h_pro_xi_45f', 'Proton #xi 45F', 1, False)
-#makeProtonPlot('h_pro_xi_45n', 'Proton #xi 45N', 1, False)
-#makeProtonPlot('h_pro_xi_56n', 'Proton #xi 56N', 1, False)
-#makeProtonPlot('h_pro_xi_56f', 'Proton #xi 56F', 1, False)
-
-#makeXiComp(False)
