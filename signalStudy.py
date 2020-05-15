@@ -30,29 +30,7 @@ signal = True
 class SignalStudy(Module):
     def __init__(self):
         self.writeHistFile=True
-        '''
-        self.v_id = [[100,200,0,0],
-                [200,400,0,0],
-                [400,600,0,0],
-                [600,800,0,0],
-                [800,1000,0,0],
-                [1000,1200,0,0],
-                [1200,1400,0,0]]
 
-        self.v_id = [[100,200,0,0],
-                [200,300,0,0],
-                [300,400,0,0],
-                [400,500,0,0],
-                [500,600,0,0],
-                [600,700,0,0],
-                [700,800,0,0],
-                [800,900,0,0],
-                [900,1000,0,0],
-                [1000,1100,0,0],
-                [1100,1200,0,0],
-                [1200,1300,0,0],
-                [1300,1400,0,0]]
-        '''
         self.v_id = [[100,200,0,0,0,0,0],
                 [200,300,0,0,0,0,0],
                 [300,400,0,0,0,0,0],
@@ -86,7 +64,6 @@ class SignalStudy(Module):
         self.h_pro_xi_gen=ROOT.TH1F('h_pro_xi_gen', '', 100, 0, 0.25)
         self.h_pro_xi_gen_twopro=ROOT.TH1F('h_pro_xi_gen_twopro', '', 100, 0, 0.25)
 
-        #self.h_ratio=ROOT.TH1F('h_ratio', photon_id+'ID Efficiency', len(self.v_id), 0, len(self.v_id))
         self.h_cuts_2d=ROOT.TH2F('h_cuts_2d', '', len(self.v_id), 0, len(self.v_id), 5, 0, 5)
 
     def beginJob(self,histFile=None,histDirName=None):
@@ -113,62 +90,6 @@ class SignalStudy(Module):
 
         print 'Efficiency (total):', float(self.total), '/ 94800'
 
-        rootFile = ROOT.TFile('cutTest.root', 'RECREATE')
-        #total, passing, comb_total, comb_passing = 0, 0, 0, 0
-        cut_names = ['Iso Chg', 'Iso All', 'H/E', 'R_{9}', '#sigma_{i#etai#eta}']
-
-        for i, v in enumerate(self.v_id):
-            self.h_cuts_2d.GetXaxis().SetBinLabel(i+1, str(self.v_id[i][1]))
-            for j, c in enumerate(cut_names):
-                self.h_cuts_2d.GetYaxis().SetBinLabel(j+1, c)
-                self.h_cuts_2d.SetBinContent(i+1, j+1, v[j+2])
-            '''
-            total = float(v[2])
-            passing = float(v[3])
-            comb_total += total
-            comb_passing += passing
-            try: ratio = 100*passing/total
-            except: ratio = 0
-            if signal: self.h_ratio.SetBinContent(i+1, ratio)
-            else: self.h_ratio.SetBinContent(i+1, 100-ratio)
-            self.h_ratio.GetXaxis().SetBinLabel(i+1, str(self.v_id[i][1]))
-            print 'i:', i, 'bin:', v[1], 'efficiency:', ratio
-            '''
-           
-            
-
-        #print ''
-        #print 'Signal' if signal else 'Background', 'ID:', photon_id, 'Total:', comb_total, 'Passing:', comb_passing
-        #print ''
-        '''
-        self.h_ratio.SetLineColor(ROOT.kWhite)
-        self.h_ratio.GetXaxis().SetTitleOffset(1.3)
-        self.h_ratio.GetYaxis().SetTitleOffset(1.5)
-        
-        g_ratio = ROOT.TGraph(self.h_ratio)
-        g_ratio.SetMarkerSize(0.7)
-        g_ratio.SetMarkerStyle(20)
-                
-        x = self.h_ratio.GetXaxis()
-        x.SetTitleSize(20)
-        x.SetTitleFont(43)
-        x.SetLabelFont(43)
-        x.SetLabelSize(15)
-        x.SetTitle('p_{T}^{#gamma}')
-        y = self.h_ratio.GetYaxis()
-        y.SetTitle('Efficiency %')
-        y.SetTitleSize(20)
-        y.SetTitleFont(43)
-        y.SetLabelFont(43)
-        y.SetLabelSize(20)
-        y.SetRangeUser(40,100) if signal else y.SetRangeUser(0,105)
-        
-        self.h_ratio.Write()
-        g_ratio.Write()
-        '''
-        self.h_cuts_2d.Draw('colz')
-        self.h_cuts_2d.Write()
-        rootFile.Close()
         
     # Apply photon ID
     def photon_id(self,pho1,pho2):
@@ -241,66 +162,6 @@ class SignalStudy(Module):
         xip = 1/13000.*( pho1.pt*math.exp(pho1.eta)+pho2.pt*math.exp(pho2.eta) )
         xim = 1/13000.*( pho1.pt*math.exp(-1*pho1.eta)+pho2.pt*math.exp(-1*pho2.eta) )
 
-        #print ''
-        #print 'diph_xip:', xip, 'diph_xim:', xim
-
-        #if not hoe_cut(pho1,pho2): return
-        #if not eta_cut(pho1,pho2): return
-        #if not mass_cut(diph_mass): return
-        #if not photon_id(pho1,pho2): return
-        #if not electron_veto(pho1,pho2): return
-        #if not acop_cut(acop): return
-        #if not xi_cut(xip,xim): return
-
-        '''        
-        self.total += 1
-
-        # Fill 2D cut plots
-        for v in self.v_id:
-            if pt1 > v[0] and pt1< v[1]:
-                if pho1.isScEtaEB:
-                    if pho1.pfRelIso03_chg > 5:    v[2] += 1
-                    if pho1.pfRelIso03_all > 2.75: v[3] += 1
-                    if pho1.hoe > 0.05:            v[4] += 1
-                    if pho1.r9 < 0.8:              v[5] += 1
-                    if pho1.sieie > 0.0105:        v[6] += 1
-                elif pho1.isScEtaEE:
-                    if pho1.pfRelIso03_chg > 5:    v[2] += 1
-                    if pho1.pfRelIso03_all > 2:    v[3] += 1
-                    if pho1.hoe > 0.05:            v[4] += 1
-                    if pho1.r9 < 0.8:              v[5] += 1
-                    if pho1.sieie > 0.0280:        v[6] += 1
-            if pt2> v[0] and pt2 < v[1]:
-                if pho2.isScEtaEB:
-                    if pho1.pfRelIso03_chg > 5:    v[2] += 1
-                    if pho1.pfRelIso03_all > 2.75: v[3] += 1
-                    if pho1.hoe > 0.05:            v[4] += 1
-                    if pho1.r9 < 0.8:              v[5] += 1
-                    if pho1.sieie > 0.0105:        v[6] += 1
-                elif pho2.isScEtaEE:
-                    if pho1.pfRelIso03_chg > 5:    v[2] += 1
-                    if pho1.pfRelIso03_all > 2:    v[3] += 1
-                    if pho1.hoe > 0.05:            v[4] += 1
-                    if pho1.r9 < 0.8:              v[5] +=1 
-                    if pho1.sieie > 0.0280:        v[6] += 1
-
-
-        # Increment total for pT bins
-        for v in self.v_id:
-            if pt1 > v[0] and pt1 < v[1]: v[2] += 1
-            if pt2 > v[0] and pt2 < v[1]: v[2] += 1
-
-        if not self.photon_id(pho1,pho2): return
-        if not self.electron_veto(pho1,pho2): return
-        #if not self.acop_cut(acop): continue
-        
-
-        #Increment passing for pT bins
-        for v in self.v_id:
-            if pt1 > v[0] and pt1 < v[1]: v[3] += 1
-            if pt2 > v[0] and pt2 < v[1]: v[3] += 1
-
-        '''
 
         # Generated photons
         part1, part2 = gen[19], gen[20]
@@ -314,7 +175,6 @@ class SignalStudy(Module):
         part_xip = 1/13000.*( part1.pt*math.exp(part1.eta)+part2.pt*math.exp(part2.eta) )
         part_xim = 1/13000.*( part1.pt*math.exp(-1*part1.eta)+part2.pt*math.exp(-1*part2.eta) )
 
-        #print 'gen_diph_xip:', part_xip, 'gen_diph_xim:', part_xim
         
         # Diphoton resolution plots
         self.h_mass_res.Fill( (diph_mass-part_mass)/part_mass )
@@ -340,22 +200,12 @@ class SignalStudy(Module):
         gen_xip = ( 6500.0-gen_prop.Rho() ) / 6500.0
         gen_xim = ( 6500.0-gen_prom.Rho() ) / 6500.0
 
-        print ''
-        print 'gen_xip:', gen_xip, 'gen_xim:', gen_xim
-
-        for p in protons:
-            print p.xi, 'm' if p.sector56 else 'p'
 
         self.h_pro_xi_gen.Fill( gen_xim ), self.h_pro_xi_gen.Fill( gen_xip )
 
-        #print ''
-        #print 'n_pro:', len(protons)
-        #for p in protons: print '-' if p.sector56 else '+'#, 'xi_reco:', p.xi
 
         # Reconstructed protons
-        if not two_protons(protons): 
-            #print 'gen_xip:', gen_xip, 'gen_xim:', gen_xim
-            return
+        if not two_protons(protons): return
         self.total += 1
         v45, v56 = [], []
         for proton in protons:
@@ -366,13 +216,7 @@ class SignalStudy(Module):
         pro_xim, pro_xip = pro_m.xi, pro_p.xi
 
 
-        #print 'xim:', pro_xim, 'xip:', pro_xip, 
-        #print 'gen_xip:', gen_xip, 'gen_xim:', gen_xim 
-        #for p in protons:
-            #print p.xi, 'm' if p.sector56 else 'p'
-
-        # Proton plots
-        
+        # Proton plots        
         self.h_pro_xi_res.Fill(abs(pro_xim-gen_xim)/gen_xim), self.h_pro_xi_res.Fill(abs(pro_xip-gen_xip)/gen_xip)
         self.h_pro_xi_diff.Fill(pro_xim-gen_xim), self.h_pro_xi_diff.Fill(pro_xip-gen_xip)
         self.h_pro_xi_gen_twopro.Fill( gen_xim ), self.h_pro_xi_gen_twopro.Fill( gen_xip )
@@ -382,12 +226,6 @@ class SignalStudy(Module):
 
 
 preselection='HLT_DoublePhoton70'
-#files=["Skims/nanoAOD_aqgc2017_Skim.root"] if signal else ["Skims/nanoAOD_ggj2017_Skim.root"]
-#files=['/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PhysicsTools/NanoAOD/test/nano_mirror.root']
-#files=['/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PhysicsTools/NanoAOD/test/nanoAOD_aqgc_noPU_2017postTS2.root']
-#files=['/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PhysicsTools/NanoAOD/test/nano_adjustedBeam_1000.root']
-#files=['/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PhysicsTools/NanoAOD/test/nano_adjustedBeam_reverse_1000.root']
-#files=['/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PhysicsTools/NanoAOD/test/nano_only45.root']
-files=['/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PhysicsTools/NanoAOD/test/nanoAOD_jan_1000.root']
+files=['/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PhysicsTools/NanoAOD/test/nanoAOD_aqgc_2017postTS2.root']
 p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[SignalStudy()],noOut=True,histFileName="histOut_signal_multiRP_2017postTS2.root",histDirName="plots",maxEntries=100)
 p.run()
