@@ -1,4 +1,4 @@
-# To Do List
+#   To Do List
 #   1. Change cuts to be consistent with diphotonAnalysis.py
 
 #!/usr/bin/env python
@@ -14,6 +14,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import Pos
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
+from PhysicsTools.NanoAODTools.postprocessing.modules.common.hepmcDump import *
 
 from common import mass_cut, hoe_cut, acop_cut, photon_id, electron_veto, xi_cut, eta_cut, two_protons
 #ROOT.gStyle.SetOptStat(0)
@@ -143,16 +144,30 @@ class SignalStudy(Module):
 
     def analyze(self, event):
         photons = Collection(event, "Photon")
-        #protons = Collection(event,"Proton_singleRP")
-        protons = Collection(event, "Proton_multiRP")
+        protons = Collection(event,"Proton_singleRP")
+        #protons = Collection(event, "Proton_multiRP")
         #lhe = Collection(event, "LHEPart")
         gen = Collection(event, "GenPart")
 
+
+        for i, g in enumerate(gen):
+            print 'i:', i, 'pdgId:', g.pdgId, 'status:', g.status
+        return
         
-        if len(photons) < 2: return
+        if event.HLT_DoublePhoton70 == 0:
+            print 'Not passing HLT'
+            return
+
+        if len(photons) < 2: 
+            print 'Not 2 reconstructed photons'
+            return
+
         pho1, pho2 = photons[0], photons[1]
         pt1, pt2 = pho1.pt, pho2.pt
-        if pho1.pt < 100 or pho2.pt < 100: return
+        if pho1.pt < 100 or pho2.pt < 100: 
+            print 'Not passing pT cut'
+            return
+
         diph_p4 = ROOT.TLorentzVector( pho1.p4() + pho2.p4() )
         diph_mass = diph_p4.M()
         diph_rap = diph_p4.Rapidity()
@@ -164,8 +179,8 @@ class SignalStudy(Module):
 
 
         # Generated photons
-        part1, part2 = gen[19], gen[20]
-        if ( abs(part1.p4().Pz()-pho1.p4().Pz()) ) > ( abs(part2.p4().Pz()-pho1.p4().Pz()) ): part1, part2 = gen[20], gen[19] 
+        part1, part2 = gen[2], gen[3] #gen[19], gen[20]
+        if ( abs(part1.p4().Pz()-pho1.p4().Pz()) ) > ( abs(part2.p4().Pz()-pho1.p4().Pz()) ): part1, part2 = gen[3], gen[2]  #gen[20], gen[19] 
         part_p4 = ROOT.TLorentzVector( part1.p4() + part2.p4() )
         part_mass = part_p4.M()
         part_rap = part_p4.Rapidity()
@@ -195,11 +210,28 @@ class SignalStudy(Module):
         self.h_logxi_diff.Fill( math.log(1/xip)-math.log(1/part_xip) )
         self.h_logxi_diff.Fill( math.log(1/xim)-math.log(1/part_xim) )
 
+        
+
         # Generated protons
-        gen_prop, gen_prom = gen[3].p4(), gen[5].p4()
+        gen_prop, gen_prom = gen[0].p4(), gen[1].p4() #gen[3].p4(), gen[5].p4()
         gen_xip = ( 6500.0-gen_prop.Rho() ) / 6500.0
         gen_xim = ( 6500.0-gen_prom.Rho() ) / 6500.0
 
+        print ''
+        #print 'xi_simu_p:', gen_xip, 'eta:', gen[3].eta, 'mass:', gen[3].mass, 'phi:', gen[3].phi, 'pt:', gen[3].pt 
+        #print 'xi_simu_m:', gen_xim, 'eta:', gen[5].eta, 'mass:', gen[5].mass, 'phi:', gen[5].phi, 'pt:', gen[5].pt
+
+        print 'xi_simu_p:', gen_xip, 'px:', gen_prop.Px(), 'py:', gen_prop.Py(), 'pz:', gen_prop.Pz(), 'E:', gen_prop.E()  
+        print 'xi_simu_m:', gen_xim, 'px:', gen_prom.Px(), 'py:', gen_prom.Py(), 'pz:', gen_prom.Pz(), 'E:', gen_prom.E()
+
+        #print 'Rho_p:', gen_prop.Rho(), 'Rho_m:', gen_prom.Rho()
+        #print 'E_p:', gen_prop.E(), 'E_m:', gen_prom.E()
+        #print 'Mag_p:', gen_prop.Mag(), 'Mag_m:', gen_prom.Mag()
+        #print 'P_p:', gen_prop.P(), 'P_m:', gen_prom.P()
+
+        for p in protons: 
+            if p.sector45: print 'xi_reco_p:', p.xi
+            if p.sector56: print 'xi_reco_m:', p.xi
 
         self.h_pro_xi_gen.Fill( gen_xim ), self.h_pro_xi_gen.Fill( gen_xip )
 
@@ -225,7 +257,7 @@ class SignalStudy(Module):
 
 
 
-preselection='HLT_DoublePhoton70'
-files=['/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PhysicsTools/NanoAOD/test/nanoAOD_aqgc_2017postTS2.root']
-p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[SignalStudy()],noOut=True,histFileName="histOut_signal_multiRP_2017postTS2.root",histDirName="plots",maxEntries=100)
+preselection=''
+files=['/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PhysicsTools/NanoAOD/test/nanoAOD_jan_5.root']
+p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[hepmcDump(),SignalStudy()],noOut=True,histFileName="histOut_signal_singleRP_2017postTS2.root",histDirName="plots")
 p.run()

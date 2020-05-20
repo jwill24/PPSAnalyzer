@@ -88,9 +88,9 @@ def makeXiComp(sector,log):
     c.SetTicks(1,1)
     if log: c.SetLogy()
     #c.SetGrid(1,1)
-    h_near = ROOT.TH1F('h_near', '', 100, 0.0, 0.3) # FIXME: change to 0.3
-    h_far = ROOT.TH1F('h_far', '', 100, 0.0, 0.3) # FIXME: change to 0.3
-    h_multi = ROOT.TH1F('h_far', '', 100, 0.0, 0.3) # FIXME: change to 0.3
+    h_near = ROOT.TH1F('h_near', '', 100, 0.0, 0.3) 
+    h_far = ROOT.TH1F('h_far', '', 100, 0.0, 0.3) 
+    h_multi = ROOT.TH1F('h_multi', '', 100, 0.0, 0.3) 
     # Add hists
     for year in years:
         for pf in protonFiles:
@@ -100,11 +100,11 @@ def makeXiComp(sector,log):
         h_multi.Add( pf_multi.Get('plots/h_pro_xi'+sec) )
 
     h_far.SetLineColor(210)
-    h_far.Rebin(2)
+    #h_far.Rebin(2)
     h_near.SetLineColor(62)
-    h_near.Rebin(2)
+    #h_near.Rebin(2)
     h_multi.SetLineColor(207)
-    h_multi.Rebin(2)
+    #h_multi.Rebin(2)
     h_far.GetYaxis().SetTitle('Events')
     h_far.GetYaxis().SetTitleOffset(1.5)
     h_far.GetXaxis().SetTitle('#xi - sector'+sector)
@@ -253,10 +253,10 @@ def makeXiAcceptance(pot,log):
 #makeProtonPlot('h_pro_xi_56f', 'Proton #xi 56F', 1, False)
 
 #makeXiComp('45',True)
-#makeXiComp('56',True)
+makeXiComp('56',True)
 
 
-makeProtonSide(False)
+#makeProtonSide(False)
 
 
 #makeHitMap('45')

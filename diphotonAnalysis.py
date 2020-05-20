@@ -1,7 +1,6 @@
 # To-Do
 
-# Add near-far xi for singleRP (https://indico.cern.ch/event/822389/contributions/3438443/attachments/1848268/3033176/proton_reconstruction_2018.pdf)
-
+# Add pixel and strip uncertainties on xi
 
 #!/usr/bin/env python
 import os, sys, re
@@ -36,12 +35,9 @@ mystruct = MyStruct()
 
 PI = 3.1415926535897932643383279
 lumi2017, lumi2018 = 37190, 55720 
-rel_mass_err = 0.02
-rel_rap_err = 0.074
+rel_mass_err, rel_rap_err = 0.02, 0.074
 
-sample = str( sys.argv[1] )
-selection = str( sys.argv[2] )
-method = str( sys.argv[3] )
+sample, selection, method = str( sys.argv[1] ), str( sys.argv[2] ), str( sys.argv[3] )
 
 mc_file = open('/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/datasets.txt','r') 
 mcs = [[n.rstrip('\n') for n in line.split(',')] for line in mc_file]
@@ -347,7 +343,7 @@ class DiphotonAnalysis(Module):
         for i, proton in enumerate(protons):
             for t in tracks:
                 if t.protonIdx == i: track = t
-            if not checkProton(event.run,track.pixelRecoInfo,proton.sector45): continue # shorturl.at/hijJK
+            if not checkProton(event.run,event.LHCInfo_xangle,track.pixelRecoInfo,proton): continue 
             if proton.sector45:   v45.append(proton), self.h_pro_xip.Fill( proton.xi ), self.h_hitmap45.Fill(track.x, track.y)
             elif proton.sector56: v56.append(proton), self.h_pro_xim.Fill( proton.xi ), self.h_hitmap56.Fill(track.x, track.y)
             if method == 'singleRP':
@@ -387,11 +383,11 @@ class DiphotonAnalysis(Module):
 preselection=""
 if sample == 'data2017':
     files=[
-        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017B_noLPC_Skim.root",
-        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017C_noLPC_Skim.root",
-        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017D_noLPC_Skim.root",
-        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017E_noLPC_Skim.root",
-        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017F_noLPC_Skim.root"
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017B_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017C_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017D_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017E_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017F_Skim.root"
     ]
 elif sample == 'data2018':
     files=[
@@ -402,7 +398,7 @@ elif sample == 'data2018':
     ]
 else: 
     if '2017' in sample:
-        files=["/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_"+sample+"_withLPC_Skim.root"]
+        files=["/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_"+sample+"_Skim.root"]
     elif '2018' in sample:
         files=["/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_"+sample+"_Skim.root"]
         

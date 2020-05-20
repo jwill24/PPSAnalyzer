@@ -166,6 +166,7 @@ leg = makeLegend(h_asym_data,v_hist,h_aqgc)
 leg.Draw()
 
 pad2.cd()
+pad2.SetGrid(0,1)
 h_ratio = h_data.Clone('h_ratio')
 h_ratio.Sumw2()
 h_ratio.Divide(h_sum) 
@@ -182,17 +183,9 @@ for i in range( len(selections) ): h_ratio.GetXaxis().SetBinLabel(i+1,selections
 denom_err, denom_err2 = h_mc_err.Clone(), h_mc_err.Clone()
 denom_err2.Sumw2(False)
 denom_err.Divide(denom_err2)
-denom_err.Draw("e2 same")
+#denom_err.Draw("e2 same") # error is so small it just looks weird
 denom_err.SetFillColor(1)
 denom_err.SetFillStyle(3004)
-
-l1 = TLine(h_ratio.GetXaxis().GetXmin(), 1, h_ratio.GetXaxis().GetXmax(), 1)
-l2 = TLine(h_ratio.GetXaxis().GetXmin(), 1.5, h_ratio.GetXaxis().GetXmax(), 1.5)
-l3 = TLine(h_ratio.GetXaxis().GetXmin(), 0.5, h_ratio.GetXaxis().GetXmax(), 0.5)
-l4 = TLine(h_ratio.GetXaxis().GetXmin(), 0., h_ratio.GetXaxis().GetXmax(), 0.)
-l5 = TLine(h_ratio.GetXaxis().GetXmin(), 2, h_ratio.GetXaxis().GetXmax(), 2.)
-l2.SetLineStyle(3), l3.SetLineStyle(3), l4.SetLineStyle(3), l5.SetLineStyle(3)
-l1.Draw(), l2.Draw(), l3.Draw(), l4.Draw(), l5.Draw()
 
 Prettify( h_ratio )
 

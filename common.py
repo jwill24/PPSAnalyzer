@@ -274,13 +274,57 @@ def getEra(run):
     elif run > 302111 and run < 302679: return '2017D'
     elif run > 303708 and run < 304798: return '2017E'
     elif run > 305016 and run < 306462: return '2017F'
-    elif run > 305016 and run < 306462: return '2018A'
-    elif run > 305016 and run < 306462: return '2018B'
-    elif run > 305016 and run < 306462: return '2018C'
-    elif run > 305016 and run < 306462: return '2018D'
+    elif run > 315256 and run < 325173: return '2018A' # FIXME
+    elif run > 305016 and run < 306462: return '2018B' # FIXME
+    elif run > 305016 and run < 306462: return '2018C' # FIXME
+    elif run > 305016 and run < 306462: return '2018D' # FIXME
     else: return 'none'
 
-def checkProton(run,recoInfo,sector45):
+def getProtonEra(run):
+    if run > 273724 and run < 280386: return '2016preTS2'
+    elif run > 280385 and run < 284043: return '2016postTS2'
+    elif run > 297023 and run < 302663: return '2017preTS2'
+    elif run > 302664 and run < 306462: return '2017postTS2'
+    elif run > 315256 and run < 325173: return '2018'
+
+def checkProton(run,xangle,recoInfo,proton):
+    if not proton.validFit: return False # https://github.com/cms-sw/cmssw/blob/2ba5d421e10379d81760a899532b2c991b89c82c/DataFormats/ProtonReco/interface/ForwardProton.h#L121
+    if not validRecoInfo(run,recoInfo,proton.sector45): return False # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TaggedProtonsGettingStarted#Specific_features_and_warnings_f
+    protonEra = getProtonEra(run)
+    print 'Proton Era:', protonEra
+    arm = 0 if proton.sector45 else 1
+    apertureLimit = getAperture(xangle,arm,protonEra)
+    if proton.xi > apertureLimit: 
+        print '------------> invalid xi'
+        return False # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TaggedProtonsGettingStarted#Fiducial_cuts
+    return True
+
+def getAperture(xangle,arm,era):
+    apertureLimit = 0.0
+    if era == "2016preTS2":
+      if arm == 0: apertureLimit = 0.111
+      elif arm == 1: apertureLimit = 0.138
+
+    elif era == "2016postTS2":
+      if arm == 0: apertureLimit = 0.104
+      elif arm == 1: apertureLimit = 999.9 # Note - 1 strip RP was not in, so no aperture cuts derived
+
+    elif era == "2017preTS2":
+      if arm == 0: apertureLimit = 0.066 + (3.54e-4 * xangle)
+      elif arm == 1: apertureLimit = 0.062 + (5.96e-4 * xangle)
+
+    elif era == "2017postTS2":
+      if arm == 0: apertureLimit = 0.073 + (4.11e-4 * xangle)
+      elif arm == 1: apertureLimit = 0.067 + (6.87e-4 * xangle)
+
+    elif era == "2018":
+      if arm == 0: apertureLimit = 0.079 + (4.21e-4 * xangle)
+      elif arm == 1: apertureLimit = 0.074 + (6.6e-4 * xangle)
+
+    return apertureLimit
+    
+
+def validRecoInfo(run,recoInfo,sector45):
     if (run>=300802 and run <=303337) or (run>=305169 and run<=307082):
         if sector45:
             if recoInfo != 0 and recoInfo != 2: return False
