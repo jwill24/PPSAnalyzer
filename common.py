@@ -287,16 +287,13 @@ def getProtonEra(run):
     elif run > 302664 and run < 306462: return '2017postTS2'
     elif run > 315256 and run < 325173: return '2018'
 
-def checkProton(run,xangle,recoInfo,proton):
+def checkProton(run,xangle,v_trks,proton):
     if not proton.validFit: return False # https://github.com/cms-sw/cmssw/blob/2ba5d421e10379d81760a899532b2c991b89c82c/DataFormats/ProtonReco/interface/ForwardProton.h#L121
-    if not validRecoInfo(run,recoInfo,proton.sector45): return False # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TaggedProtonsGettingStarted#Specific_features_and_warnings_f
+    if not validRecoInfo(run,v_trks,proton.sector45): return False # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TaggedProtonsGettingStarted#Specific_features_and_warnings_f
     protonEra = getProtonEra(run)
-    print 'Proton Era:', protonEra
     arm = 0 if proton.sector45 else 1
     apertureLimit = getAperture(xangle,arm,protonEra)
-    if proton.xi > apertureLimit: 
-        print '------------> invalid xi'
-        return False # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TaggedProtonsGettingStarted#Fiducial_cuts
+    if proton.xi > apertureLimit: return False # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TaggedProtonsGettingStarted#Fiducial_cuts
     return True
 
 def getAperture(xangle,arm,era):
@@ -324,11 +321,12 @@ def getAperture(xangle,arm,era):
     return apertureLimit
     
 
-def validRecoInfo(run,recoInfo,sector45):
-    if (run>=300802 and run <=303337) or (run>=305169 and run<=307082):
-        if sector45:
-            if recoInfo != 0 and recoInfo != 2: return False
-    if (run>=305965 and run<=307802):
-        if not sector45:
-            if recoInfo != 0 and recoInfo != 2: return False
+def validRecoInfo(run,v_trks,sector45):
+    for t in v_trks: 
+        if (run>=300802 and run <=303337) or (run>=305169 and run<=307082):
+            if sector45:
+                if t.pixelRecoInfo != 0 and t.pixelRecoInfo != 2: return False
+        if (run>=305965 and run<=307802):
+            if not sector45:
+                if t.pixelRecoInfo != 0 and t.pixelRecoInfo != 2: return False
     return True
