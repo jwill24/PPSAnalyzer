@@ -322,11 +322,12 @@ def getAperture(xangle,arm,era):
     
 
 def validRecoInfo(run,v_trks,sector45):
-    for t in v_trks: 
-        if (run>=300802 and run <=303337) or (run>=305169 and run<=307082):
-            if sector45:
-                if t.pixelRecoInfo != 0 and t.pixelRecoInfo != 2: return False
-        if (run>=305965 and run<=307802):
-            if not sector45:
-                if t.pixelRecoInfo != 0 and t.pixelRecoInfo != 2: return False
+    if (run>=300802 and run <=303337) or (run>=305169 and run<=307082):
+        if sector45:
+            for t in v_trks: 
+                if t.pixelRecoInfo == 1 or t.pixelRecoInfo == 3: return False
+    elif (run>=305965 and run<=307802):
+        if not sector45:
+            for t in v_trks: 
+                if t.pixelRecoInfo == 1 and t.pixelRecoInfo == 3: return False
     return True

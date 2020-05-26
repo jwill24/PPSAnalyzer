@@ -343,7 +343,6 @@ class DiphotonAnalysis(Module):
         for i, proton in enumerate(protons):
             v_trks = []
             for t in tracks:
-                #print 'i:', i, 'side:', '45' if proton.sector45 else '56', 'proton.xi:', proton.xi, 't.protonIdx:', t.protonIdx, 't.x:', t.x, 'recoInfo:', t.pixelRecoInfo
                 if t.protonIdx == i: v_trks.append(t)
 
             if not checkProton(event.run,event.LHCInfo_xangle,v_trks,proton): continue 
@@ -390,10 +389,10 @@ preselection=""
 if sample == 'data2017':
     files=[
         #"/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017B_Skim.root",
-        #"/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017C_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017C_Skim.root",
         #"/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017D_Skim.root",
         #"/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017E_Skim.root",
-        "/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017F_Skim.root"
+        #"/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_Run2017F_Skim.root"
     ]
 elif sample == 'data2018':
     files=[
@@ -408,7 +407,7 @@ else:
     elif '2018' in sample:
         files=["/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/Skims/nanoAOD_"+sample+"_Skim.root"]
         
-p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/tmp/histOut_"+sample+"F_test_"+selection+"_"+method+".root",histDirName="plots")
+p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PPSAnalyzer/tmp/histOut_"+sample+"C_test_"+selection+"_"+method+".root",histDirName="plots")
 p.run()
 
 
