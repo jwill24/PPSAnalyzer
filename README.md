@@ -11,6 +11,8 @@ Use the `keep_drop.txt` file to select relevant branches for your purposes.
 ### Create basic histograms
 Create histograms using the `diphotonAnalyzer.py`.
 
+``python diphotonAnalyzer.py <sample> <selection> method>''
+
 For special purposes, create signal histograms using `signalStudy.py`
 
 ### Build nicer histograms

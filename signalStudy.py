@@ -46,7 +46,7 @@ class SignalStudy(Module):
                 [1200,1300,0,0,0,0,0],
                 [1300,1400,0,0,0,0,0]]
 
-        self.total = 0
+        self.total, self.passing_hp, self.passing_wp90, self.passing_wp80, self.passing_l, self.passing_m, self.passing_t = 0, 0, 0, 0, 0, 0, 0
 
         self.h_mass_res=ROOT.TH1F('h_mass_res', 'Diphoton Mass Resolution', 100, -0.1, 0.1)
         self.h_rap_diff=ROOT.TH1F('h_rap_diff', 'Diphoton Rapidity Resolution', 100, -0.3, 0.3)
@@ -89,8 +89,13 @@ class SignalStudy(Module):
     def endJob(self):
         Module.endJob(self)
 
-        print 'Efficiency (total):', float(self.total), '/ 94800'
-
+        #print 'Efficiency (total):', float(self.total), '/ 94800'
+        print 'High pT ID:', float(self.passing_hp)/float(self.total)
+        print 'MVA WP90 ID:', float(self.passing_wp90)/float(self.total)
+        print 'MVA WP80 ID:', float(self.passing_wp80)/float(self.total)
+        print 'Loose ID:', float(self.passing_l)/float(self.total)
+        print 'Medium ID:', float(self.passing_m)/float(self.total)
+        print 'Tight ID:', float(self.passing_t)/float(self.total)
         
     # Apply photon ID
     def photon_id(self,pho1,pho2):
@@ -114,42 +119,31 @@ class SignalStudy(Module):
 
 
     # Apply high pT photon ID (AN2018_234)
-    def highPtID(self,pho1,pho2):
-        if pho1.isScEtaEB:
-            if pho1.pfRelIso03_chg > 5: return False
-            if pho1.pfRelIso03_all > 2.75: return False
-            if pho1.hoe > 0.05: return False
-            if pho1.r9 < 0.8: return False
-            if pho1.sieie > 0.0112: return False # FIXME
-        elif pho1.isScEtaEE:
-            if pho1.pfRelIso03_chg > 5: return False
-            if pho1.pfRelIso03_all > 2: return False
-            if pho1.hoe > 0.05: return False
-            if pho1.r9 < 0.8: return False
-            if pho1.sieie > 0.0280: return False # FIXME
-        if pho2.isScEtaEB:
-            if pho1.pfRelIso03_chg > 5: return False
-            if pho1.pfRelIso03_all > 2.75: return False
-            if pho1.hoe > 0.05: return False
-            if pho1.r9 < 0.8: return False
-            if pho1.sieie > 0.0112: return False # FIXME
-        elif pho2.isScEtaEE:
-            if pho1.pfRelIso03_chg > 5: return False
-            if pho1.pfRelIso03_all > 2: return False
-            if pho1.hoe > 0.05: return False
-            if pho1.r9 < 0.8: return False
-            if pho1.sieie > 0.0280: return False # FIXME
+    def highPtID(self,pho1,pho2,rho):
+        for pho in (pho1,pho2):
+            if pho.isScEtaEB:
+                corPhoIso = 2.5 + pho.photonIso - rho*0.14 - 0.0045*pho.pt
+                if corPhoIso > 2.75: return False
+                if pho.see > (0.0112 if pho.isSeedSaturated else 0.0105): return False
+            elif pho.isScEtaEE:
+                corPhoIso = 2.5 + pho.photonIso - rho*0.22 - 0.003*pho.pt
+                if corPhoIso > 2.00: return False
+                if pho.see > (0.0300 if pho.isSeedSaturated else 0.0280): return False
+            if pho.chargedHadronIso > 5: return False
+            if pho.hoe > 0.05: return False
+            if pho.r9 < 0.8: return False
         return True
+
 
 
     def analyze(self, event):
         photons = Collection(event, "Photon")
-        protons = Collection(event,"Proton_singleRP")
+        #protons = Collection(event,"Proton_singleRP")
         #protons = Collection(event, "Proton_multiRP")
         #lhe = Collection(event, "LHEPart")
-        gen = Collection(event, "GenPart")
+        #gen = Collection(event, "GenPart")
 
-
+        '''
         for i, g in enumerate(gen):
             print 'i:', i, 'pdgId:', g.pdgId, 'status:', g.status
         return
@@ -157,12 +151,25 @@ class SignalStudy(Module):
         if event.HLT_DoublePhoton70 == 0:
             print 'Not passing HLT'
             return
+        '''
 
         if len(photons) < 2: 
             print 'Not 2 reconstructed photons'
             return
 
+        self.total += 1
         pho1, pho2 = photons[0], photons[1]
+        if self.highPtID(pho1,pho2,event.fixedGridRhoFastjetAll): self.passing_hp += 1
+        if pho1.mvaID_WP90 == 1 and pho2.mvaID_WP90 == 1: self.passing_wp90 += 1 
+        if pho1.mvaID_WP80 == 1 and pho2.mvaID_WP80 == 1: self.passing_wp80 += 1
+        if pho1.cutBasedBitmap >= 1 and pho2.cutBasedBitmap >= 1: self.passing_l += 1
+        if pho1.cutBasedBitmap >= 3 and pho2.cutBasedBitmap >= 3: self.passing_m += 1
+        if pho1.cutBasedBitmap >= 7 and pho2.cutBasedBitmap >= 7: self.passing_t += 1
+
+
+
+
+        '''
         pt1, pt2 = pho1.pt, pho2.pt
         if pho1.pt < 100 or pho2.pt < 100: 
             print 'Not passing pT cut'
@@ -252,12 +259,13 @@ class SignalStudy(Module):
         self.h_pro_xi_res.Fill(abs(pro_xim-gen_xim)/gen_xim), self.h_pro_xi_res.Fill(abs(pro_xip-gen_xip)/gen_xip)
         self.h_pro_xi_diff.Fill(pro_xim-gen_xim), self.h_pro_xi_diff.Fill(pro_xip-gen_xip)
         self.h_pro_xi_gen_twopro.Fill( gen_xim ), self.h_pro_xi_gen_twopro.Fill( gen_xip )
+        '''
 
         return True
 
 
 
 preselection=''
-files=['/home/t3-ku/juwillia/CMSSW_11_0_0_pre6/src/PhysicsTools/NanoAOD/test/nanoAOD_jan_5.root']
-p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[hepmcDump(),SignalStudy()],noOut=True,histFileName="histOut_signal_singleRP_2017postTS2.root",histDirName="plots")
+files=['/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/nanoAOD_aqgc2017_Skim.root']
+p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[hepmcDump(),SignalStudy()],noOut=True,histFileName="histOut_aqgc2017_study.root",histDirName="plots")
 p.run()
