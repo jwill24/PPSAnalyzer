@@ -15,5 +15,5 @@ keep puWeightUp
 keep puWeightDown
 
 
-#keep Proton_*
-#keep LHCInfo_*
+keep Proton_*
+keep LHCInfo_*

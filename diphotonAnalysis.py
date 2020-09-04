@@ -25,7 +25,7 @@ ROOT.gROOT.ProcessLine(
    Float_t     rap;\
    Float_t     xim;\
    Float_t     xip;\
-   Long64_t    xangle;\
+   Long64_t    crossingAngle;\
    Char_t      era[5];\
    Float_t     weight;\
 };" );
@@ -86,12 +86,12 @@ class DiphotonAnalysis(Module):
             # Initialize objects for toy matching file
             self.diphoton_file = ROOT.TFile('/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/tmp/diphotonEvents_'+sample+'_'+selection+'_'+method+'.root', 'RECREATE')
             self.diphoton_tree = ROOT.TTree('tree','Tree with diphoton events')
-            self.v_mass, self.v_rap, self.v_xip, self.v_xim, self.v_era, self.v_xangle = array('f', []), array('f', []), array('f', []), array('f', []), array('f', []), array('f', [])
+            self.v_mass, self.v_rap, self.v_xip, self.v_xim, self.v_era, self.v_crossingAngle = array('f', []), array('f', []), array('f', []), array('f', []), array('f', []), array('f', [])
             self.diphoton_tree.Branch('mass', ROOT.AddressOf( mystruct, 'mass'), 'mass/F')
             self.diphoton_tree.Branch('rap', ROOT.AddressOf( mystruct, 'rap'), 'rap/F')
             self.diphoton_tree.Branch('xim', ROOT.AddressOf( mystruct, 'xim'), 'xim/F')
             self.diphoton_tree.Branch('xip', ROOT.AddressOf( mystruct, 'xip'), 'xip/F')
-            self.diphoton_tree.Branch('xangle', ROOT.AddressOf( mystruct, 'xangle'), 'xangle/L')
+            self.diphoton_tree.Branch('crossingAngle', ROOT.AddressOf( mystruct, 'crossingAngle'), 'crossingAngle/L')
             self.diphoton_tree.Branch('era', ROOT.AddressOf( mystruct, 'era'), 'era/C')
             self.diphoton_tree.Branch('weight', ROOT.AddressOf( mystruct, 'weight'), 'weight/F')
 
@@ -302,10 +302,10 @@ class DiphotonAnalysis(Module):
             mystruct.xip = xip
             mystruct.weight = weight
             if data_:
-                mystruct.xangle = event.LHCInfo_crossingAngle # edited from xangle
+                mystruct.crossingAngle = event.LHCInfo_crossingAngle # edited from xangle
                 mystruct.era = getEra(event.run)
             else: # FIXME
-                mystruct.xangle = 150.0 # random xangle
+                mystruct.crossingAngle = 150.0 # random crossingAngle
                 mystruct.era = '2017E' if '2017' in sample else '2018D' # random eras
             self.diphoton_tree.Fill()
 
@@ -394,12 +394,11 @@ class DiphotonAnalysis(Module):
 preselection=""
 if sample == 'data2017':
     files=[
-        "nanoAOD_Run2017D_Skim.root"
-        #"/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_Run2017B_Skim.root",
-        #"/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_Run2017C_Skim.root",
-        #"/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_Run2017D_Skim.root",
-        #"/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_Run2017E_Skim.root",
-        #"/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_Run2017F_Skim.root"
+        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2017/nanoAOD_Run2017B_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2017/nanoAOD_Run2017C_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2017/nanoAOD_Run2017D_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2017/nanoAOD_Run2017E_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2017/nanoAOD_Run2017F_Skim.root"
     ]
 elif sample == 'data2018':
     files=[
@@ -414,7 +413,7 @@ else:
     elif '2018' in sample:
         files=["/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_"+sample+"_Skim.root"]
         
-p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/tmp/histOut_"+sample+"D_new_"+selection+"_"+method+".root",histDirName="plots")
+p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/tmp/histOut_"+sample+"_"+selection+"_"+method+".root",histDirName="plots")
 p.run()
 
 

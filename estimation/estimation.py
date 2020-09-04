@@ -39,7 +39,7 @@ experiments = 100000     # number of iterations
 plotting = False     # make matching plot for each experiment
 testing  = False    # only run over a few events
 test_events = 10    # number of events to use for testing
-method = 'singleRP' # singleRP or multiRP reconstruction
+method = 'multiRP' # singleRP or multiRP reconstruction
 
 diphoton_file = TFile( 'estimation/diphotonEvents_data2017_Xi_'+method+'.root' ) # data
 #diphoton_file = TFile( 'estimation/diphotonEvents_mc2017.root' ) # 2017 MC
@@ -343,6 +343,7 @@ def lumiLabel():
 #----------------------------------
 
 entries = diphoton_tree.GetEntries()
+print 'Entries:', entries
 if testing: entries, experiments = test_events, 1
 
 v_count, v_20sig, v_5sig,  v_3sig, v_2sig = [], [], [], [], []
@@ -366,8 +367,6 @@ for e in range(experiments):
             #era = weighted_choice(v_eras)
             #xangle = getXangle( diph_struct.era )
             
-        #print 'Era:', era, 'xangle:', xangle
-
 
         # Get entry by era and xangle
         if era == '2017B':

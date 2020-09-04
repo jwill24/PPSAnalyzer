@@ -160,7 +160,7 @@ class SignalStudy(Module):
         self.total += 1
         pho1, pho2 = photons[0], photons[1]
         if self.highPtID(pho1,pho2,event.fixedGridRhoFastjetAll): self.passing_hp += 1
-        if pho1.mvaID_WP90 == 1 and pho2.mvaID_WP90 == 1: self.passing_wp90 += 1 
+        if (pho1.mvaID_WP90 == 1 and pho2.mvaID_WP90 == 1) and (pho1.electronVeto == 0 or pho2.electronVeto == 0): self.passing_wp90 += 1 
         if pho1.mvaID_WP80 == 1 and pho2.mvaID_WP80 == 1: self.passing_wp80 += 1
         if pho1.cutBasedBitmap >= 1 and pho2.cutBasedBitmap >= 1: self.passing_l += 1
         if pho1.cutBasedBitmap >= 3 and pho2.cutBasedBitmap >= 3: self.passing_m += 1
