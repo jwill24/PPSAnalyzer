@@ -16,7 +16,7 @@ gROOT.ProcessLine(
    Float_t   rap;\
    Float_t   xim;\
    Float_t   xip;\
-   Long64_t  xangle;\
+   Long64_t  crossingAngle;\
    Char_t    era[5];\
    Float_t   weight;\
 };");
@@ -54,14 +54,14 @@ else:
     v_eras = ['2017B', '2017C', '2017D', '2017E', '2017F']
     #v_eras = [['2017B',0.0915], ['2017C',0.3318], ['2017D',0.1584], ['2017E',0.1019], ['2017F',0.3164]] # weights from HLT
     #v_eras = [['2017B',0.0541], ['2017C',0.3419], ['2017D',0.1311], ['2017E',0.1054], ['2017F',0.3675]] # weights from Xi
-    v_xangles = [120.0, 130.0, 140.0, 150.0]
+    v_crossingAngles = [120.0, 130.0, 140.0, 150.0]
 
 diphoton_tree = diphoton_file.Get( 'tree' )
 diphoton_tree.SetBranchAddress('mass', AddressOf( diph_struct, 'mass'))
 diphoton_tree.SetBranchAddress('rap', AddressOf( diph_struct, 'rap'))
 diphoton_tree.SetBranchAddress('xim', AddressOf( diph_struct, 'xim'))
 diphoton_tree.SetBranchAddress('xip', AddressOf( diph_struct, 'xip'))
-diphoton_tree.SetBranchAddress('xangle', AddressOf( diph_struct, 'xangle'))
+diphoton_tree.SetBranchAddress('crossingAngle', AddressOf( diph_struct, 'crossingAngle'))
 diphoton_tree.SetBranchAddress('era', AddressOf( diph_struct, 'era'))
 diphoton_tree.SetBranchAddress('weight', AddressOf( diph_struct, 'weight'))
 
@@ -246,8 +246,8 @@ def getXangle(era):
     elif era == '2017D': choices = [['120',0.1614], ['130',0.2846], ['140',0.2614], ['150',0.2926]]
     elif era == '2017E': choices = [['120',0.2932], ['130',0.3478], ['140',0.1355], ['150',0.1610]]
     elif era == '2017F': choices = [['120',0.4090], ['130',0.2392], ['140',0.0403], ['150',0.3115]]
-    xangle = weighted_choice(choices)
-    return int(xangle)
+    crossingAngle = weighted_choice(choices)
+    return int(crossingAngle)
 
 #----------------------------------
 
@@ -360,40 +360,40 @@ for e in range(experiments):
         v_xim, v_xip = [], []
     
         if data_:
-            era, xangle = diph_struct.era, diph_struct.xangle
+            era, crossingAngle = diph_struct.era, diph_struct.crossingAngle
         else:
             era = random.choice(v_eras)
-            xangle = random.choice(v_xangles)
+            crossingAngle = random.choice(v_crossingAngles)
             #era = weighted_choice(v_eras)
-            #xangle = getXangle( diph_struct.era )
+            #crossingAngle = getXangle( diph_struct.era )
             
 
-        # Get entry by era and xangle
+        # Get entry by era and crossingAngle
         if era == '2017B':
-            if xangle == 120: tree_B_120.GetEntry( random.randrange(0,tree_B_120.GetEntries()) )        
-            if xangle == 130: tree_B_130.GetEntry( random.randrange(0,tree_B_130.GetEntries()) )        
-            if xangle == 140: tree_B_140.GetEntry( random.randrange(0,tree_B_140.GetEntries()) )        
-            if xangle == 150: tree_B_150.GetEntry( random.randrange(0,tree_B_150.GetEntries()) )        
+            if crossingAngle == 120: tree_B_120.GetEntry( random.randrange(0,tree_B_120.GetEntries()) )        
+            if crossingAngle == 130: tree_B_130.GetEntry( random.randrange(0,tree_B_130.GetEntries()) )        
+            if crossingAngle == 140: tree_B_140.GetEntry( random.randrange(0,tree_B_140.GetEntries()) )        
+            if crossingAngle == 150: tree_B_150.GetEntry( random.randrange(0,tree_B_150.GetEntries()) )        
         elif era == '2017C':
-            if xangle == 120: tree_C_120.GetEntry( random.randrange(0,tree_C_120.GetEntries()) )        
-            if xangle == 130: tree_C_130.GetEntry( random.randrange(0,tree_C_130.GetEntries()) )        
-            if xangle == 140: tree_C_140.GetEntry( random.randrange(0,tree_C_140.GetEntries()) )        
-            if xangle == 150: tree_C_150.GetEntry( random.randrange(0,tree_C_150.GetEntries()) )        
+            if crossingAngle == 120: tree_C_120.GetEntry( random.randrange(0,tree_C_120.GetEntries()) )        
+            if crossingAngle == 130: tree_C_130.GetEntry( random.randrange(0,tree_C_130.GetEntries()) )        
+            if crossingAngle == 140: tree_C_140.GetEntry( random.randrange(0,tree_C_140.GetEntries()) )        
+            if crossingAngle == 150: tree_C_150.GetEntry( random.randrange(0,tree_C_150.GetEntries()) )        
         elif era == '2017D':
-            if xangle == 120: tree_D_120.GetEntry( random.randrange(0,tree_D_120.GetEntries()) )        
-            if xangle == 130: tree_D_130.GetEntry( random.randrange(0,tree_D_130.GetEntries()) )        
-            if xangle == 140: tree_D_140.GetEntry( random.randrange(0,tree_D_140.GetEntries()) )        
-            if xangle == 150: tree_D_150.GetEntry( random.randrange(0,tree_D_150.GetEntries()) )        
+            if crossingAngle == 120: tree_D_120.GetEntry( random.randrange(0,tree_D_120.GetEntries()) )        
+            if crossingAngle == 130: tree_D_130.GetEntry( random.randrange(0,tree_D_130.GetEntries()) )        
+            if crossingAngle == 140: tree_D_140.GetEntry( random.randrange(0,tree_D_140.GetEntries()) )        
+            if crossingAngle == 150: tree_D_150.GetEntry( random.randrange(0,tree_D_150.GetEntries()) )        
         elif era == '2017E':
-            if xangle == 120: tree_E_120.GetEntry( random.randrange(0,tree_E_120.GetEntries()) )        
-            if xangle == 130: tree_E_130.GetEntry( random.randrange(0,tree_E_130.GetEntries()) )        
-            if xangle == 140: tree_E_140.GetEntry( random.randrange(0,tree_E_140.GetEntries()) )        
-            if xangle == 150: tree_E_150.GetEntry( random.randrange(0,tree_E_150.GetEntries()) )        
+            if crossingAngle == 120: tree_E_120.GetEntry( random.randrange(0,tree_E_120.GetEntries()) )        
+            if crossingAngle == 130: tree_E_130.GetEntry( random.randrange(0,tree_E_130.GetEntries()) )        
+            if crossingAngle == 140: tree_E_140.GetEntry( random.randrange(0,tree_E_140.GetEntries()) )        
+            if crossingAngle == 150: tree_E_150.GetEntry( random.randrange(0,tree_E_150.GetEntries()) )        
         elif era == '2017F':
-            if xangle == 120: tree_F_120.GetEntry( random.randrange(0,tree_F_120.GetEntries()) )        
-            if xangle == 130: tree_F_130.GetEntry( random.randrange(0,tree_F_130.GetEntries()) )        
-            if xangle == 140: tree_F_140.GetEntry( random.randrange(0,tree_F_140.GetEntries()) )        
-            if xangle == 150: tree_F_150.GetEntry( random.randrange(0,tree_F_150.GetEntries()) )        
+            if crossingAngle == 120: tree_F_120.GetEntry( random.randrange(0,tree_F_120.GetEntries()) )        
+            if crossingAngle == 130: tree_F_130.GetEntry( random.randrange(0,tree_F_130.GetEntries()) )        
+            if crossingAngle == 140: tree_F_140.GetEntry( random.randrange(0,tree_F_140.GetEntries()) )        
+            if crossingAngle == 150: tree_F_150.GetEntry( random.randrange(0,tree_F_150.GetEntries()) )        
 
         if pro_struct.num_m == 0 or pro_struct.num_p == 0: continue
 
@@ -407,7 +407,7 @@ for e in range(experiments):
 
         # Check for matching
         mass_match, rap_match = isMatching(diph_struct.mass, diph_struct.rap, pro_xim, pro_xip)
-
+        
         # Plot events
         if plotting: gr_estimate.SetPoint( gr_estimate.GetN(), mass_match, rap_match )
         h2_estimate.Fill(mass_match, rap_match)

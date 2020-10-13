@@ -12,14 +12,16 @@ from common import Prettify
 
 gStyle.SetOptStat(0)
 
+era = '2018'
+
 color = 50
 stations = [['0','45'], ['1','56'], ['3','45N'], ['23','45F'], ['103','56N'], ['123','56F']]
 
 #aqgcFile = TFile('outputHists/histOut_resolution_aqgc.root')
 #aqgcFile = TFile('histOut_signal_singleRP_2017postTS2.root')
 
-f = TFile('outputHists/output_hists_2017postTS2.root')
-f_eff = TFile('outputHists/output_hists_2017postTS2_withWeights.root')
+f = TFile('outputHists/directSimulation/output_hists_%s.root' % era)
+f_eff = TFile('outputHists/directSimulation/output_hists_%s_withWeights.root' % era)
 
 def Canvas(name):
     c = TCanvas(name,'c',750,600)
@@ -44,7 +46,7 @@ def condLabel():
     label.SetBorderSize(0)
     label.SetLineWidth(0)
     label.SetLineStyle(0)
-    label.AddText( "2017 Post TS2 cond. (13 TeV)" )
+    label.AddText( "%s cond. (13 TeV)" % era )
     label.SetTextSize( 0.034 )
     label.SetTextAlign(11)
     label.SetTextFont( 42 )
@@ -270,25 +272,14 @@ h_mass_reco_eff = f_eff.Get('h_mass_reco')
 #plotEA(h_mass_sim_single, h_mass_sim_total, 'Both singleRP reconstructed', 'All events', 'pds_mass_singleRP_acceptance.pdf')
 #plotEA(h_mass_sim_multi, h_mass_sim_total, 'Both multiRP reconstructed', 'All events', 'pds_mass_multiRP_acceptance.pdf')
 
-plotEA(h_xi_reco_eff, h_xi_reco_total, 'multiRP with efficiencies', 'multiRP', 'pds_xi_efficiency.pdf')
+#plotEA(h_xi_reco_eff, h_xi_reco_total, 'multiRP with efficiencies', 'multiRP', 'pds_xi_efficiency.pdf')
 #plotEA(h_mass_reco_eff, h_mass_reco_total, 'multiRP with efficiencies', 'multiRP', 'pds_mass_efficiency.pdf')
 
-#plotEA(h_xi_reco_eff, h_xi_sim_total, 'multiRP reco with efficiencies', 'simulated', 'pds_xi_eXA.pdf')
-plotEA(h_mass_reco_eff, h_mass_sim_total, 'multiRP reco with efficiencies', 'simulated', 'pds_mass_eXA.pdf')
+plotEA(h_xi_reco_eff, h_xi_sim_total, 'multiRP reco with efficiencies', 'simulated', 'pds_xi_eXA_%s.pdf' % era)
+plotEA(h_mass_reco_eff, h_mass_sim_total, 'multiRP reco with efficiencies', 'simulated', 'pds_mass_eXA_%s.pdf' % era)
 
 
-# FIXME: outdated function
-#plotEfficiency('mass','multi','two')
-#plotEfficiency('mass','single','two')
-#plotEfficiency('xi','single','one')
-#plotEfficiency('xi','multi','one')
 
-#plotProtonResolution('singleRP','3')
-#plotProtonResolution('singleRP','23')
-#plotProtonResolution('singleRP','103')
-#plotProtonResolution('singleRP','123')
-#plotProtonResolution('multiRP','0')
-#plotProtonResolution('multiRP','1')
 
 
 

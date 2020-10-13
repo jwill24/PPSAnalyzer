@@ -9,6 +9,7 @@ from ROOT import TCanvas, TPad, TFile, TPaveLabel, TPaveText, TAttText, TLine, T
 from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
+extension = 'pdf'
 
 #years = ['2017','2018']
 years = ['2017']
@@ -18,7 +19,8 @@ s_years = '+'.join(years)
 #files = [['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic.root')],
 #         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic.root')]]
 files = [['2017',TFile('outputHists/2017/histOut_data2017_Xi_multiRP.root')],
-         ['2018',TFile('outputHists/2018/histOut_data2018_Xi_multiRP.root')]]
+         #['2018',TFile('outputHists/2018/histOut_data2018_Xi_multiRP.root')]
+         ]
 #files = [['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic_multiRP.root')],
 #         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic_multiRP.root')]]
 
@@ -154,8 +156,7 @@ def massrap_matching(blinded):
     sLabel.Draw()
     lLabel = lumiLabel()
     lLabel.Draw()
-    c.SaveAs("plots/matching/massrap_matching_"+s_years+"_singleRP.pdf")
-
+    c.SaveAs("plots/matching/massrap_matching_"+s_years+"_multiRP.%s" % extension)
 
 def xi_matching(sector):
     c = Canvas("c")
@@ -231,7 +232,8 @@ def xi_matching(sector):
 
     pLabel, sLabel, lLabel = prelimLabel(), selectionLabel("Tight #xi selection"), lumiLabel()
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
-    c.SaveAs("plots/matching/xi"+sector+"_matching_"+s_years+".pdf")
+    #c.SaveAs("plots/matching/xi"+sector+"_matching_"+s_years+".pdf")
+    c.SaveAs("plots/matching/xi%s_matching_%s.%s" % (sector,s_years,extension))
 
 def oneDim_matching(blinded):
     c1 = Canvas("c1")
@@ -293,7 +295,7 @@ def oneDim_matching(blinded):
     legend.AddEntry(b1,"2#sigma matching",'f')
     legend.AddEntry(b2,"3#sigma matching",'f')
     legend.Draw()
-    c1.SaveAs('h_mass_1d.pdf')
+    c1.SaveAs('plots/matching/h_mass_1d.%s' % extension)
     c2.cd()
     c2.SetTicks(1,1)
     h_rap.GetXaxis().SetTitle('(y_{pp}-y_{#gamma#gamma})/#sigma(y_{pp}-y_{#gamma#gamma}}')
@@ -311,7 +313,7 @@ def oneDim_matching(blinded):
     legend.AddEntry(b1,"2#sigma matching",'f')
     legend.AddEntry(b2,"3#sigma matching",'f')
     legend.Draw()
-    c2.SaveAs('h_rap_1d.pdf')
+    c2.SaveAs('plots/matching/h_rap_1d.%s' % extension)
 
     
 
@@ -319,10 +321,10 @@ def oneDim_matching(blinded):
 
 massrap_matching(True)
 
-#oneDim_matching(True)
+oneDim_matching(True)
 
-#xi_matching('m')
-#xi_matching('p')
+xi_matching('m')
+xi_matching('p')
 
 '''
 # Make hit map of matching

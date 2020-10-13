@@ -356,11 +356,11 @@ class DiphotonAnalysis(Module):
                 if proton.sector45: self.h_hitmap45.Fill(t.x, t.y)
                 if proton.sector56: self.h_hitmap56.Fill(t.x, t.y)
             if method == 'singleRP':
-                self.h_detType.Fill( proton.protonRPType )                       # not available for multiRP
-                if proton.decDetId == 23: self.h_pro_xi_45f.Fill( proton.xi )    # not available for multiRP
-                elif proton.decDetId == 3: self.h_pro_xi_45n.Fill( proton.xi )   # not available for multiRP
-                elif proton.decDetId == 103: self.h_pro_xi_56n.Fill( proton.xi ) # not available for multiRP
-                elif proton.decDetId == 123: self.h_pro_xi_56f.Fill( proton.xi ) # not available for multiRP
+                self.h_detType.Fill( 0 if proton.decRPId == 3 or proton.decRPId == 103 else 1 )                       # not available for multiRP
+                if proton.decRPId == 23: self.h_pro_xi_45f.Fill( proton.xi )    # not available for multiRP
+                elif proton.decRPId == 3: self.h_pro_xi_45n.Fill( proton.xi )   # not available for multiRP
+                elif proton.decRPId == 103: self.h_pro_xi_56n.Fill( proton.xi ) # not available for multiRP
+                elif proton.decRPId == 123: self.h_pro_xi_56f.Fill( proton.xi ) # not available for multiRP
                 else: print 'Proton not in known det id:', proton.decDetId       # not available for multiRP
             if method == 'multiRP':
                 if proton.sector45: self.h_pro_thetaY_45.Fill(proton.thetaY), self.h_pro_time_45.Fill(proton.time) 

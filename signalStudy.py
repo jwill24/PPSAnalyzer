@@ -24,7 +24,7 @@ sqrts = 13000
 
 signal = True
 
-#photon_id = 'MVA_WP90'
+photon_id = 'MVA_WP90'
 #photon_id = 'cutBased_loose'
 #photon_id = 'highPt'
 
@@ -88,15 +88,18 @@ class SignalStudy(Module):
 
     def endJob(self):
         Module.endJob(self)
+        
+        print 'Signal Efficiency:', str(float(100)*float(self.passing_wp90)/float(self.total))+r'%'
 
-        #print 'Efficiency (total):', float(self.total), '/ 94800'
+        '''
         print 'High pT ID:', float(self.passing_hp)/float(self.total)
         print 'MVA WP90 ID:', float(self.passing_wp90)/float(self.total)
         print 'MVA WP80 ID:', float(self.passing_wp80)/float(self.total)
         print 'Loose ID:', float(self.passing_l)/float(self.total)
         print 'Medium ID:', float(self.passing_m)/float(self.total)
         print 'Tight ID:', float(self.passing_t)/float(self.total)
-        
+        '''
+
     # Apply photon ID
     def photon_id(self,pho1,pho2):
         if '90' in photon_id:
@@ -143,38 +146,22 @@ class SignalStudy(Module):
         #lhe = Collection(event, "LHEPart")
         #gen = Collection(event, "GenPart")
 
-        '''
-        for i, g in enumerate(gen):
-            print 'i:', i, 'pdgId:', g.pdgId, 'status:', g.status
-        return
-        
-        if event.HLT_DoublePhoton70 == 0:
-            print 'Not passing HLT'
-            return
-        '''
-
-        if len(photons) < 2: 
-            print 'Not 2 reconstructed photons'
-            return
-
+        if len(photons) < 2: return
         self.total += 1
         pho1, pho2 = photons[0], photons[1]
+
+        # Photon ID study
+        '''
         if self.highPtID(pho1,pho2,event.fixedGridRhoFastjetAll): self.passing_hp += 1
         if (pho1.mvaID_WP90 == 1 and pho2.mvaID_WP90 == 1) and (pho1.electronVeto == 0 or pho2.electronVeto == 0): self.passing_wp90 += 1 
         if pho1.mvaID_WP80 == 1 and pho2.mvaID_WP80 == 1: self.passing_wp80 += 1
         if pho1.cutBasedBitmap >= 1 and pho2.cutBasedBitmap >= 1: self.passing_l += 1
         if pho1.cutBasedBitmap >= 3 and pho2.cutBasedBitmap >= 3: self.passing_m += 1
         if pho1.cutBasedBitmap >= 7 and pho2.cutBasedBitmap >= 7: self.passing_t += 1
-
-
-
-
         '''
-        pt1, pt2 = pho1.pt, pho2.pt
-        if pho1.pt < 100 or pho2.pt < 100: 
-            print 'Not passing pT cut'
-            return
 
+        # Diphoton variables
+        pt1, pt2 = pho1.pt, pho2.pt
         diph_p4 = ROOT.TLorentzVector( pho1.p4() + pho2.p4() )
         diph_mass = diph_p4.M()
         diph_rap = diph_p4.Rapidity()
@@ -185,7 +172,20 @@ class SignalStudy(Module):
         xim = 1/13000.*( pho1.pt*math.exp(-1*pho1.eta)+pho2.pt*math.exp(-1*pho2.eta) )
 
 
+        # Signal efficiency study
+        if pho1.pt < 100 or pho2.pt < 100: return
+        if not hoe_cut(pho1,pho2): return
+        if not eta_cut(pho1,pho2): return 
+        if not mass_cut(diph_mass): return
+        if not self.photon_id(pho1,pho2): return
+        if not electron_veto(pho1,pho2): return
+        if not acop_cut(acop): return
+        if not xi_cut(xip,xim): return
+
+        self.passing_wp90 += 1
+
         # Generated photons
+        '''
         part1, part2 = gen[2], gen[3] #gen[19], gen[20]
         if ( abs(part1.p4().Pz()-pho1.p4().Pz()) ) > ( abs(part2.p4().Pz()-pho1.p4().Pz()) ): part1, part2 = gen[3], gen[2]  #gen[20], gen[19] 
         part_p4 = ROOT.TLorentzVector( part1.p4() + part2.p4() )
@@ -196,9 +196,10 @@ class SignalStudy(Module):
         part_acop = 1 - abs(part_dphi)/PI
         part_xip = 1/13000.*( part1.pt*math.exp(part1.eta)+part2.pt*math.exp(part2.eta) )
         part_xim = 1/13000.*( part1.pt*math.exp(-1*part1.eta)+part2.pt*math.exp(-1*part2.eta) )
-
+        '''
         
         # Diphoton resolution plots
+        '''
         self.h_mass_res.Fill( (diph_mass-part_mass)/part_mass )
         self.h_rap_diff.Fill( (diph_rap-part_rap) )
         self.h_pt_res.Fill( (pho1.pt-part1.pt)/part1.pt )
@@ -216,10 +217,11 @@ class SignalStudy(Module):
         self.h_xi_res.Fill( (xim-part_xim)/part_xim )
         self.h_logxi_diff.Fill( math.log(1/xip)-math.log(1/part_xip) )
         self.h_logxi_diff.Fill( math.log(1/xim)-math.log(1/part_xim) )
-
+        '''
         
 
         # Generated protons
+        '''
         gen_prop, gen_prom = gen[0].p4(), gen[1].p4() #gen[3].p4(), gen[5].p4()
         gen_xip = ( 6500.0-gen_prop.Rho() ) / 6500.0
         gen_xim = ( 6500.0-gen_prom.Rho() ) / 6500.0
@@ -266,6 +268,6 @@ class SignalStudy(Module):
 
 
 preselection=''
-files=['/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/nanoAOD_aqgc2017_Skim.root']
+files=['/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_aqgc2017_Skim.root']
 p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[hepmcDump(),SignalStudy()],noOut=True,histFileName="histOut_aqgc2017_study.root",histDirName="plots")
 p.run()

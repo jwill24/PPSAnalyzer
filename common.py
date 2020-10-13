@@ -288,7 +288,11 @@ def getProtonEra(run):
     elif run > 315256 and run < 325173: return '2018'
 
 def checkProton(run,xangle,v_trks,proton):
-    if not proton.validFit: return False # https://github.com/cms-sw/cmssw/blob/2ba5d421e10379d81760a899532b2c991b89c82c/DataFormats/ProtonReco/interface/ForwardProton.h#L121
+    singleRP = False
+    try: proton.validFit
+    except: singleRP = True
+    if not singleRP:
+        if not proton.validFit: return False # https://github.com/cms-sw/cmssw/blob/2ba5d421e10379d81760a899532b2c991b89c82c/DataFormats/ProtonReco/interface/ForwardProton.h#L121
     if not validRecoInfo(run,v_trks,proton.sector45): return False # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TaggedProtonsGettingStarted#Specific_features_and_warnings_f
     protonEra = getProtonEra(run)
     arm = 0 if proton.sector45 else 1
