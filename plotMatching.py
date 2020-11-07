@@ -9,7 +9,7 @@ from ROOT import TCanvas, TPad, TFile, TPaveLabel, TPaveText, TAttText, TLine, T
 from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
-extension = 'pdf'
+extension = 'png'
 
 #years = ['2017','2018']
 years = ['2017']
@@ -19,7 +19,7 @@ s_years = '+'.join(years)
 #files = [['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic.root')],
 #         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic.root')]]
 files = [['2017',TFile('outputHists/2017/histOut_data2017_Xi_multiRP.root')],
-         #['2018',TFile('outputHists/2018/histOut_data2018_Xi_multiRP.root')]
+         ['2018',TFile('outputHists/2018/histOut_data2018_Xi_multiRP.root')]
          ]
 #files = [['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic_multiRP.root')],
 #         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic_multiRP.root')]]
@@ -156,7 +156,8 @@ def massrap_matching(blinded):
     sLabel.Draw()
     lLabel = lumiLabel()
     lLabel.Draw()
-    c.SaveAs("plots/matching/massrap_matching_"+s_years+"_multiRP.%s" % extension)
+    s_blind = '_blinded' if blinded else ''
+    c.SaveAs("plots/matching/massrap_matching_"+s_years+"_multiRP%s.%s" % (s_blind,extension))
 
 def xi_matching(sector):
     c = Canvas("c")
@@ -319,12 +320,13 @@ def oneDim_matching(blinded):
 
 #------------------------------------------------
 
-massrap_matching(True)
+massrap_matching(False)
 
-oneDim_matching(True)
+#oneDim_matching(True)
 
-xi_matching('m')
-xi_matching('p')
+#xi_matching('m')
+#xi_matching('p')
+
 
 '''
 # Make hit map of matching

@@ -1,3 +1,8 @@
+# Usage: python diphotonAnalyzer.py <sample> <selection> <method>
+# <sample> = data2017/data2018/gj2017/tt2018/...
+# <selection = HLT/Elastic/Xi/...
+# <method> = singleRP/multiRP
+
 # To-Do
 
 # Add pixel and strip uncertainties on xi
@@ -176,7 +181,7 @@ class DiphotonAnalysis(Module):
 
 
         if not data_:
-            self.mcfile = ROOT.TFile( '/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_'+sample+'_Skim.root' )
+            self.mcfile = ROOT.TFile( '/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2018/nanoAOD_'+sample+'_Skim.root' )
             self.mchist = ROOT.TH1F('mchist', 'fixedGridRho', 58, 0, 58) 
             self.mctree = self.mcfile.Events
             self.mctree.Project('mchist', 'fixedGridRhoFastjetAll')
@@ -402,16 +407,16 @@ if sample == 'data2017':
     ]
 elif sample == 'data2018':
     files=[
-        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_Run2018A_Skim.root",
-        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_Run2018B_Skim.root",
-        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_Run2018C_Skim.root",
-        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_Run2018D_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2018/nanoAOD_Run2018A_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2018/nanoAOD_Run2018B_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2018/nanoAOD_Run2018C_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2018/nanoAOD_Run2018D_Skim.root",
     ]
 else: 
     if '2017' in sample:
-        files=["/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_"+sample+"_Skim.root"]
+        files=["/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2017/nanoAOD_"+sample+"_Skim.root"]
     elif '2018' in sample:
-        files=["/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_"+sample+"_Skim.root"]
+        files=["/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2018/nanoAOD_"+sample+"_Skim.root"]
         
 p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[DiphotonAnalysis()],noOut=True,histFileName="/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/tmp/histOut_"+sample+"_"+selection+"_"+method+".root",histDirName="plots")
 p.run()

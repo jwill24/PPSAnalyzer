@@ -274,10 +274,10 @@ def getEra(run):
     elif run > 302111 and run < 302679: return '2017D'
     elif run > 303708 and run < 304798: return '2017E'
     elif run > 305016 and run < 306462: return '2017F'
-    elif run > 315256 and run < 325173: return '2018A' # FIXME
-    elif run > 305016 and run < 306462: return '2018B' # FIXME
-    elif run > 305016 and run < 306462: return '2018C' # FIXME
-    elif run > 305016 and run < 306462: return '2018D' # FIXME
+    elif run > 315256 and run < 316996: return '2018A' 
+    elif run > 317079 and run < 319078: return '2018B' 
+    elif run > 319336 and run < 320066: return '2018C' 
+    elif run > 320672 and run < 325173: return '2018D' 
     else: return 'none'
 
 def getProtonEra(run):
