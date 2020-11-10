@@ -39,10 +39,14 @@ from ROOT import MyStruct
 mystruct = MyStruct()
 
 PI = 3.1415926535897932643383279
-lumi2017, lumi2018 = 37190, 55720 
+lumi2016, lumi2017, lumi2018 = 9410, 37190, 55720 
 rel_mass_err, rel_rap_err = 0.02, 0.074
 
 sample, selection, method = str( sys.argv[1] ), str( sys.argv[2] ), str( sys.argv[3] )
+
+if '2016' in sample: year = '2016'
+elif '2017' in sample: year = '2017'
+elif '2018' in sample: year = '2018'
 
 mc_file = open('/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/datasets.txt','r') 
 mcs = [[n.rstrip('\n') for n in line.split(',')] for line in mc_file]
@@ -76,7 +80,11 @@ class DiphotonAnalysis(Module):
 
         # Get SF hists for ID and CSEV
         self.photonmapname = "EGamma_SF2D"        
-        if '2017' in sample: 
+        if '2016' in sample: 
+            self.photon_file = open_root("/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/egammaEffi.txt_EGM2D_Pho_wp90_UL16.root")
+            self.csev_file = open_root("/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/ScalingFactors_80X_Summer16.root")
+            self.csevmapname = "Scaling_Factors_CSEV_R9\ Inclusive"
+        elif '2017' in sample: 
             self.photon_file = open_root("/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/egammaEffi.txt_EGM2D_PHO_MVA90_UL17.root")
             self.csev_file = open_root("/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/CSEV_ScaleFactors_2017.root")
             self.csevmapname = "MVA_ID"
@@ -181,14 +189,13 @@ class DiphotonAnalysis(Module):
 
 
         if not data_:
-            self.mcfile = ROOT.TFile( '/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2018/nanoAOD_'+sample+'_Skim.root' )
+            self.mcfile = ROOT.TFile( '/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/%s/nanoAOD_'+sample+'_Skim.root' % year )
             self.mchist = ROOT.TH1F('mchist', 'fixedGridRho', 58, 0, 58) 
             self.mctree = self.mcfile.Events
             self.mctree.Project('mchist', 'fixedGridRhoFastjetAll')
             self.mchist.Scale( 1 / self.mchist.Integral() )
 
-            if '2017' in sample: self.datafile = ROOT.TFile( '/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/dataFixedGridRho_2017.root' )
-            elif '2018' in sample: self.datafile = ROOT.TFile( '/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/dataFixedGridRho_2018.root' )
+            self.datafile = ROOT.TFile( '/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/dataFixedGridRho_%s.root' % year )
             self.datahist = self.datafile.Get('h')
             self.datahist.Scale( 1 / self.datahist.Integral() )
 
@@ -397,7 +404,13 @@ class DiphotonAnalysis(Module):
         return True
 
 preselection=""
-if sample == 'data2017':
+if sample == 'data2016':
+    files=[
+        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2016/nanoAOD_Run2016B_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2016/nanoAOD_Run2016C_Skim.root",
+        "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2016/nanoAOD_Run2016G_Skim.root",
+    ]
+elif sample == 'data2017':
     files=[
         "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2017/nanoAOD_Run2017B_Skim.root",
         "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2017/nanoAOD_Run2017C_Skim.root",
@@ -413,7 +426,9 @@ elif sample == 'data2018':
         "/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2018/nanoAOD_Run2018D_Skim.root",
     ]
 else: 
-    if '2017' in sample:
+    if '2016' in sample:
+        files=["/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2016/nanoAOD_"+sample+"_Skim.root"]
+    elif '2017' in sample:
         files=["/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2017/nanoAOD_"+sample+"_Skim.root"]
     elif '2018' in sample:
         files=["/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2018/nanoAOD_"+sample+"_Skim.root"]

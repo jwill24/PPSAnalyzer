@@ -4,13 +4,13 @@
 #include <fstream>
 #include <iostream>
 
-#define output_file "protonEvents_2018.root"
+#define output_file "protonEvents_2017.root"
 
 void makeProtonTree( TString outFile=output_file )
 {
 
   TFile* out = new TFile( outFile, "RECREATE" );
-
+  /*
   TTree* tree_A_120 = new TTree( "tree_A_120", "tree for 120 protons");
   TTree* tree_A_121 = new TTree( "tree_A_121", "tree for 121 protons");
   TTree* tree_A_122 = new TTree( "tree_A_122", "tree for 122 protons");
@@ -178,8 +178,8 @@ void makeProtonTree( TString outFile=output_file )
   TTree* tree_D_158 = new TTree( "tree_D_158", "tree for 158 protons");
   TTree* tree_D_159 = new TTree( "tree_D_159", "tree for 159 protons");
   TTree* tree_D_160 = new TTree( "tree_D_160", "tree for 160 protons");
-
-  /*
+  */
+  
   TTree* tree_B_120 = new TTree( "tree_B_120", "tree for 120 protons");
   TTree* tree_B_130 = new TTree( "tree_B_130", "tree for 130 protons");
   TTree* tree_B_140 = new TTree( "tree_B_140", "tree for 140 protons");
@@ -204,12 +204,12 @@ void makeProtonTree( TString outFile=output_file )
   TTree* tree_F_130 = new TTree( "tree_F_130", "tree for 130 protons");
   TTree* tree_F_140 = new TTree( "tree_F_140", "tree for 140 protons");
   TTree* tree_F_150 = new TTree( "tree_F_150", "tree for 150 protons");
-  */
+
 
   unsigned short maxProSide = 12;
   unsigned int num_m, num_p;
   float xim[maxProSide], xip[maxProSide];
-
+  /*
   tree_A_120->Branch("num_m", &num_m, "num_m/I");
   tree_A_120->Branch("num_p", &num_p, "num_p/I");
   tree_A_120->Branch("xim", xim, "xim[num_m]/F");
@@ -869,8 +869,8 @@ void makeProtonTree( TString outFile=output_file )
   tree_D_160->Branch("num_p", &num_p, "num_p/I");
   tree_D_160->Branch("xim", xim, "xim[num_m]/F");
   tree_D_160->Branch("xip", xip, "xim[num_p]/F");
-  
-  /*
+  */
+
   tree_B_120->Branch("num_m", &num_m, "num_m/I");
   tree_B_120->Branch("num_p", &num_p, "num_p/I");
   tree_B_120->Branch("xim", xim, "xim[num_m]/F");
@@ -955,21 +955,21 @@ void makeProtonTree( TString outFile=output_file )
   tree_F_150->Branch("num_p", &num_p, "num_p/I");
   tree_F_150->Branch("xim", xim, "xim[num_m]/F");
   tree_F_150->Branch("xip", xip, "xim[num_p]/F");
-  */
+
 
   TChain chain("Events");
-  /*
+
   chain.Add( "Skims/2017/nanoAOD_Run2017B_Skim.root" );
   chain.Add( "Skims/2017/nanoAOD_Run2017C_Skim.root" );
   chain.Add( "Skims/2017/nanoAOD_Run2017D_Skim.root" );
   chain.Add( "Skims/2017/nanoAOD_Run2017E_Skim.root" );
   chain.Add( "Skims/2017/nanoAOD_Run2017F_Skim.root" );
-  */
+  /*
   chain.Add( "Skims/2018/nanoAOD_Run2018A_Skim.root" );
   chain.Add( "Skims/2018/nanoAOD_Run2018B_Skim.root" );
   chain.Add( "Skims/2018/nanoAOD_Run2018C_Skim.root" );
   chain.Add( "Skims/2018/nanoAOD_Run2018D_Skim.root" );
-
+  */
   unsigned int run, event, num_proton;
   float crossingAngle;
   const unsigned short maxPro = 21;
@@ -1035,7 +1035,6 @@ void makeProtonTree( TString outFile=output_file )
     // Fill tree based on era and crossingAngle
 
     // 2017
-    /*
     if ( run > 297023 && run < 299330 ) { // Run2017B
       if ( crossingAngle == 120 ) tree_B_120->Fill();
       else if ( crossingAngle == 130 ) tree_B_130->Fill();
@@ -1061,9 +1060,10 @@ void makeProtonTree( TString outFile=output_file )
       else if ( crossingAngle == 130 ) tree_F_130->Fill();
       else if ( crossingAngle == 140 ) tree_F_140->Fill();
       else if ( crossingAngle == 150 ) tree_F_150->Fill();
-      }*/
+      }
 
     // 2018
+    /*
     if ( run > 315256 && run < 316996 ) { //Run2018A
       if ( crossingAngle == 120 ) tree_A_120->Fill();
       else if ( crossingAngle == 121 ) tree_A_121->Fill();
@@ -1233,6 +1233,7 @@ void makeProtonTree( TString outFile=output_file )
       else if ( crossingAngle == 159 ) tree_D_159->Fill();
       else if ( crossingAngle == 160 ) tree_D_160->Fill();
     }
+    */
 
   } // End loop over entries
 
