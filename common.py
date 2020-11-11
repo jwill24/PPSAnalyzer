@@ -134,8 +134,9 @@ def lumiLabel(ratio,years):
     label.SetBorderSize(0)
     label.SetLineWidth(0)
     label.SetLineStyle(0)
-    if len(years) == 1 and years[0] == '2017': luminosity = '37.19'
-    elif years[0] == '2018': luminosity = '55.72'
+    if len(years) == 1 and years[0] == '2016': luminosity = '9.78'
+    elif len(years) == 1 and years[0] == '2017': luminosity = '37.19'
+    elif len(years) == 1 and years[0] == '2018': luminosity = '55.72'
     elif len(years) == 2: luminosity = '92.91'
     label.AddText( luminosity+" fb^{-1} (13 TeV)" )
     if ratio: label.SetTextSize( 0.048 )
@@ -208,7 +209,7 @@ def acop_cut(acop):
 
 # Apply photon ID
 def photon_id(pho1,pho2):
-    if pho1.mvaID_WP90 == 1 and pho2.mvaID_WP90 == 1: return True # loose MVA ID                                                                                                                     
+    if pho1.mvaID_WP90 == 1 and pho2.mvaID_WP90 == 1: return True # loose MVA ID
     else: return False
 
 # Apply electron veto

@@ -12,13 +12,14 @@ gStyle.SetOptStat(0)
 extension = 'png'
 
 #years = ['2017','2018']
-years = ['2017']
+years = ['2016']
 s_years = '+'.join(years)
 #files = [['2017',TFile('outputHists/2017/histOut_data2017_Xi.root')],
 #         ['2018',TFile('outputHists/2018/histOut_data2018_Xi.root')]]
 #files = [['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic.root')],
 #         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic.root')]]
-files = [['2017',TFile('outputHists/2017/histOut_data2017_Xi_multiRP.root')],
+files = [['2016',TFile('outputHists/2016/histOut_data2016_Xi_multiRP.root')],
+         ['2017',TFile('outputHists/2017/histOut_data2017_Xi_multiRP.root')],
          ['2018',TFile('outputHists/2018/histOut_data2018_Xi_multiRP.root')]
          ]
 #files = [['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic_multiRP.root')],
@@ -77,8 +78,9 @@ def lumiLabel():
     label.SetBorderSize(0)
     label.SetLineWidth(0)
     label.SetLineStyle(0)
-    if len(years) == 1 and years[0] == '2017': luminosity = '37.19'
-    elif years[0] == '2018': luminosity = '55.72'
+    if len(years) == 1 and years[0] == '2016': luminosity = '9.72'
+    elif len(years) == 1 and years[0] == '2017': luminosity = '37.19'
+    elif len(years) == 1 and years[0] == '2018': luminosity = '55.72'
     elif len(years) == 2: luminosity = '92.91'
     label.AddText( luminosity+" fb^{-1} (13 TeV)" )
     label.SetTextSize( 0.033 )
@@ -322,7 +324,7 @@ def oneDim_matching(blinded):
 
 massrap_matching(False)
 
-#oneDim_matching(True)
+oneDim_matching(False)
 
 #xi_matching('m')
 #xi_matching('p')
