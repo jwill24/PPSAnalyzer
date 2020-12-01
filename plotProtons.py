@@ -15,12 +15,12 @@ gStyle.SetPalette(ROOT.kRainBow)
 lab = 'HLT selection'
 selection = 'HLT'
 #years = ['2017','2018']
-years = ['2017']
+years = ['2018']
 s_years = '+'.join(years)
 
-#protonFiles = [['2017',TFile('outputHists/2017/histOut_data2017_'+selection+'.root'),TFile('outputHists/2017/histOut_data2017_'+selection+'_multiRP.root')],
-#               ['2018',TFile('outputHists/2018/histOut_data2018_HLT.root')]]
-protonFiles = [['2017',TFile('tmp/histOut_data2017_'+selection+'_singleRP.root'),TFile('tmp/histOut_data2017_'+selection+'_multiRP.root')]] # testing
+protonFiles = [['2017',TFile('outputHists/2017/histOut_data2017_'+selection+'_singleRP.root'),TFile('outputHists/2017/histOut_data2017_'+selection+'_multiRP.root')],
+               ['2018',TFile('outputHists/2018/histOut_data2018_'+selection+'_singleRP.root'),TFile('outputHists/2018/histOut_data2017_'+selection+'_multiRP.root')]]
+#protonFiles = [['2017',TFile('outputHists/2017/histOut_data2017_'+selection+'_singleRP.root'),TFile('outputHists/2017/histOut_data2017_'+selection+'_multiRP.root')]]
 
 proton_pot = [['45f','(45F)', 0.016], ['45n','(45N)', 0.013], ['56n','(56N)', 0.048], ['56f','(56F)', 0.037]]
 
@@ -123,7 +123,7 @@ def makeXiComp(sector,log):
     legend.Draw()
     pLabel, lLabel = prelimLabel('top',log,h_far.GetMaximum()), lumiLabel(False,years)
     pLabel.Draw(), lLabel.Draw()
-    c.SaveAs('h_xi_comp_'+sector+'.png')
+    c.SaveAs('plots/%s/h_xi_comp_%s.pdf' % (s_years,sector)) 
 
 def makeProtonSide(log):
     c = Canvas('c')
@@ -252,7 +252,7 @@ def makeXiAcceptance(pot,log):
 #makeProtonPlot('h_pro_xi_56n', 'Proton #xi 56N', 1, False)
 #makeProtonPlot('h_pro_xi_56f', 'Proton #xi 56F', 1, False)
 
-#makeXiComp('45',True)
+makeXiComp('45',True)
 makeXiComp('56',True)
 
 

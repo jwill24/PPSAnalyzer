@@ -11,8 +11,8 @@ from ROOT import gROOT, gStyle
 gStyle.SetOptStat(0)
 extension = 'png'
 
-#years = ['2017','2018']
-years = ['2016']
+years = ['2016','2017','2018']
+#years = ['2016']
 s_years = '+'.join(years)
 #files = [['2017',TFile('outputHists/2017/histOut_data2017_Xi.root')],
 #         ['2018',TFile('outputHists/2018/histOut_data2018_Xi.root')]]
@@ -78,10 +78,11 @@ def lumiLabel():
     label.SetBorderSize(0)
     label.SetLineWidth(0)
     label.SetLineStyle(0)
-    if len(years) == 1 and years[0] == '2016': luminosity = '9.72'
+    if len(years) == 1 and years[0] == '2016': luminosity = '9.78'
     elif len(years) == 1 and years[0] == '2017': luminosity = '37.19'
     elif len(years) == 1 and years[0] == '2018': luminosity = '55.72'
     elif len(years) == 2: luminosity = '92.91'
+    elif len(years) == 3: luminosity = '102.7'
     label.AddText( luminosity+" fb^{-1} (13 TeV)" )
     label.SetTextSize( 0.033 )
     label.SetTextAlign(11)
@@ -322,9 +323,9 @@ def oneDim_matching(blinded):
 
 #------------------------------------------------
 
-massrap_matching(False)
+massrap_matching(True)
 
-oneDim_matching(False)
+oneDim_matching(True)
 
 #xi_matching('m')
 #xi_matching('p')

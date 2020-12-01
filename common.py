@@ -138,6 +138,7 @@ def lumiLabel(ratio,years):
     elif len(years) == 1 and years[0] == '2017': luminosity = '37.19'
     elif len(years) == 1 and years[0] == '2018': luminosity = '55.72'
     elif len(years) == 2: luminosity = '92.91'
+    elif len(years) == 3: luminosity = '102.7'
     label.AddText( luminosity+" fb^{-1} (13 TeV)" )
     if ratio: label.SetTextSize( 0.048 )
     else: label.SetTextSize( 0.034 )

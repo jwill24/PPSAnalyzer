@@ -15,8 +15,8 @@ gStyle.SetOptStat(0)
 selections = [['ID','Preselection'], ['Elastic','Elastic selection'], ['Xi', '#xi_{#gamma#gamma}^{#pm} #in PPS']]
 #selections = [['HLT','After HLT'], ['Elastic','Diphoton selection'], ['Xi', '#xi_{#gamma#gamma}^{#pm} #in PPS']]
 #selections = [['Elastic','Diphoton selection'], ['Xi', '#xi_{#gamma#gamma}^{#pm} #in PPS']]
-years = ['2017','2018']
-#years = ['2017']
+years = ['2016','2017','2018']
+#years = ['2016']
 s_years = '+'.join(years)
 #scale2018 = 55.72/37.2
 
@@ -78,8 +78,8 @@ for selection in selections:
     #print 'Selection:', selection[0]
 
     for i, year in enumerate(years): 
-        dataFile = TFile('outputHists/'+year+'/histOut_data'+year+'_'+selection[0]+'.root') 
-        aqgcFile = TFile('outputHists/'+'2017'+'/histOut_aqgc'+'2017'+'_'+selection[0]+'.root') # FIXME: waiting on 2018 samples
+        dataFile = TFile('outputHists/%s/histOut_data%s_%s_multiRP.root' % (year,year,selection[0]) )
+        aqgcFile = TFile('outputHists/%s/histOut_aqgc%s_%s_multiRP.root' % ('2017','2017',selection[0])) # FIXME: waiting on 2018 samples
 
         thisBin = selections.index(selection)+1
 
@@ -94,7 +94,7 @@ for selection in selections:
 
         for bg in bgs:
 
-            f = TFile('outputHists/'+year+'/histOut_'+str(bg[0])+year+'_'+selection[0]+'.root') 
+            f = TFile('outputHists/%s/histOut_%s%s_%s_multiRP.root' % (year,str(bg[0]),year,selection[0])) 
             hist = f.Get('plots/h_diph_mass')
             
             errors = []
@@ -189,5 +189,5 @@ denom_err.SetFillStyle(3004)
 
 Prettify( h_ratio )
 
-c.SaveAs('cutflow_'+s_years+'.png')
-c.SaveAs('cutflow_'+s_years+'.pdf')
+c.SaveAs('plots/cutflow_'+s_years+'.png')
+#c.SaveAs('plots/cutflow_'+s_years+'.pdf')

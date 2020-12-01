@@ -11,11 +11,14 @@ fnames=[
 
 ]
 
+# 2016 MC
+#p=PostProcessor(".",fnames,"HLT_DoublePhoton60 == 1","keep_drop.txt",[puAutoWeight_2016()],provenance=True,haddFileName="nanoAOD_ggj2016_Skim.root")
+
 # 2016 Data
-p=PostProcessor(".",fnames,"HLT_DoublePhoton60 == 1","keep_drop.txt",[],provenance=True,haddFileName="nanoAOD_Run2016B_Skim.root")
+#p=PostProcessor(".",fnames,"HLT_DoublePhoton60 == 1","keep_drop.txt",[],provenance=True,haddFileName="nanoAOD_Run2016B_Skim.root")
 
 # 2017 MC
-#p=PostProcessor(".",fnames,"HLT_DoublePhoton70 == 1","keep_drop.txt",[puAutoWeight_2017(),PrefCorr()],provenance=True,haddFileName="nanoAOD_aqgc2017_Skim.root")
+p=PostProcessor(".",fnames,"HLT_DoublePhoton70 == 1","keep_drop.txt",[puAutoWeight_2017(),PrefCorr()],provenance=True,haddFileName="nanoAOD_aqgc2017_Skim.root")
 
 # 2017 Data
 #p=PostProcessor(".",fnames,"HLT_DoublePhoton70 == 1","keep_drop.txt",[],provenance=True,haddFileName="nanoAOD_Run2017F_Skim.root")

@@ -98,6 +98,7 @@ class DiphotonAnalysis(Module):
         self.csev_map = get_root_obj(self.csev_file, self.csevmapname)
         self.photon_map = get_root_obj(self.photon_file, self.photonmapname)
 
+        '''
         if nSelect == 2.5 or nSelect == 5:
             # Initialize objects for toy matching file
             self.diphoton_file = ROOT.TFile('/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/tmp/diphotonEvents_'+sample+'_'+selection+'_'+method+'.root', 'RECREATE')
@@ -110,7 +111,7 @@ class DiphotonAnalysis(Module):
             self.diphoton_tree.Branch('crossingAngle', ROOT.AddressOf( mystruct, 'crossingAngle'), 'crossingAngle/L')
             self.diphoton_tree.Branch('era', ROOT.AddressOf( mystruct, 'era'), 'era/C')
             self.diphoton_tree.Branch('weight', ROOT.AddressOf( mystruct, 'weight'), 'weight/F')
-
+        '''
     def beginJob(self,histFile=None,histDirName=None):
 	Module.beginJob(self,histFile,histDirName)
         
@@ -211,11 +212,11 @@ class DiphotonAnalysis(Module):
 
     def endJob(self):
         Module.endJob(self)
-        
+        '''
         if nSelect == 2.5 or nSelect == 5:
             self.diphoton_file.Write()
             self.diphoton_file.Close()
-
+        '''
     # Get the SFs for MCs
     def efficiency(self,pt,eta_sc,r9):
         if nSelect != 2.5 and nSelect < 3: return 1.0
@@ -279,11 +280,11 @@ class DiphotonAnalysis(Module):
         xip = 1/13000.0*( pho1.pt*math.exp(pho1.eta)+pho2.pt*math.exp(pho2.eta) )
         xim = 1/13000.0*( pho1.pt*math.exp(-1*pho1.eta)+pho2.pt*math.exp(-1*pho2.eta) )
         if data_: weight = 1
-
-
+        pt_thresh = 75.0 if year == '2016' else 100.0
+                    
         # Make selection cuts
         if nSelect > 1:                                   # Preselection
-            if pho1.pt < 100.0 or pho2.pt < 100.0: return
+            if pho1.pt < pt_thresh or pho2.pt < pt_thresh: return
             if not hoe_cut(pho1,pho2): return
             if not eta_cut(pho1,pho2): return 
             if not mass_cut(diph_mass): return
@@ -315,6 +316,7 @@ class DiphotonAnalysis(Module):
             weight = s_weight * ( eff_pho1*eff_pho2 )
 
         # Fill diphoton tree for background estimation
+        '''
         if nSelect == 2.5 or nSelect == 5: # xi and reverse 
             mystruct.mass = diph_mass
             mystruct.rap = diph_rap
@@ -328,7 +330,7 @@ class DiphotonAnalysis(Module):
                 mystruct.crossingAngle = 150.0 # random crossingAngle
                 mystruct.era = '2017E' if '2017' in sample else '2018D' # random eras
             self.diphoton_tree.Fill()
-
+        '''
         # Fill single photon hists
         self.h_single_eta.Fill(pho1.eta,s_weight*eff_pho1), self.h_single_eta.Fill(pho2.eta,s_weight*eff_pho2)
         self.h_lead_eta.Fill(pho1.eta,s_weight*eff_pho1), self.h_sub_eta.Fill(pho2.eta,s_weight*eff_pho2)
