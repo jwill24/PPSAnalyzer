@@ -8,6 +8,14 @@ from ROOT import gROOT, gStyle, TColor, TCanvas, TPaveText, TLegend
 lightBlue, red, yellow, purple, darkGreen, green = ROOT.kCyan-9, 208, ROOT.kYellow-9, 38, ROOT.kTeal+3, ROOT.kGreen-9
 sqrts = 13000.0
 rel_xi_err = 0.08
+eras = { '2017B' : 0, '2017C1' : 1, '2017C2' : 2, '2017D' : 3, 
+         '2017E' : 4, '2017F1' : 5, '2017F2' : 6, '2017F3' : 7,
+         '2018A' : 8, '2018B1' : 9, '2018B2' : 10, '2018C' : 11, 
+         '2018D1' : 12, '2018D2' : 13 }
+dicts = []
+with open('pps_dictionaries.txt','r') as inf:
+    for line in inf: dicts.append(eval(line))
+
 
 class Color(int):
     __slots__ = ["object", "name"]
@@ -272,8 +280,8 @@ def rap_matching(rp):
 
 def getEra(run):
     if run > 297023 and run < 299330:   return '2017B'
-    elif run > 299359 and run < 302045: return '2017C'
-    elif run > 302111 and run < 302679: return '2017D'
+    elif run > 299359 and run < 302030: return '2017C'
+    elif run > 302030 and run < 302679: return '2017D'
     elif run > 303708 and run < 304798: return '2017E'
     elif run > 305016 and run < 306462: return '2017F'
     elif run > 315256 and run < 316996: return '2018A' 
@@ -289,6 +297,54 @@ def getProtonEra(run):
     elif run > 302664 and run < 306462: return '2017postTS2'
     elif run > 315256 and run < 325173: return '2018'
 
+def getPPSEra(run):
+    if run > 273724 and run < 280386:   return '2016'
+    elif run > 297019 and run < 299330: return '2017B'
+    elif run > 299336 and run < 300786: return '2017C1'
+    elif run > 300805 and run < 302030: return '2017C2'
+    elif run > 302030 and run < 302679: return '2017D'
+    elif run > 303708 and run < 304798: return '2017E'
+    elif run > 305016 and run < 305115: return '2017F1'
+    elif run > 305177 and run < 305903: return '2017F2'
+    elif run > 305964 and run < 306463: return '2017F3'
+    elif run > 315256 and run < 316996: return '2018A' 
+    elif run > 317079 and run < 317697: return '2018B1' 
+    elif run > 318621 and run < 319078: return '2018B2' 
+    elif run > 319336 and run < 320066: return '2018C' 
+    elif run > 320672 and run < 322632: return '2018D1' 
+    elif run > 323362 and run < 325173: return '2018D2' 
+    else: return 'none'
+
+def efficiency_cut(era, arm, xi, v_trks): #https://twiki.cern.ch/twiki/bin/view/CMS/TaggedProtonsFiducialCuts
+    arm = str(arm)
+    if '2016' in era: 
+        if arm == '0' and xi < 0.016: return False
+        if arm == '1' and xi < 0.019: return False
+    else:
+        for t in v_trks:
+            decRPId = str(t.decRPId)
+            if decRPId[-1] == '6': continue
+            station = '0' if len(decRPId) == 1 else decRPId[-2] 
+            print 'era:', era, 'station:', station
+            if '2017' in era and station == '0': 
+                print 'Strip!'
+                if arm == '0' and xi < 0.017: return False
+                if arm == '1' and xi < 0.022: return False
+            else:
+                print 'Pixel!'
+                xmin = dicts[ eras[era] ]['xmin_%s%s' % (arm,station)]
+                xmax = dicts[ eras[era] ]['xmax_%s%s' % (arm,station)]
+                ymin = dicts[ eras[era] ]['ymin_%s%s' % (arm,station)]
+                ymax = dicts[ eras[era] ]['ymax_%s%s' % (arm,station)]
+                if station == '1':
+                    if t.x < xmin or t.x > xmax: return False
+                    if t.y < ymin or t.y > ymax: return False
+                elif station == '0':
+                    if t.x*math.cos(math.radians(-8)) - t.y*math.sin(math.radians(-8)) < xmin or t.x*math.cos(math.radians(-8)) - t.y*math.sin(math.radians(-8)) > xmax: return False
+                    if t.x*math.sin(math.radians(-8)) + t.y*math.cos(math.radians(-8)) < ymin or t.x*math.sin(math.radians(-8)) + t.y*math.cos(math.radians(-8)) > ymax: return False
+    return True
+    
+
 def checkProton(run,xangle,v_trks,proton):
     singleRP = False
     try: proton.validFit
@@ -297,8 +353,10 @@ def checkProton(run,xangle,v_trks,proton):
         if not proton.validFit: return False # https://github.com/cms-sw/cmssw/blob/2ba5d421e10379d81760a899532b2c991b89c82c/DataFormats/ProtonReco/interface/ForwardProton.h#L121
     if not validRecoInfo(run,v_trks,proton.sector45): return False # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TaggedProtonsGettingStarted#Specific_features_and_warnings_f
     protonEra = getProtonEra(run)
+    ppsEra = getPPSEra(run)
     arm = 0 if proton.sector45 else 1
     apertureLimit = getAperture(xangle,arm,protonEra)
+    if not efficiency_cut(ppsEra,arm,proton.xi,v_trks): return False
     if proton.xi > apertureLimit: return False # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TaggedProtonsGettingStarted#Fiducial_cuts
     return True
 
