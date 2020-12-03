@@ -325,13 +325,10 @@ def efficiency_cut(era, arm, xi, v_trks): #https://twiki.cern.ch/twiki/bin/view/
             decRPId = str(t.decRPId)
             if decRPId[-1] == '6': continue
             station = '0' if len(decRPId) == 1 else decRPId[-2] 
-            print 'era:', era, 'station:', station
             if '2017' in era and station == '0': 
-                print 'Strip!'
                 if arm == '0' and xi < 0.017: return False
                 if arm == '1' and xi < 0.022: return False
             else:
-                print 'Pixel!'
                 xmin = dicts[ eras[era] ]['xmin_%s%s' % (arm,station)]
                 xmax = dicts[ eras[era] ]['xmax_%s%s' % (arm,station)]
                 ymin = dicts[ eras[era] ]['ymin_%s%s' % (arm,station)]
