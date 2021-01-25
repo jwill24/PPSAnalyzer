@@ -189,5 +189,5 @@ denom_err.SetFillStyle(3004)
 
 Prettify( h_ratio )
 
-c.SaveAs('plots/cutflow_'+s_years+'.png')
-#c.SaveAs('plots/cutflow_'+s_years+'.pdf')
+#c.SaveAs('plots/cutflow_'+s_years+'.png')
+c.SaveAs('plots/cutflow_'+s_years+'.pdf')

@@ -7,21 +7,20 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 from ROOT import TCanvas, TPad, TFile, TPaveLabel, TPaveText, TAttText, TLine, TLegend, TBox, TColor, THStack, TGaxis, TH1F
 from ROOT import gROOT, gStyle, kBlack
-from common import sampleColors, Canvas, Prettify, lumiLabel, makeLegend, asym_error_bars
+from common import sampleColors, Canvas, Prettify, lumiLabel, makeLegend, asym_error_bars, makeColors
 
 gStyle.SetOptStat(0)
 gStyle.SetPalette(ROOT.kRainBow)
 
 lab = 'HLT selection'
 selection = 'HLT'
-#years = ['2017','2018']
-years = ['2018']
+years = ['2016']
 s_years = '+'.join(years)
+colors = makeColors()
 
-protonFiles = [['2017',TFile('outputHists/2017/histOut_data2017_'+selection+'_singleRP.root'),TFile('outputHists/2017/histOut_data2017_'+selection+'_multiRP.root')],
-               ['2018',TFile('outputHists/2018/histOut_data2018_'+selection+'_singleRP.root'),TFile('outputHists/2018/histOut_data2017_'+selection+'_multiRP.root')]]
-#protonFiles = [['2017',TFile('outputHists/2017/histOut_data2017_'+selection+'_singleRP.root'),TFile('outputHists/2017/histOut_data2017_'+selection+'_multiRP.root')]]
-
+protonFiles = [['2016',TFile('outputHists/2016/histOut_data2016_'+selection+'_singleRP.root'),TFile('outputHists/2016/histOut_data2016_'+selection+'_multiRP.root')],
+               ['2017',TFile('outputHists/2017/histOut_data2017_'+selection+'_singleRP.root'),TFile('outputHists/2017/histOut_data2017_'+selection+'_multiRP.root')],
+               ['2018',TFile('outputHists/2018/histOut_data2018_'+selection+'_singleRP.root'),TFile('outputHists/2018/histOut_data2018_'+selection+'_multiRP.root')]]
 proton_pot = [['45f','(45F)', 0.016], ['45n','(45N)', 0.013], ['56n','(56N)', 0.048], ['56f','(56F)', 0.037]]
 
 def prelimLabel(location,log,maximum):
@@ -60,26 +59,66 @@ def selectionLabel(text,ratio,log,maximum):
     label.SetTextColor( 1 )
     return label
 
-def makeProtonPlot(name, xTitle, rbin, log):
+def getHist(method, year, name):
+    for f in protonFiles:
+        if year[0] == f[0]: 
+            if method == 'singleRP': pf = f[1]
+            if method == 'multiRP': pf = f[2]
+    h = pf.Get('plots/'+name)
+    return h
+
+def makeProtonPlot(name, xTitle, rbin, method, log):
     c = Canvas('c')
     c.cd()
     c.SetTicks(1,1)
     if log: c.SetLogy()
-    h = getHist('data',year,name)
+    h = getHist(method,years,name)
     h.SetTitle('')
     h.SetXTitle(xTitle)
     h.SetYTitle('Events')
     h.Rebin(rbin)
-    h.SetFillColor(208)
-    h.SetLineColor(208)
+    #h.SetFillColor(208)
+    #h.SetLineColor(208)
+    h.SetFillColor(ROOT.azure)
+    h.SetLineColor(ROOT.darkAzure)
     if log: h.SetMaximum( h.GetMaximum()*30 )
     else: h.SetMaximum( h.GetMaximum()*1.2 )
     if 'detType' in name: h.GetXaxis().SetBinLabel(1,'Strip'), h.GetXaxis().SetBinLabel(2,'Pixel')
     h.Draw('HIST')
     pLabel, sLabel, lLabel = prelimLabel('left',log,h.GetMaximum()), selectionLabel(lab,False,log,h.GetMaximum()), lumiLabel(False,years)
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
-    c.SaveAs('plots/'+year+'/'+name+'_'+selection+'.pdf')
+    c.SaveAs('plots/%s/%s_%s_%s.pdf' % (s_years,name,s_years,selection))
 
+def makeNumPro(method):
+    c = Canvas('c')
+    c.cd()
+    c.SetTicks(1,1)
+    c.SetLogy()
+    h_16 = getHist(method,['2016'],'h_num_pro')
+    h_17 = getHist(method,['2017'],'h_num_pro')
+    h_18 = getHist(method,['2018'],'h_num_pro')
+    h_18.SetTitle(''), h_18.GetXaxis().SetTitle('Number Of Reconstructed Protons'), h_18.GetYaxis().SetTitle('Events')
+    h_18.SetMarkerStyle(20), h_17.SetMarkerStyle(20), h_16.SetMarkerStyle(20)
+    h_18.SetMarkerColor(ROOT.darkLime), h_17.SetMarkerColor(ROOT.turquois), h_16.SetMarkerColor(ROOT.orangeSoda)
+    h_18.SetMarkerSize(1.5), h_17.SetMarkerSize(1.5), h_16.SetMarkerSize(1.5)
+    h_18.SetLineColor(ROOT.darkLime), h_17.SetLineColor(ROOT.turquois), h_16.SetLineColor(ROOT.orangeSoda)
+    h_18.SetLineWidth(2), h_17.SetLineWidth(2), h_16.SetLineWidth(2)
+    h_18.SetMinimum(10000.0)
+    h_18.Draw('p')
+    h_17.Draw('p same')
+    h_16.Draw('p same')
+    c.SetGrid(0,1)
+    legend = TLegend(0.6,0.7,0.8,0.78)
+    legend.SetTextSize(0.03)
+    legend.SetLineColor( 0 )
+    legend.SetFillColor( 0 )
+    legend.AddEntry(h_18,"2018",'lp')
+    legend.AddEntry(h_17,"2017",'lp')
+    legend.AddEntry(h_16,"2016",'lp')
+    legend.Draw()
+    pLabel = prelimLabel('top',True,h_18.GetMaximum())
+    pLabel.Draw()
+    c.SaveAs('plots/combined/h_num_pro_%s.png' % (selection))
 
 def makeXiComp(sector,log):
     sec = 'p' if sector == '45' else 'm'
@@ -123,26 +162,28 @@ def makeXiComp(sector,log):
     legend.Draw()
     pLabel, lLabel = prelimLabel('top',log,h_far.GetMaximum()), lumiLabel(False,years)
     pLabel.Draw(), lLabel.Draw()
-    c.SaveAs('plots/%s/h_xi_comp_%s.pdf' % (s_years,sector)) 
+    c.SaveAs('plots/%s/h_xi_comp_%s_%s.pdf' % (s_years,s_years,sector)) 
 
 def makeProtonSide(log):
     c = Canvas('c')
     c.cd()
+    c.SetLeftMargin(0.15)
     if log: c.SetLogy()
     c.SetTicks(1,1)
-    h_single = ROOT.TH1F('h_single', '', 3, 0, 3)
-    h_multi = ROOT.TH1F('h_multi', '', 3, 0, 3)
+    h_single = ROOT.TH1F('h_single', '', 4, 0, 4)
+    h_multi = ROOT.TH1F('h_multi', '', 4, 0, 4)
     for year in years:
         for pf in protonFiles:
             if year == pf[0]: pf_single, pf_multi = pf[1], pf[2]
         h_single.Add( pf_single.Get('plots/h_proton_side') )
         h_multi.Add( pf_multi.Get('plots/h_proton_side') )
     
-    h_multi.Scale(1.0/100.0)
-    h_multi.GetYaxis().SetTitle('Events/0.01')
+    denom = h_single.GetEntries()
+    h_multi.Scale(1.0/denom)
+    h_multi.GetYaxis().SetTitle('Fraction Of Events')
     h_multi.GetXaxis().SetBinLabel(1,'No protons'), h_multi.GetXaxis().SetBinLabel(2,'sector45 only'), h_multi.GetXaxis().SetBinLabel(3,'sector56 only'), h_multi.GetXaxis().SetBinLabel(4,'Both')
     h_multi.Draw('p')
-    h_single.Scale(1.0/100.0)
+    h_single.Scale(1.0/denom)
     h_single.Draw('p same')
     h_single.SetMarkerColor(62), h_multi.SetMarkerColor(207)
     h_single.SetLineColor(62), h_multi.SetLineColor(207)
@@ -159,8 +200,9 @@ def makeProtonSide(log):
     legend.AddEntry(h_multi,"multiRP",'lp')
     legend.Draw()
     pLabel, lLabel = prelimLabel('top',log,h_single.GetMaximum()), lumiLabel(False,years)
+    pLabel.SetMargin(0.49)
     pLabel.Draw(), lLabel.Draw()
-    c.SaveAs('h_proton_side_'+selection+'.png')
+    c.SaveAs('plots/%s/h_proton_side_%s_%s.pdf' % (s_years,selection,s_years))
     
 def makeDetType():
     c = Canvas('c')
@@ -183,7 +225,7 @@ def makeDetType():
     c.SetGrid(0,1)
     pLabel, sLabel, lLabel = prelimLabel('left',False,h_type.GetMaximum()), selectionLabel('singleRP',False,False,h_type.GetMaximum()), lumiLabel(False,years)
     pLabel.Draw(), sLabel.Draw(), lLabel.Draw()
-    c.SaveAs('h_detType_'+selection+'_'+s_years+'.png')
+    c.SaveAs('plots/%s/h_detType_%s_%s.png' % (s_years,selection,s_years))
 
 def makeHitMap(sector):
     c = Canvas('c')
@@ -199,9 +241,9 @@ def makeHitMap(sector):
     h_map.Draw('colz')
     pLabel, lLabel = prelimLabel('top',False,h_map.GetMaximum()), lumiLabel(False,years)
     pLabel.Draw(), lLabel.Draw()
-    c.SaveAs('hitmap_'+sector+'_'+s_years+'_'+selection+'.png')
+    c.SaveAs('plots/%s/hitmap_%s_%s_%s.pdf' % (s_years,sector,s_years,selection))
 
-def makeXiAcceptance(pot,log):
+def makeXiAcceptanceSide(side,log):
     c = Canvas('c')
     c.cd()
     if log: c.SetLogy()
@@ -210,10 +252,35 @@ def makeXiAcceptance(pot,log):
     h = ROOT.TH1F('h', '', 100, 0, 0.3)
     for year in years:
         for pf in protonFiles:
+            if year == pf[0]: pfile = pf[2]
+        h.Add( pfile.Get('plots/h_pro_xi%s' % side) )
+    #h.Rebin(2)
+    h.GetXaxis().SetTitle('#xi ^{%s}' % ('+' if side == 'p' else '-'))
+    h.GetYaxis().SetTitle('Events')
+    h.SetLineColor(ROOT.kBlack)
+    h.SetMarkerStyle(24)
+    minx, miny, maxx, maxy = 0.0001, h.GetMinimum(), 0.2, h.GetMaximum()*10 if log else h.GetMaximum()*1.2
+    c.DrawFrame(minx, miny, maxx, maxy)
+    h.Draw('p e2')
+    h.SetMaximum(maxy)
+    pLabel, lLabel = prelimLabel('top',log,maxy), lumiLabel(log,years)
+    lLabel.SetTextSize(0.034)
+    pLabel.Draw(), lLabel.Draw()
+    c.SaveAs('plots/%s/h_xi%s_%s.pdf' % (s_years,side,s_years))
+
+def makeXiAcceptance(pot,log):
+    c = Canvas('c')
+    c.cd()
+    if log: c.SetLogy()
+    c.SetTicks(1,1)
+    c.SetGrid(1,1)
+    h = ROOT.TH1F('h', '', 100, 0, 0.2)
+    for year in years:
+        for pf in protonFiles:
             if year == pf[0]: pfile = pf[1]
-        h.Add( pfile.Get('plots/h_pro_xi_'+pot) )
+        h.Add( pfile.Get('plots/h_pro_xi_%s' % pot) )
     h.Rebin(2)
-    #h.Scale(1.0/100.0)
+    #h.Scale(1.0/100.0)                                                                                                                                                                                                                               
     for pp in proton_pot:
         if pot == pp[0]: v_pot = pp
     h.GetXaxis().SetTitle('#xi '+v_pot[1])
@@ -225,43 +292,35 @@ def makeXiAcceptance(pot,log):
     h.Draw('p e2')
     h.SetMaximum(maxy)
     pLabel, lLabel = prelimLabel('top',log,maxy), lumiLabel(log,years)
+    lLabel.SetTextSize(0.034)
     pLabel.Draw(), lLabel.Draw()
-    #l1 = ROOT.TLine(0.015,miny,0.015,maxy)
-    #l2 = ROOT.TLine(v_pot[2],miny,v_pot[2],maxy)
-    #l1.SetLineStyle(3), l2.SetLineStyle(3)
-    #l1.SetLineColor(ROOT.kGreen), l2.SetLineColor(ROOT.kRed)
-    #l1.Draw(), l2.Draw()
-    #legend = TLegend(0.6,0.6,0.7,0.7)
-    #legend.SetTextSize(0.03)
-    #legend.SetLineColor( 0 )
-    #legend.SetFillColor( 0 )
-    #legend.AddEntry(l1,'Nominal accept.','l')
-    #legend.AddEntry(l2,'Observed accept.','l')
-    #legend.Draw()
-    c.SaveAs('h_xi_'+pot+'_'+s_years+'.png')
+    c.SaveAs('plots/%s/h_xi_%s_%s.pdf' % (s_years,side,s_years))
 
 #-----------------------
 
+method = 'multiRP'
 
-#makeProtonPlot('h_num_pro', 'Number of protons', 1, False)
-#makeProtonPlot('h_detType', 'Proton Detector Type', 1, False)
-#makeProtonPlot('h_pro_xip', 'Proton #xi ^{+}', 1, True)
-#makeProtonPlot('h_pro_xim', 'Proton #xi ^{-}', 1, True)
-#makeProtonPlot('h_pro_xi_45f', 'Proton #xi 45F', 1, False)
-#makeProtonPlot('h_pro_xi_45n', 'Proton #xi 45N', 1, False)
-#makeProtonPlot('h_pro_xi_56n', 'Proton #xi 56N', 1, False)
-#makeProtonPlot('h_pro_xi_56f', 'Proton #xi 56F', 1, False)
+#makeProtonPlot('h_num_pro', 'Number of protons', 1, method, True)
+#makeProtonPlot('h_detType', 'Proton Detector Type', 1, 'singleRP', False)
+#makeProtonPlot('h_pro_xip', 'Proton #xi ^{+}', 1, method, True)
+#makeProtonPlot('h_pro_xim', 'Proton #xi ^{-}', 1, method, True)
+#makeProtonPlot('h_pro_xi_45f', 'Proton #xi 45F', 1, 'singleRP', False)
+#makeProtonPlot('h_pro_xi_45n', 'Proton #xi 45N', 1, 'singleRP', False)
+#makeProtonPlot('h_pro_xi_56n', 'Proton #xi 56N', 1, 'singleRP', False)
+#makeProtonPlot('h_pro_xi_56f', 'Proton #xi 56F', 1, 'singleRP', False)
 
 makeXiComp('45',True)
 makeXiComp('56',True)
 
+#makeNumPro(method)
 
 #makeProtonSide(False)
-
 
 #makeHitMap('45')
 #makeHitMap('56')
 
+#makeXiAcceptanceSide('p',True)
+#makeXiAcceptanceSide('m',True)
 
 ## singleRP only
 #makeDetType()

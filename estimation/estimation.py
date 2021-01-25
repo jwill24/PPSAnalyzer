@@ -40,10 +40,10 @@ plotting = False     # make matching plot for each experiment
 testing  = False    # only run over a few events
 test_events = 10    # number of events to use for testing
 method = 'multiRP' # singleRP or multiRP reconstruction
-year = '2018'
+year = '2016'
 
-diphoton_file = TFile( 'diphotonEvents_data%s_Xi_%s.root' % (year,method) ) # data
-#diphoton_file = TFile( 'diphotonEvents_data%s_ReverseElastic_%s.root' % (year,method) ) # data
+#diphoton_file = TFile( 'diphotonEvents_data%s_Xi_%s.root' % (year,method) ) # data
+diphoton_file = TFile( 'diphotonEvents_data%s_ReverseElastic_%s.root' % (year,method) ) # reverse elsastic
 #diphoton_file = TFile( 'diphotonEvents_ggj%s_Xi_%s.root' % (year,method) ) # MC
 
 proton_file = TFile( 'protonEvents_%s_%s.root' % (method,year) )
@@ -54,7 +54,10 @@ if 'data' in diphoton_file.GetName():
 else:
     data_ = False
     sample_string = 'mc'
-    if year == '2017': 
+    if year == '2016':
+        v_eras = ['2016B', '2016C', '2016G']
+        v_crossingAngles = [120.0]
+    elif year == '2017': 
         v_eras = ['2017B', '2017C', '2017D', '2017E', '2017F']
         v_crossingAngles = [120.0, 130.0, 140.0, 150.0]
     elif year == '2018': 
@@ -1004,6 +1007,25 @@ elif year == '2017':
     tree_F_150.SetBranchAddress('xim', AddressOf( pro_struct, 'xim'))
     tree_F_150.SetBranchAddress('xip', AddressOf( pro_struct, 'xip'))
 
+elif year == '2016':
+    tree_B = proton_file.Get( 'tree_B' )
+    tree_B.SetBranchAddress('num_m', AddressOf( pro_struct, 'num_m'))
+    tree_B.SetBranchAddress('num_p', AddressOf( pro_struct, 'num_p'))
+    tree_B.SetBranchAddress('xim', AddressOf( pro_struct, 'xim'))
+    tree_B.SetBranchAddress('xip', AddressOf( pro_struct, 'xip'))
+
+    tree_C = proton_file.Get( 'tree_C' )
+    tree_C.SetBranchAddress('num_m', AddressOf( pro_struct, 'num_m'))
+    tree_C.SetBranchAddress('num_p', AddressOf( pro_struct, 'num_p'))
+    tree_C.SetBranchAddress('xim', AddressOf( pro_struct, 'xim'))
+    tree_C.SetBranchAddress('xip', AddressOf( pro_struct, 'xip'))
+
+    tree_G = proton_file.Get( 'tree_G' )
+    tree_G.SetBranchAddress('num_m', AddressOf( pro_struct, 'num_m'))
+    tree_G.SetBranchAddress('num_p', AddressOf( pro_struct, 'num_p'))
+    tree_G.SetBranchAddress('xim', AddressOf( pro_struct, 'xim'))
+    tree_G.SetBranchAddress('xip', AddressOf( pro_struct, 'xip'))
+
 
 gr_estimate = TGraphErrors('gr_estimate')
 #gr_converge = ROOT.TGraph('gr_converge')
@@ -1076,7 +1098,9 @@ def weighted_choice(choices):
 #----------------------------------
 
 def getEra(year):
-    if year == '2017':
+    if year == '2016':
+        choices = [['2016B', 0.42], ['2016C', 0.16], ['2016G', 0.32]]
+    elif year == '2017':
         choices = [['2017B',0.0541], ['2017C',0.3419], ['2017D',0.1311], ['2017E',0.1054], ['2017F',0.3675]]
     elif year == '2018':
         choices = [['2018A', 0.22], ['2018B', 0.11], ['2018C', 0.11], ['2018D', 0.56]]
@@ -1221,6 +1245,9 @@ for e in range(experiments):
             
 
         # Get entry by era and crossingAngle
+        if era == '2016B': tree_B.GetEntry( random.randrange(0,tree_B.GetEntries()) )
+        elif era == '2016C': tree_C.GetEntry( random.randrange(0,tree_C.GetEntries()) )
+        elif era == '2016G': tree_G.GetEntry( random.randrange(0,tree_G.GetEntries()) )
 
         if era == '2017B':
             if crossingAngle == 120: tree_B_120.GetEntry( random.randrange(0,tree_B_120.GetEntries()) )        
@@ -1418,23 +1445,27 @@ for e in range(experiments):
             if crossingAngle == 159: tree_D_159.GetEntry( random.randrange(0,tree_D_159.GetEntries()) )        
             if crossingAngle == 160: tree_D_160.GetEntry( random.randrange(0,tree_D_160.GetEntries()) )        
 
-
-
         if pro_struct.num_m == 0 or pro_struct.num_p == 0: continue
 
         for j in range(pro_struct.num_m): v_xim.append( pro_struct.xim[j] )
         for j in range(pro_struct.num_p): v_xip.append( pro_struct.xip[j] )
-        
+
+
+        #------ Choose the best diproton candidate ------
+
         # Use the proton from each arm best matching in xi
         #pro_xim, pro_xip = find_nearest(v_xim, diph_struct.xim), find_nearest(v_xip, diph_struct.xip) 
 
         # Use the proton from each arm with the highest xi
-        #pro_xim, pro_xip = max(v_xim), max(v_xip)
+        pro_xim, pro_xip = max(v_xim), max(v_xip)
 
         # Only use events with exactly one proton in each arm
-        if len(v_xim) != 1 or len(v_xip) != 1: continue
-        pro_xim, pro_xip = v_xim[0], v_xip[0]
+        #if len(v_xim) != 1 or len(v_xip) != 1: continue
+        #pro_xim, pro_xip = v_xim[0], v_xip[0]
         
+        #------------------------------------------------
+
+
         #h_xip.Fill( pro_xip ), h_xim.Fill( pro_xim )
         #h2_xim.Fill( pro_xim, diph_struct.xim )
         #h2_xip.Fill( pro_xip, diph_struct.xip )

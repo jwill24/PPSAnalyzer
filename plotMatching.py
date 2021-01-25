@@ -9,21 +9,19 @@ from ROOT import TCanvas, TPad, TFile, TPaveLabel, TPaveText, TAttText, TLine, T
 from ROOT import gROOT, gStyle
 
 gStyle.SetOptStat(0)
-extension = 'png'
+extension = 'pdf'
 
-years = ['2016','2017','2018']
-#years = ['2016']
+#years = ['2016','2017','2018']
+years = ['2016']
 s_years = '+'.join(years)
-#files = [['2017',TFile('outputHists/2017/histOut_data2017_Xi.root')],
-#         ['2018',TFile('outputHists/2018/histOut_data2018_Xi.root')]]
-#files = [['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic.root')],
-#         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic.root')]]
-files = [['2016',TFile('outputHists/2016/histOut_data2016_Xi_multiRP.root')],
-         ['2017',TFile('outputHists/2017/histOut_data2017_Xi_multiRP.root')],
-         ['2018',TFile('outputHists/2018/histOut_data2018_Xi_multiRP.root')]
-         ]
-#files = [['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic_multiRP.root')],
-#         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic_multiRP.root')]]
+files = [['2016',TFile('outputHists/2016/histOut_data2016_ReverseElastic_multiRP.root')],
+         ['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic_multiRP.root')],
+         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic_multiRP.root')]]
+#files = [['2016',TFile('outputHists/2016/histOut_data2016_Xi_multiRP.root')],
+#         ['2017',TFile('outputHists/2017/histOut_data2017_Xi_multiRP.root')],
+#         ['2018',TFile('outputHists/2018/histOut_data2018_Xi_multiRP.root')]
+#         ]
+#files = [['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic_multiRP.root')]]
 
 
 def Canvas(name):
@@ -183,6 +181,7 @@ def xi_matching(sector):
             ey = g.GetErrorY(j)
             diff = abs(y-x)
             if diff < 0.003:
+            #if diff < 0.02 * x: # only using relative PPS xi error
                 gr_m.SetPoint(n_grm+j,x,y) 
                 gr_m.SetPointError(n_grm+j,ex,ey)
             else:
@@ -323,9 +322,9 @@ def oneDim_matching(blinded):
 
 #------------------------------------------------
 
-massrap_matching(True)
+massrap_matching(False)
 
-oneDim_matching(True)
+#oneDim_matching(True)
 
 #xi_matching('m')
 #xi_matching('p')

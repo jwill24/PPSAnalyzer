@@ -16,6 +16,18 @@ dicts = []
 with open('pps_dictionaries.txt','r') as inf:
     for line in inf: dicts.append(eval(line))
 
+def open_root(path):
+    r_file = ROOT.TFile.Open(path)
+    if not r_file.__nonzero__() or not r_file.IsOpen(): raise NameError('File ' + path + ' not open')
+    return r_file
+
+unc_file = open_root('/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/reco_charactersitics_version1.root')
+
+def get_root_obj(root_file, obj_name):
+    r_obj = root_file.Get(obj_name)
+    if not r_obj.__nonzero__(): raise NameError('Root Object ' + obj_name + ' not found')
+    return r_obj
+
 
 class Color(int):
     __slots__ = ["object", "name"]
@@ -88,7 +100,9 @@ def makeColors():
               Color(0.99, 0.91, 0.59, 'yellow'),           # laurent
               Color(0.91, 0.82, 0.15, 'gold'),             # laurent
               Color(0.29, 0.64, 0.98, 'darkBlue'),         # laurent
-              Color(0.67, 0.83, 0.99, 'blue')]             # laurent
+              Color(0.67, 0.83, 0.99, 'blue'),             # laurent
+              Color( 245, 85, 54, 'orangeSoda')
+    ]
     for color in colors: setattr(ROOT, color.name, color)
     return colors
 
@@ -183,16 +197,6 @@ def asym_error_bars(hist):
         g.SetPointEYhigh( i, U-N )
     return g
 
-def open_root(path):
-    r_file = ROOT.TFile.Open(path)
-    if not r_file.__nonzero__() or not r_file.IsOpen(): raise NameError('File ' + path + ' not open')
-    return r_file
-
-def get_root_obj(root_file, obj_name):
-    r_obj = root_file.Get(obj_name)
-    if not r_obj.__nonzero__(): raise NameError('Root Object ' + obj_name + ' not found')
-    return r_obj
-
 # Apply mass cut
 def mass_cut(diph_mass):
     if diph_mass > 350: return True
@@ -263,11 +267,22 @@ def rapidity(xi1,xi2):
     if xi1 < 0 or xi2 < 0: return -999
     else: return 0.5*math.log(xi1/xi2)
 
-def mass_err(pro1,pro2):
-    return mass(pro1.xi,pro2.xi) * rapidity_err(pro1,pro2)
+def getXiError(pro,run):
+    arm = 0 if pro.sector45 else 1
+    protonEra = getProtonEra(run)
+    era = protonEra[:4] + '_' + protonEra[4:]
+    bias_map = get_root_obj(unc_file, '%s/multi rp-%s/xi/g_bias_vs_xi' % (era,arm)) 
+    res_map = get_root_obj(unc_file, '%s/multi rp-%s/xi/g_resolution_vs_xi' % (era,arm))
+    syst_map = get_root_obj(unc_file, '%s/multi rp-%s/xi/g_systematics_vs_xi' % (era,arm))
+    bias, res, syst = bias_map.Eval( pro.xi ), res_map.Eval( pro.xi ), syst_map.Eval( pro.xi )
+    return math.sqrt( pow(bias,2) + pow(res,2) + pow(syst,2) )
 
-def rapidity_err(pro1,pro2):
-    xi1_err, xi2_err = pro1.xi*rel_xi_err, pro2.xi*rel_xi_err
+def mass_err(pro1,pro2,run):
+    return mass(pro1.xi,pro2.xi) * rapidity_err(pro1,pro2,run)
+
+def rapidity_err(pro1,pro2,run):
+    xi1_err, xi2_err = getXiError(pro1,run), getXiError(pro2,run)
+    #xi1_err, xi2_err = pro1.xi*rel_xi_err, pro2.xi*rel_xi_err
     return 0.5 * math.sqrt( pow(xi1_err/pro1.xi,2) + pow(xi2_err/pro2.xi,2) )
 
 def mass_matching(mp):
@@ -279,7 +294,10 @@ def rap_matching(rp):
     else: return False
 
 def getEra(run):
-    if run > 297023 and run < 299330:   return '2017B'
+    if run > 272006 and run < 275387:   return '2016B'
+    elif run > 275656 and run < 276284: return '2016C'
+    elif run > 278819 and run < 280386: return '2016G'
+    elif run > 297023 and run < 299330: return '2017B'
     elif run > 299359 and run < 302030: return '2017C'
     elif run > 302030 and run < 302679: return '2017D'
     elif run > 303708 and run < 304798: return '2017E'
@@ -295,10 +313,15 @@ def getProtonEra(run):
     elif run > 280385 and run < 284043: return '2016postTS2'
     elif run > 297023 and run < 302663: return '2017preTS2'
     elif run > 302664 and run < 306462: return '2017postTS2'
-    elif run > 315256 and run < 325173: return '2018'
+    elif run > 315256 and run < 317697: return '2018preTS1'
+    elif run > 318621 and run < 322634: return '2018TS1_TS2'
+    elif run > 323362 and run < 325173: return '2018postTS2'
 
 def getPPSEra(run):
-    if run > 273724 and run < 280386:   return '2016'
+    if run > 272006 and run < 274287:   return '2016B1'
+    elif run > 274313 and run < 275387: return '2016B2'
+    elif run > 275656 and run < 276284: return '2016C'
+    elif run > 278819 and run < 280386: return '2016G'
     elif run > 297019 and run < 299330: return '2017B'
     elif run > 299336 and run < 300786: return '2017C1'
     elif run > 300805 and run < 302030: return '2017C2'
@@ -309,10 +332,10 @@ def getPPSEra(run):
     elif run > 305964 and run < 306463: return '2017F3'
     elif run > 315256 and run < 316996: return '2018A' 
     elif run > 317079 and run < 317697: return '2018B1' 
-    elif run > 318621 and run < 319078: return '2018B2' 
-    elif run > 319336 and run < 320066: return '2018C' 
-    elif run > 320672 and run < 322632: return '2018D1' 
-    elif run > 323362 and run < 325173: return '2018D2' 
+    elif run > 318621 and run < 319313: return '2018B2' 
+    elif run > 319336 and run < 320394: return '2018C' 
+    elif run > 320393 and run < 322634: return '2018D1' 
+    elif run > 323362 and run < 325274: return '2018D2' 
     else: return 'none'
 
 def efficiency_cut(era, arm, xi, v_trks): #https://twiki.cern.ch/twiki/bin/view/CMS/TaggedProtonsFiducialCuts
@@ -346,6 +369,7 @@ def checkProton(run,xangle,v_trks,proton):
     singleRP = False
     try: proton.validFit
     except: singleRP = True
+
     if not singleRP:
         if not proton.validFit: return False # https://github.com/cms-sw/cmssw/blob/2ba5d421e10379d81760a899532b2c991b89c82c/DataFormats/ProtonReco/interface/ForwardProton.h#L121
     if not validRecoInfo(run,v_trks,proton.sector45): return False # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TaggedProtonsGettingStarted#Specific_features_and_warnings_f
@@ -357,7 +381,7 @@ def checkProton(run,xangle,v_trks,proton):
     if proton.xi > apertureLimit: return False # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TaggedProtonsGettingStarted#Fiducial_cuts
     return True
 
-def getAperture(xangle,arm,era):
+def getAperture(xangle,arm,era): # FIXME: https://twiki.cern.ch/twiki/pub/CMS/TaggedProtonsFiducialCuts/aperture_param_v2.h
     apertureLimit = 0.0
     if era == "2016preTS2":
       if arm == 0: apertureLimit = 0.111
@@ -375,7 +399,7 @@ def getAperture(xangle,arm,era):
       if arm == 0: apertureLimit = 0.073 + (4.11e-4 * xangle)
       elif arm == 1: apertureLimit = 0.067 + (6.87e-4 * xangle)
 
-    elif era == "2018":
+    else:
       if arm == 0: apertureLimit = 0.079 + (4.21e-4 * xangle)
       elif arm == 1: apertureLimit = 0.074 + (6.6e-4 * xangle)
 

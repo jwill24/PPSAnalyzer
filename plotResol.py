@@ -211,7 +211,25 @@ def plotProtonResolution(method,subdir):
     mean, rms = round(h.GetMean(),3), round(h.GetRMS(),4)
     statsLabel = makeStats(mean,rms)
     statsLabel.Draw()
-    c.SaveAs('h_proton_res_'+method+'_'+string+'.pdf')
+    c.SaveAs('plots/h_proton_res_%s_%s.pdf' % (method,string))
+
+def plotXiReco():
+    c0 = Canvas('c0')
+    c1 = Canvas('c1')
+    c.SetTicks(1,1)
+    h0 = f_eff.Get('multirp/0/h_xi_reco_vs_xi_simu')
+    h1 = f_eff.Get('multirp/1/h_xi_reco_vs_xi_simu')
+    cLabel, pLabel = condLabel(), simLabel()
+    c0.cd()
+    h1.Draw('colz')
+    cLabel.Draw(), pLabel.Draw()
+    c0.SaveAs('plots/h2_xi_recoVsim_arm0_2017preTS2')
+    c1.cd()
+    h2.Draw('colz')
+    cLabel.Draw(), pLabel.Draw()
+    c1.SaveAs('plots/h2_xi_recoVsim_arm1_2017preTS2')
+    
+    
      
 # -----------------------------------------
 '''
@@ -267,13 +285,18 @@ h_xi_reco_eff.Add ( f_eff.Get('multirp/1/h_xi_reco') )
 h_mass_reco_total = f.Get('h_mass_reco')
 h_mass_reco_eff = f_eff.Get('h_mass_reco')
 
-#plotEA(h_xi_sim_single, h_xi_sim_total, 'Both singleRP reconstructed', 'All events', 'pds_xi_singleRP_acceptance.pdf')
-#plotEA(h_xi_sim_multi, h_xi_sim_total, 'Both multiRP reconstructed', 'All events', 'pds_xi_multiRP_acceptance.pdf')
-#plotEA(h_mass_sim_single, h_mass_sim_total, 'Both singleRP reconstructed', 'All events', 'pds_mass_singleRP_acceptance.pdf')
-#plotEA(h_mass_sim_multi, h_mass_sim_total, 'Both multiRP reconstructed', 'All events', 'pds_mass_multiRP_acceptance.pdf')
 
-#plotEA(h_xi_reco_eff, h_xi_reco_total, 'multiRP with efficiencies', 'multiRP', 'pds_xi_efficiency.pdf')
-#plotEA(h_mass_reco_eff, h_mass_reco_total, 'multiRP with efficiencies', 'multiRP', 'pds_mass_efficiency.pdf')
+plotXiReco()
+
+plotEA(h_xi_sim_single, h_xi_sim_total, 'Both singleRP reconstructed', 'All events', 'pds_xi_singleRP_acceptance.pdf')
+plotEA(h_xi_sim_multi, h_xi_sim_total, 'Both multiRP reconstructed', 'All events', 'pds_xi_multiRP_acceptance.pdf')
+plotEA(h_mass_sim_single, h_mass_sim_total, 'Both singleRP reconstructed', 'All events', 'pds_mass_singleRP_acceptance.pdf')
+plotEA(h_mass_sim_multi, h_mass_sim_total, 'Both multiRP reconstructed', 'All events', 'pds_mass_multiRP_acceptance.pdf')
+
+plotEA(h_xi_reco_eff, h_xi_reco_total, 'multiRP with efficiencies', 'multiRP', 'pds_xi_efficiency.pdf')
+plotEA(h_mass_reco_eff, h_mass_reco_total, 'multiRP with efficiencies', 'multiRP', 'pds_mass_efficiency.pdf')
+
+
 
 plotEA(h_xi_reco_eff, h_xi_sim_total, 'multiRP reco with efficiencies', 'simulated', 'pds_xi_eXA_%s.pdf' % era)
 plotEA(h_mass_reco_eff, h_mass_sim_total, 'multiRP reco with efficiencies', 'simulated', 'pds_mass_eXA_%s.pdf' % era)

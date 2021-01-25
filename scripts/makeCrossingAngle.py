@@ -5,7 +5,7 @@ import ROOT as r
 from ROOT import gROOT
 r.PyConfig.IgnoreCommandLineOptions = True
 
-year = '2017'
+year = '2018'
 files = glob.glob('Skims/%s/nanoAOD_Run*_Skim.root' % year)
 
 hxang = r.TH1F('hxang', '', 41, 120, 160)

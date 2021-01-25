@@ -98,7 +98,7 @@ class DiphotonAnalysis(Module):
         self.csev_map = get_root_obj(self.csev_file, self.csevmapname)
         self.photon_map = get_root_obj(self.photon_file, self.photonmapname)
 
-        '''
+
         if nSelect == 2.5 or nSelect == 5:
             # Initialize objects for toy matching file
             self.diphoton_file = ROOT.TFile('/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/tmp/diphotonEvents_'+sample+'_'+selection+'_'+method+'.root', 'RECREATE')
@@ -111,14 +111,14 @@ class DiphotonAnalysis(Module):
             self.diphoton_tree.Branch('crossingAngle', ROOT.AddressOf( mystruct, 'crossingAngle'), 'crossingAngle/L')
             self.diphoton_tree.Branch('era', ROOT.AddressOf( mystruct, 'era'), 'era/C')
             self.diphoton_tree.Branch('weight', ROOT.AddressOf( mystruct, 'weight'), 'weight/F')
-        '''
+
     def beginJob(self,histFile=None,histDirName=None):
 	Module.beginJob(self,histFile,histDirName)
         
         self.h_num_pho=ROOT.TH1F('h_num_pho', 'Number Of Photons', 8, 0, 8)
         self.h_diph_mass=ROOT.TH1F('h_diph_mass', 'Diphoton Mass', 100, 100 if nSelect<2 else 350, 2500.) # aqgc - 3000, data - 2500
         self.h_diph_rap=ROOT.TH1F('h_diph_rap', 'Diphoton Rapidity', 100, -2, 2)
-        self.h_acop=ROOT.TH1F('h_acop', 'Diphoton Acoplanarity', 100, 0., 0.25 if nSelect < 4 else 0.01) # aqgc - 0.01, data - 0.25 if nSelect < 4 else 0.01
+        self.h_acop=ROOT.TH1F('h_acop', 'Diphoton Acoplanarity', 100, 0., 0.25 if nSelect < 4 else 0.005) # aqgc - 0.01, data - 0.25 if nSelect < 4 else 0.01
         self.h_pt_ratio=ROOT.TH1F('h_pt_ratio', 'Diphoton p_{T} Ratio', 100, 0, 2)
         self.h_single_eta=ROOT.TH1F('h_single_eta', 'Single Photon Eta', 100, -3.0, 3.0)
         self.h_lead_eta=ROOT.TH1F('h_lead_eta', 'Leading Photon Eta', 100, -3.0, 3.0)
@@ -129,12 +129,12 @@ class DiphotonAnalysis(Module):
         self.h_single_r9=ROOT.TH1F('h_single_r9', 'Single Photon R_{9}', 100, 0.5, 1) # aqgc - 0.8, data - 0.5 if nSelect < 4 else 0.8
         self.h_lead_r9=ROOT.TH1F('h_lead_r9', 'Lead Photon R_{9}', 100, 0.5, 1)
         self.h_sub_r9=ROOT.TH1F('h_sub_r9', 'Sublead Photon R_{9}', 100, 0.5, 1)
-        self.h_single_hoe=ROOT.TH1F('h_single_hoe', 'Single Photon H/E', 100, 0, 1 if nSelect < 2 else 0.15)
-        self.h_eb_hoe=ROOT.TH1F('h_eb_hoe', 'Lead Photon H/E', 100, 0, 1 if nSelect < 2 else 0.15)
-        self.h_ee_hoe=ROOT.TH1F('h_ee_hoe', 'Sublead Photon H/E', 100, 0, 1 if nSelect < 2 else 0.15)
-        self.h_single_sieie=ROOT.TH1F('h_single_sieie', 'Single Photon #sigma_{i#etai#eta}', 100, 0, 0.1)
-        self.h_eb_sieie=ROOT.TH1F('h_eb_sieie', 'Lead Photon #sigma_{i#etai#eta}', 100, 0, 0.1)
-        self.h_ee_sieie=ROOT.TH1F('h_ee_sieie', 'Sublead Photon #sigma_{i#etai#eta}', 100, 0, 0.1)
+        self.h_single_hoe=ROOT.TH1F('h_single_hoe', 'Single Photon H/E', 100, 0, 1 if nSelect < 2 else 0.1)
+        self.h_eb_hoe=ROOT.TH1F('h_eb_hoe', 'Lead Photon H/E', 100, 0, 1 if nSelect < 2 else 0.1)
+        self.h_ee_hoe=ROOT.TH1F('h_ee_hoe', 'Sublead Photon H/E', 100, 0, 1 if nSelect < 2 else 0.1)
+        self.h_single_sieie=ROOT.TH1F('h_single_sieie', 'Single Photon #sigma_{i#etai#eta}', 100, 0, 0.02)
+        self.h_eb_sieie=ROOT.TH1F('h_eb_sieie', 'Lead Photon #sigma_{i#etai#eta}', 100, 0, 0.02)
+        self.h_ee_sieie=ROOT.TH1F('h_ee_sieie', 'Sublead Photon #sigma_{i#etai#eta}', 100, 0, 0.02)
         self.h_single_electronVeto=ROOT.TH1F('h_single_electronVeto', 'Single Photon Electron Veto', 2, 0, 2)
         self.h_lead_electronVeto=ROOT.TH1F('h_lead_electronVeto', 'Lead Photon Electron Veto', 2, 0, 2)
         self.h_sub_electronVeto=ROOT.TH1F('h_sub_electronVeto', 'Sublead Photon Electron Veto', 2, 0, 2)
@@ -145,15 +145,15 @@ class DiphotonAnalysis(Module):
         self.h_vtx_z=ROOT.TH1F('h_vtx_z', 'Vtx z position', 100,-15,15)
         self.h_fgr=ROOT.TH1F('h_fgr', 'fixedGridRho', 58, 0, 58)
 
-        self.h_num_pro=ROOT.TH1F('h_num_pro', 'Number of Protons', 15, 0, 15)
+        self.h_num_pro=ROOT.TH1F('h_num_pro', 'Number of Protons', 8, 0, 8)
         self.h_proton_side=ROOT.TH1F('h_proton_side', 'Proton side',4, 0, 4)
         self.h_detType=ROOT.TH1F('h_detType', 'PPS Detector Type', 2, 3, 5)
-        self.h_pro_xip=ROOT.TH1F('h_pro_xip', 'Proton #xi ^{+}', 100, 0.00, 0.3)
-        self.h_pro_xim=ROOT.TH1F('h_pro_xim', 'Proton #xi ^{-}', 100, 0.00, 0.3)
-        self.h_pro_xi_45f=ROOT.TH1F('h_pro_xi_45f', 'Proton #xi 45F', 100, 0., 0.3)
-        self.h_pro_xi_45n=ROOT.TH1F('h_pro_xi_45n', 'Proton #xi 45N', 100, 0., 0.3)
-        self.h_pro_xi_56n=ROOT.TH1F('h_pro_xi_56n', 'Proton #xi 56N', 100, 0., 0.3)
-        self.h_pro_xi_56f=ROOT.TH1F('h_pro_xi_56f', 'Proton #xi 56F', 100, 0., 0.3)
+        self.h_pro_xip=ROOT.TH1F('h_pro_xip', 'Proton #xi ^{+}', 100, 0.00, 0.2)
+        self.h_pro_xim=ROOT.TH1F('h_pro_xim', 'Proton #xi ^{-}', 100, 0.00, 0.2)
+        self.h_pro_xi_45f=ROOT.TH1F('h_pro_xi_45f', 'Proton #xi 45F', 100, 0., 0.2)
+        self.h_pro_xi_45n=ROOT.TH1F('h_pro_xi_45n', 'Proton #xi 45N', 100, 0., 0.2)
+        self.h_pro_xi_56n=ROOT.TH1F('h_pro_xi_56n', 'Proton #xi 56N', 100, 0., 0.2)
+        self.h_pro_xi_56f=ROOT.TH1F('h_pro_xi_56f', 'Proton #xi 56F', 100, 0., 0.2)
         self.h_pro_thetaY_45=ROOT.TH1F('h_pro_thetaY_45', 'Proton #theta_{y} 45', 100, -0.001, 0.001)
         self.h_pro_thetaY_56=ROOT.TH1F('h_pro_thetaY_56', 'Proton #theta_{y} 56', 100, -0.001, 0.001)
         self.h_pro_time_45=ROOT.TH1F('h_pro_time_45', 'Proton time 45', 100, -2, 2)
@@ -212,11 +212,11 @@ class DiphotonAnalysis(Module):
 
     def endJob(self):
         Module.endJob(self)
-        '''
+
         if nSelect == 2.5 or nSelect == 5:
             self.diphoton_file.Write()
             self.diphoton_file.Close()
-        '''
+
     # Get the SFs for MCs
     def efficiency(self,pt,eta_sc,r9):
         if nSelect != 2.5 and nSelect < 3: return 1.0
@@ -235,7 +235,8 @@ class DiphotonAnalysis(Module):
             bin_x = min( max( self.csev_map.GetXaxis().FindBin( eta_sc ), 1 ), self.csev_map.GetXaxis().GetNbins() )
             bin_y = min( max( self.csev_map.GetYaxis().FindBin( pt ), 1 ), self.csev_map.GetYaxis().GetNbins() )
             csev_sf = self.csev_map.GetBinContent( bin_x, bin_y )
-        return id_sf*csev_sf 
+        return id_sf*csev_sf
+
 
     # Use the fixedGridRho for reweighting
     def rhoReweight(self,nPU):
@@ -259,7 +260,7 @@ class DiphotonAnalysis(Module):
         if data_: pu_weight, vtxWeight, prefWeight, eff_pho1, eff_pho2 = 1.0, 1.0, 1.0, 1.0, 1.0
         else: pu_weight, vtxWeight, prefWeight = event.puWeightUp, self.rhoReweight(event.Pileup_nPU), event.PrefireWeight if '2017' in sample else 1.0
         s_weight = sample_weight*pu_weight*prefWeight
-        
+
         if len(photons) < 2: return
                 
         # Choose the best diphoton candidate
@@ -316,7 +317,7 @@ class DiphotonAnalysis(Module):
             weight = s_weight * ( eff_pho1*eff_pho2 )
 
         # Fill diphoton tree for background estimation
-        '''
+
         if nSelect == 2.5 or nSelect == 5: # xi and reverse 
             mystruct.mass = diph_mass
             mystruct.rap = diph_rap
@@ -330,7 +331,7 @@ class DiphotonAnalysis(Module):
                 mystruct.crossingAngle = 150.0 # random crossingAngle
                 mystruct.era = '2017E' if '2017' in sample else '2018D' # random eras
             self.diphoton_tree.Fill()
-        '''
+
         # Fill single photon hists
         self.h_single_eta.Fill(pho1.eta,s_weight*eff_pho1), self.h_single_eta.Fill(pho2.eta,s_weight*eff_pho2)
         self.h_lead_eta.Fill(pho1.eta,s_weight*eff_pho1), self.h_sub_eta.Fill(pho2.eta,s_weight*eff_pho2)
@@ -370,7 +371,10 @@ class DiphotonAnalysis(Module):
         for i, proton in enumerate(protons):
             v_trks = []
             for t in tracks:
-                if t.multiRPProtonIdx == i: v_trks.append(t) # edited
+                if method == 'multiRP':
+                    if t.multiRPProtonIdx == i: v_trks.append(t) 
+                elif method == 'singleRP':
+                    if t.singleRPProtonIdx == i: v_trks.append(t)
 
             if not checkProton(event.run,event.LHCInfo_crossingAngle,v_trks,proton): continue # edited from xangle
             if proton.sector45:   v45.append(proton), self.h_pro_xip.Fill( proton.xi )
@@ -379,12 +383,12 @@ class DiphotonAnalysis(Module):
                 if proton.sector45: self.h_hitmap45.Fill(t.x, t.y)
                 if proton.sector56: self.h_hitmap56.Fill(t.x, t.y)
             if method == 'singleRP':
-                self.h_detType.Fill( 0 if proton.decRPId == 3 or proton.decRPId == 103 else 1 )                       # not available for multiRP
-                if proton.decRPId == 23: self.h_pro_xi_45f.Fill( proton.xi )    # not available for multiRP
-                elif proton.decRPId == 3: self.h_pro_xi_45n.Fill( proton.xi )   # not available for multiRP
-                elif proton.decRPId == 103: self.h_pro_xi_56n.Fill( proton.xi ) # not available for multiRP
-                elif proton.decRPId == 123: self.h_pro_xi_56f.Fill( proton.xi ) # not available for multiRP
-                else: print 'Proton not in known det id:', proton.decDetId       # not available for multiRP
+                self.h_detType.Fill( 0 if proton.decRPId == 3 or proton.decRPId == 103 else 1 )  # not available for multiRP
+                if proton.decRPId == 23: self.h_pro_xi_45f.Fill( proton.xi )                     # not available for multiRP
+                elif proton.decRPId == 3: self.h_pro_xi_45n.Fill( proton.xi )                    # not available for multiRP
+                elif proton.decRPId == 103: self.h_pro_xi_56n.Fill( proton.xi )                  # not available for multiRP
+                elif proton.decRPId == 123: self.h_pro_xi_56f.Fill( proton.xi )                  # not available for multiRP
+                else: print 'Proton not in known det id:', proton.decDetId                       # not available for multiRP
             if method == 'multiRP':
                 if proton.sector45: self.h_pro_thetaY_45.Fill(proton.thetaY), self.h_pro_time_45.Fill(proton.time) 
                 else: self.h_pro_thetaY_56.Fill(proton.thetaY), self.h_pro_time_56.Fill(proton.time)
@@ -398,13 +402,17 @@ class DiphotonAnalysis(Module):
         
         self.h_proton_side.Fill(3)
 
-        # Choose the best diproton candidate
-        pro_m = min(v45, key=lambda x:abs(x.xi-xim))
-        pro_p = min(v56, key=lambda x:abs(x.xi-xip))
+        # Choose the diproton candidate with the best xi matching
+        #pro_m = min(v56, key=lambda x:abs(x.xi-xim))
+        #pro_p = min(v45, key=lambda x:abs(x.xi-xip))
+
+        # Choose the diproton candidate with the highest xi
+        pro_m = max(v56, key=lambda x:x.xi)
+        pro_p = max(v45, key=lambda x:x.xi)
 
         # SetPoint for matching plot
         pps_mass, pps_rap = mass(pro_m.xi,pro_p.xi), rapidity(pro_m.xi,pro_p.xi)
-        pps_mass_err, pps_rap_err = mass_err(pro_m, pro_p), rapidity_err(pro_m, pro_p)
+        pps_mass_err, pps_rap_err = mass_err(pro_m, pro_p, event.run), rapidity_err(pro_m, pro_p, event.run)
         mass_point = (pps_mass - diph_mass) / (pps_mass_err + diph_mass*rel_mass_err) 
         rap_point = (pps_rap - diph_rap) / (pps_rap_err + rel_rap_err*diph_rap)
         self.gr_matching.SetPoint( self.gr_matching.GetN(), mass_point, rap_point )

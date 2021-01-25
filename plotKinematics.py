@@ -13,11 +13,13 @@ from common import sampleColors, Canvas, Prettify, lumiLabel, makeLegend, asym_e
 
 gStyle.SetOptStat(0)
 
-lab = '#xi^{#gamma#gamma} #in PPS selection'
-selection = 'Xi'
+extension = 'pdf'
+#lab = '#xi^{#gamma#gamma} #in PPS selection'
+lab = 'Elastic selection'
+selection = 'Elastic'
 method = 'multiRP'
 years = ['2016','2017','2018']
-#years = ['2018']
+#years = ['2016']
 s_years = '+'.join(years)
 samples = sampleColors()
 samples.append(['aqgc',92,92])
@@ -107,8 +109,8 @@ def plotRatio(name, h1, v_hist, hs, log):
 
     Prettify( h_ratio )
 
-    if len(years) == 1: c.SaveAs('plots/'+years[0]+'/'+name+'_'+selection+'.pdf')
-    else: c.SaveAs('plots/combined/'+name+'_'+selection+'_'+s_years+'.pdf') # saving as pdf
+    if len(years) == 1: c.SaveAs('plots/%s/%s_%s.%s' % (years[0],name,selection,extension))
+    else: c.SaveAs('plots/combined/%s_%s_%s.%s' % (name,selection,s_years,extension)) 
 
 def prelimLabel(location,log,maximum):
     if location == 'left':
@@ -225,22 +227,22 @@ def getColors(sample):
 
 
 makePlot('h_diph_mass', 'h_mass_comp', 'm_{#gamma#gamma} GeV', 4, True)
-#makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
+makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
 makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 4, True)
-#makePlot('h_lead_pt', 'h_lead_pt_comp', 'Leading p_{T}^{#gamma} GeV', 2, True)
-#makePlot('h_sub_pt', 'h_sub_pt_comp', 'Subleading p_{T}^{#gamma} GeV', 2, True)
+makePlot('h_lead_pt', 'h_lead_pt_comp', 'Leading p_{T}^{#gamma} GeV', 2, True)
+makePlot('h_sub_pt', 'h_sub_pt_comp', 'Subleading p_{T}^{#gamma} GeV', 2, True)
 makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 2, False)
-#makePlot('h_lead_eta', 'h_lead_eta_comp', 'Leading #eta ^{#gamma}', 4, False)
-#makePlot('h_sub_eta', 'h_sub_eta_comp', 'Subleading #eta ^{#gamma}', 4, False)
-#makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 1, True)
-#makePlot('h_lead_r9', 'h_lead_r9_comp', 'Leading R_{9} ^{#gamma}', 2, True)
-#makePlot('h_sub_r9', 'h_sub_r9_comp', 'Subleading R_{9} ^{#gamma}', 2, True)
-#makePlot('h_eb_hoe', 'h_eb_hoe_comp', 'EB H/E', 1, True)
-#makePlot('h_eb_sieie', 'h_eb_sieie_comp', 'EB #sigma_{i#etai#eta}', 1, True)
+makePlot('h_lead_eta', 'h_lead_eta_comp', 'Leading #eta ^{#gamma}', 4, False)
+makePlot('h_sub_eta', 'h_sub_eta_comp', 'Subleading #eta ^{#gamma}', 4, False)
+makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 1, True)
+makePlot('h_lead_r9', 'h_lead_r9_comp', 'Leading R_{9} ^{#gamma}', 2, True)
+makePlot('h_sub_r9', 'h_sub_r9_comp', 'Subleading R_{9} ^{#gamma}', 2, True)
+makePlot('h_eb_hoe', 'h_eb_hoe_comp', 'EB H/E', 1, True)
+makePlot('h_eb_sieie', 'h_eb_sieie_comp', 'EB #sigma_{i#etai#eta}', 1, True)
 makePlot('h_nvtx', 'h_nvtx_comp', 'Number of vertices', 1, True)
 makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
-#makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
-#makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 2, True)
+makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
+makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 2, True)
 makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
 makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, True)
 

@@ -4,13 +4,13 @@
 #include <fstream>
 #include <iostream>
 
-#define output_file "protonEvents_2017.root"
+#define output_file "protonEvents_2016.root"
 
 void makeProtonTree( TString outFile=output_file )
 {
 
   TFile* out = new TFile( outFile, "RECREATE" );
-  /*
+  /* 2018
   TTree* tree_A_120 = new TTree( "tree_A_120", "tree for 120 protons");
   TTree* tree_A_121 = new TTree( "tree_A_121", "tree for 121 protons");
   TTree* tree_A_122 = new TTree( "tree_A_122", "tree for 122 protons");
@@ -180,6 +180,7 @@ void makeProtonTree( TString outFile=output_file )
   TTree* tree_D_160 = new TTree( "tree_D_160", "tree for 160 protons");
   */
   
+  /* 2017
   TTree* tree_B_120 = new TTree( "tree_B_120", "tree for 120 protons");
   TTree* tree_B_130 = new TTree( "tree_B_130", "tree for 130 protons");
   TTree* tree_B_140 = new TTree( "tree_B_140", "tree for 140 protons");
@@ -204,12 +205,17 @@ void makeProtonTree( TString outFile=output_file )
   TTree* tree_F_130 = new TTree( "tree_F_130", "tree for 130 protons");
   TTree* tree_F_140 = new TTree( "tree_F_140", "tree for 140 protons");
   TTree* tree_F_150 = new TTree( "tree_F_150", "tree for 150 protons");
+  */
 
+  TTree* tree_B = new TTree( "tree_B", "tree for RunB protons");
+  TTree* tree_C = new TTree( "tree_C", "tree for RunC protons");
+  TTree* tree_G = new TTree( "tree_G", "tree for RunG protons");
 
   unsigned short maxProSide = 12;
   unsigned int num_m, num_p;
   float xim[maxProSide], xip[maxProSide];
-  /*
+
+  /* 2018
   tree_A_120->Branch("num_m", &num_m, "num_m/I");
   tree_A_120->Branch("num_p", &num_p, "num_p/I");
   tree_A_120->Branch("xim", xim, "xim[num_m]/F");
@@ -871,6 +877,7 @@ void makeProtonTree( TString outFile=output_file )
   tree_D_160->Branch("xip", xip, "xim[num_p]/F");
   */
 
+  /* 2017
   tree_B_120->Branch("num_m", &num_m, "num_m/I");
   tree_B_120->Branch("num_p", &num_p, "num_p/I");
   tree_B_120->Branch("xim", xim, "xim[num_m]/F");
@@ -955,15 +962,38 @@ void makeProtonTree( TString outFile=output_file )
   tree_F_150->Branch("num_p", &num_p, "num_p/I");
   tree_F_150->Branch("xim", xim, "xim[num_m]/F");
   tree_F_150->Branch("xip", xip, "xim[num_p]/F");
+  */
+
+  tree_B->Branch("num_m", &num_m, "num_m/I");
+  tree_B->Branch("num_p", &num_p, "num_p/I");
+  tree_B->Branch("xim", xim, "xim[num_m]/F");
+  tree_B->Branch("xip", xip, "xim[num_p]/F");
+
+  tree_C->Branch("num_m", &num_m, "num_m/I");
+  tree_C->Branch("num_p", &num_p, "num_p/I");
+  tree_C->Branch("xim", xim, "xim[num_m]/F");
+  tree_C->Branch("xip", xip, "xim[num_p]/F");
+
+  tree_G->Branch("num_m", &num_m, "num_m/I");
+  tree_G->Branch("num_p", &num_p, "num_p/I");
+  tree_G->Branch("xim", xim, "xim[num_m]/F");
+  tree_G->Branch("xip", xip, "xim[num_p]/F");
 
 
   TChain chain("Events");
 
+  chain.Add( "Skims/2016/nanoAOD_Run2016B_Skim.root" );
+  chain.Add( "Skims/2016/nanoAOD_Run2016C_Skim.root" );
+  chain.Add( "Skims/2016/nanoAOD_Run2016G_Skim.root" );
+
+  /*
   chain.Add( "Skims/2017/nanoAOD_Run2017B_Skim.root" );
   chain.Add( "Skims/2017/nanoAOD_Run2017C_Skim.root" );
   chain.Add( "Skims/2017/nanoAOD_Run2017D_Skim.root" );
   chain.Add( "Skims/2017/nanoAOD_Run2017E_Skim.root" );
   chain.Add( "Skims/2017/nanoAOD_Run2017F_Skim.root" );
+  */
+
   /*
   chain.Add( "Skims/2018/nanoAOD_Run2018A_Skim.root" );
   chain.Add( "Skims/2018/nanoAOD_Run2018B_Skim.root" );
@@ -1034,7 +1064,13 @@ void makeProtonTree( TString outFile=output_file )
 
     // Fill tree based on era and crossingAngle
 
+    // 2016
+    if ( run > 272006 && run < 275387 ) tree_B->Fill();
+    else if ( run > 275656 && run < 276284 ) tree_C->Fill();
+    else if ( run > 278819 && run < 280386 ) tree_G->Fill();
+
     // 2017
+    /*
     if ( run > 297023 && run < 299330 ) { // Run2017B
       if ( crossingAngle == 120 ) tree_B_120->Fill();
       else if ( crossingAngle == 130 ) tree_B_130->Fill();
@@ -1061,6 +1097,7 @@ void makeProtonTree( TString outFile=output_file )
       else if ( crossingAngle == 140 ) tree_F_140->Fill();
       else if ( crossingAngle == 150 ) tree_F_150->Fill();
       }
+    */
 
     // 2018
     /*
