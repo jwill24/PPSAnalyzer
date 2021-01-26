@@ -35,18 +35,31 @@ pro_struct  = proStruct()
 
 
 # Flags
-experiments = 1000     # number of iterations
+experiments = 1     # number of iterations
 plotting = False     # make matching plot for each experiment
 testing  = False    # only run over a few events
 test_events = 10    # number of events to use for testing
 method = 'multiRP' # singleRP or multiRP reconstruction
-year = '2016'
+year = '2018'
 
-#diphoton_file = TFile( 'diphotonEvents_data%s_Xi_%s.root' % (year,method) ) # data
-diphoton_file = TFile( 'diphotonEvents_data%s_ReverseElastic_%s.root' % (year,method) ) # reverse elsastic
+diphoton_file = TFile( 'diphotonEvents_data%s_Xi_%s.root' % (year,method) ) # data
+#diphoton_file = TFile( 'diphotonEvents_data%s_ReverseElastic_%s.root' % (year,method) ) # reverse elsastic
 #diphoton_file = TFile( 'diphotonEvents_ggj%s_Xi_%s.root' % (year,method) ) # MC
 
 proton_file = TFile( 'protonEvents_%s_%s.root' % (method,year) )
+
+def open_root(path):
+    r_file = ROOT.TFile.Open(path)
+    if not r_file.__nonzero__() or not r_file.IsOpen(): raise NameError('File ' + path + ' not open')
+    return r_file
+
+# Xi uncertainty file
+unc_file = open_root('/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/reco_charactersitics_version1.root')
+
+def get_root_obj(root_file, obj_name):
+    r_obj = root_file.Get(obj_name)
+    if not r_obj.__nonzero__(): raise NameError('Root Object ' + obj_name + ' not found')
+    return r_obj
 
 if 'data' in diphoton_file.GetName():
     data_ = True
@@ -1066,17 +1079,40 @@ def getRap(xip,xim):
 
 #----------------------------------
 
-def rapidity_err(xim,xip):
-    rel_xi_err = 0.08
-    xim_err, xip_err = xim * rel_xi_err, xip * rel_xi_err
+def getProtonEra(era):
+    if '2016' in era: return '2016_preTS2'
+    if era == '2017B' or (era == '2017C' or era == '2017D'): return '2017_preTS2'
+    if era == '2017E' or era == '2017F': return '2017_postTS2'
+    if era == '2018A': return '2018_preTS1'
+    if era == '2018B':
+        choices = [['2018_preTS1',0.94],['2018_TS1_TS2',0.06]]
+        return weighted_choice(choices)
+    if era == '2018C': return '2018_TS1_TS2'
+    if era == '2018D': 
+        choices = [['2018_TS1_TS2',0.66],['2018_postTS2',0.34]]
+        return weighted_choice(choices)
+
+#----------------------------------
+
+def getXiError(xi,arm,protonEra):
+    bias_map = get_root_obj(unc_file, '%s/multi rp-%s/xi/g_bias_vs_xi' % (protonEra,arm))
+    res_map = get_root_obj(unc_file, '%s/multi rp-%s/xi/g_resolution_vs_xi' % (protonEra,arm))
+    syst_map = get_root_obj(unc_file, '%s/multi rp-%s/xi/g_systematics_vs_xi' % (protonEra,arm))
+    bias, res, syst = bias_map.Eval( xi ), res_map.Eval( xi ), syst_map.Eval( xi )
+    return math.sqrt( pow(bias,2) + pow(res,2) + pow(syst,2) )
+
+#----------------------------------
+
+def rapidity_err(xim,xip,protonEra):
+    xim_err, xip_err = getXiError(xim,1,protonEra), getXiError(xip,0,protonEra)
     return 0.5 * math.sqrt( pow(xim_err/xim,2) + pow(xip_err/xip,2) )
 
 #----------------------------------
 
-def isMatching(cms_mass,cms_rap,pro_xim,pro_xip):
+def isMatching(cms_mass,cms_rap,pro_xim,pro_xip,protonEra):
     pps_mass, pps_rap = getMass(pro_xim,pro_xip), getRap(pro_xim,pro_xip)
     if pps_mass == -1: return 999, 999
-    pps_rap_err = rapidity_err(pro_xim,pro_xip)
+    pps_rap_err = rapidity_err(pro_xim,pro_xip,protonEra)
     pps_mass_err = pps_mass * pps_rap_err
     rel_mass_err, rel_rap_err = 0.02, 0.074
     mass_point = (pps_mass - cms_mass) / (pps_mass_err + cms_mass*rel_mass_err)
@@ -1471,7 +1507,8 @@ for e in range(experiments):
         #h2_xip.Fill( pro_xip, diph_struct.xip )
 
         # Check for matching
-        mass_match, rap_match = isMatching(diph_struct.mass, diph_struct.rap, pro_xim, pro_xip)
+        protonEra = getProtonEra(era)
+        mass_match, rap_match = isMatching(diph_struct.mass, diph_struct.rap, pro_xim, pro_xip, protonEra)
         
         # Plot events
         if plotting: gr_estimate.SetPoint( gr_estimate.GetN(), mass_match, rap_match )
