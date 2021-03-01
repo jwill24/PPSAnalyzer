@@ -15,8 +15,8 @@ gStyle.SetOptStat(0)
 selections = [['ID','Preselection'], ['Elastic','Elastic selection'], ['Xi', '#xi_{#gamma#gamma}^{#pm} #in PPS']]
 #selections = [['HLT','After HLT'], ['Elastic','Diphoton selection'], ['Xi', '#xi_{#gamma#gamma}^{#pm} #in PPS']]
 #selections = [['Elastic','Diphoton selection'], ['Xi', '#xi_{#gamma#gamma}^{#pm} #in PPS']]
-years = ['2016','2017','2018']
-#years = ['2016']
+#years = ['2016','2017','2018']
+years = ['2016']
 s_years = '+'.join(years)
 #scale2018 = 55.72/37.2
 
@@ -158,7 +158,7 @@ h_asym_data.SetMarkerSize(0.9)
 h_asym_data.GetXaxis().SetTitle('Events')
 h_asym_data.GetXaxis().SetTitleSize(26)
 h_asym_data.Draw('p e2 same') # testing e2
-h_aqgc.SetLineColor(92), h_aqgc.SetLineWidth(2), h_aqgc.SetFillColor(0), h_aqgc.Scale(100) if year == '2017' else h_aqgc.Scale(100*94.91/37.2) # FIXME
+h_aqgc.SetLineColor(92), h_aqgc.SetLineWidth(2), h_aqgc.SetFillColor(0), h_aqgc.Scale(100) #if year == '2017' else h_aqgc.Scale(100*94.91/37.2) # FIXME
 h_aqgc.Draw('HIST same')
 lLabel, pLabel = lumiLabel(True,years), prelimLabel()
 lLabel.Draw(), pLabel.Draw()

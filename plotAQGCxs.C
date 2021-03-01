@@ -111,6 +111,44 @@ void plotAQGCxs( TString outFile=output_file )
     {-5.e-12, -1.e-12, 122.200},
     {-5.e-12, -5.e-12, 214.348},
 
+    {-2.e-12, 3.e-12,  4.417},
+    {2.e-12,  -3.e-12, 4.417}, 
+    {-2.e-12, 4.e-12,  4.157},
+    {2.e-12,  -4.e-12, 4.157},
+    {-1.e-12, 4.e-12,  5.543},
+    {1.e-12,  -4.e-12, 5.543},
+    {-3.e-12, 4.e-12,  11.085},
+    {3.e-12,  -4.e-12, 11.085},
+
+    {-1.5e-12, 4.5e-12, 5.261},
+    {1.5e-12, -4.5e-12, 5.261},
+    {-2.0e-12, 1.5e-12, 8.379},
+    {2.0e-12, -1.5e-12, 8.379},
+    {-2.5e-12, 5.0e-12, 6.495},
+    {2.5e-12, -5.0e-12, 6.495},
+
+    {0.,     -2.5e-12,  5.954},
+    {0.,      2.5e-12,  5.954},
+    {1.e-12, -2.5e-12,  1.451},
+    {-1.e-12, 2.5e-12,  1.451},
+    {-2.e-12, 0.0,      16.628},
+    {2.e-12,  0.0,      16.628},
+    {-3.e-12, 0.0,      37.413},
+    {3.e-12,  0.0,      37.413},
+    {-4.e-12, 0.0,      66.513},
+    {4.e-12,  0.0,      66.513},
+    {1.5e-12, -3.5e-12, 2.836},
+    {-1.5e-12, 3.5e-12, 2.836},
+    {-2.5e-12, 3.e-12,  8.574},
+    {2.5e-12, -3.e-12,  8.574},
+    {-2.5e-12, -2.e-12, 47.113},
+    {2.5e-12,  2.e-12,  47.113},
+    {3.5e-12, 3.e-12,   95.871},
+    {-3.5e-12, -3.e-12, 95.871},
+    {-4.0e-12, 2.0e-12, 42.610},
+    {4.0e-12, -2.0e-12, 42.610},
+    
+    
   };
 
   unsigned short i;
@@ -121,14 +159,24 @@ void plotAQGCxs( TString outFile=output_file )
   }
   
 
-  gStyle->SetPalette( kBeach );
+  //gStyle->SetPalette( kBeach );
+  //gStyle->SetPalette( kBlackBody );
+  gStyle->SetPalette( kLightTemperature );
+  //gStyle->SetPalette( kThermometer );
+  //gStyle->SetPalette( kViridis );
+  //gStyle->SetPalette( kGistEarth );
   
   TCanvas c;
   c.cd();
-
-  g_xs.GetXaxis()->SetTitle("#zeta_{1} (GeV^{-4})");
-  g_xs.GetYaxis()->SetTitle("#zeta_{2} (GeV^{-4})");
+  c.SetTicks(1,1);
+  g_xs.SetNpx(50);
+  g_xs.SetNpy(50);
   g_xs.Draw( "colz" );
+  g_xs.SetTitle("");
+  //g_xs.GetHistogram()->GetYaxis()->SetTitleOffset(0.2);
+  //g_xs.GetYaxis()->SetTitleOffset(0.2);
+  g_xs.GetHistogram()->GetXaxis()->SetTitle("#zeta_{1} (GeV^{-4}) #times 10^{-12}");
+  g_xs.GetHistogram()->GetYaxis()->SetTitle("#zeta_{2} (GeV^{-4}) #times 10^{-12}");
   g_el_vals.SetMarkerStyle( 3 );
   //g_el_vals.Draw( "p same" );
   c.SetLogz();

@@ -12,15 +12,15 @@ gStyle.SetOptStat(0)
 extension = 'pdf'
 
 #years = ['2016','2017','2018']
-years = ['2016']
+years = ['2018']
 s_years = '+'.join(years)
 files = [['2016',TFile('outputHists/2016/histOut_data2016_ReverseElastic_multiRP.root')],
          ['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic_multiRP.root')],
          ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic_multiRP.root')]]
 #files = [['2016',TFile('outputHists/2016/histOut_data2016_Xi_multiRP.root')],
-#         ['2017',TFile('outputHists/2017/histOut_data2017_Xi_multiRP.root')],
-#         ['2018',TFile('outputHists/2018/histOut_data2018_Xi_multiRP.root')]
-#         ]
+#         ['2017',TFile('outputHists/2017/histOut_data2017_Xi_singleRP.root')],
+#         ['2018',TFile('outputHists/2018/histOut_data2018_Xi_singleRP.root')]]
+
 #files = [['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic_multiRP.root')]]
 
 

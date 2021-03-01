@@ -267,23 +267,28 @@ def rapidity(xi1,xi2):
     if xi1 < 0 or xi2 < 0: return -999
     else: return 0.5*math.log(xi1/xi2)
 
-def getXiError(pro,run):
-    arm = 0 if pro.sector45 else 1
+def getXiError(xi,method,detId,run):
+    str_method = 'multi' if method == 'multiRP' else 'single'
     protonEra = getProtonEra(run)
     era = protonEra[:4] + '_' + protonEra[4:]
-    bias_map = get_root_obj(unc_file, '%s/multi rp-%s/xi/g_bias_vs_xi' % (era,arm)) 
-    res_map = get_root_obj(unc_file, '%s/multi rp-%s/xi/g_resolution_vs_xi' % (era,arm))
-    syst_map = get_root_obj(unc_file, '%s/multi rp-%s/xi/g_systematics_vs_xi' % (era,arm))
-    bias, res, syst = bias_map.Eval( pro.xi ), res_map.Eval( pro.xi ), syst_map.Eval( pro.xi )
+    bias_map = get_root_obj(unc_file, '%s/%s rp-%s/xi/g_bias_vs_xi' % (era,str_method,detId)) 
+    res_map = get_root_obj(unc_file, '%s/%s rp-%s/xi/g_resolution_vs_xi' % (era,str_method,detId))
+    syst_map = get_root_obj(unc_file, '%s/%s rp-%s/xi/g_systematics_vs_xi' % (era,str_method,detId))
+    bias, res, syst = bias_map.Eval( xi ), res_map.Eval( xi ), syst_map.Eval( xi )
     return math.sqrt( pow(bias,2) + pow(res,2) + pow(syst,2) )
 
-def mass_err(pro1,pro2,run):
-    return mass(pro1.xi,pro2.xi) * rapidity_err(pro1,pro2,run)
+def mass_err(method,pro1,pro2,run):
+    return mass(pro1.xi,pro2.xi) * rapidity_err(method,pro1,pro2,run) 
 
-def rapidity_err(pro1,pro2,run):
-    xi1_err, xi2_err = getXiError(pro1,run), getXiError(pro2,run)
-    #xi1_err, xi2_err = pro1.xi*rel_xi_err, pro2.xi*rel_xi_err
-    return 0.5 * math.sqrt( pow(xi1_err/pro1.xi,2) + pow(xi2_err/pro2.xi,2) )
+def rapidity_err(method,pro1,pro2,run):
+    if pro1.sector45 == 1: pro_p, pro_m = pro1, pro2
+    else: pro_p, pro_m = pro2, pro1
+    if method == 'multiRP':
+        xip_err, xim_err = getXiError(pro_p.xi,method,0,run), getXiError(pro_m.xi,method,1,run)
+    else:
+        xip_err, xim_err = getXiError(pro_p.xi,method,pro_p.decRPId,run), getXiError(pro_m.xi,method,pro_m.decRPId,run) 
+    return 0.5 * math.sqrt( pow(xip_err/pro_p.xi,2) + pow(xim_err/pro_m.xi,2) ) 
+    
 
 def mass_matching(mp):
     if abs(mp) <= 3: return True
@@ -311,7 +316,7 @@ def getEra(run):
 def getProtonEra(run):
     if run > 273724 and run < 280386: return '2016preTS2'
     elif run > 280385 and run < 284043: return '2016postTS2'
-    elif run > 297023 and run < 302663: return '2017preTS2'
+    elif run > 297023 and run < 302664: return '2017preTS2'
     elif run > 302664 and run < 306462: return '2017postTS2'
     elif run > 315256 and run < 317697: return '2018preTS1'
     elif run > 318621 and run < 322634: return '2018TS1_TS2'
@@ -376,34 +381,34 @@ def checkProton(run,xangle,v_trks,proton):
     protonEra = getProtonEra(run)
     ppsEra = getPPSEra(run)
     arm = 0 if proton.sector45 else 1
-    apertureLimit = getAperture(xangle,arm,protonEra)
+    apertureLimit = getAperture(xangle,arm,protonEra,proton.xi)
     if not efficiency_cut(ppsEra,arm,proton.xi,v_trks): return False
-    if proton.xi > apertureLimit: return False # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TaggedProtonsGettingStarted#Fiducial_cuts
+    if not singleRP and proton.thetaX > apertureLimit: return False # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TaggedProtonsGettingStarted#Fiducial_cuts
     return True
 
-def getAperture(xangle,arm,era): # FIXME: https://twiki.cern.ch/twiki/pub/CMS/TaggedProtonsFiducialCuts/aperture_param_v2.h
+def getAperture(xangle,arm,era,xi): # https://twiki.cern.ch/twiki/pub/CMS/TaggedProtonsFiducialCuts/aperture_param_v2.h
     apertureLimit = 0.0
     if era == "2016preTS2":
-      if arm == 0: apertureLimit = 0.111
-      elif arm == 1: apertureLimit = 0.138
+      if arm == 0: apertureLimit = 3.76296E-05+((xi<0.117122)*0.00712775+(xi>=0.117122)*0.0148651)*(xi-0.117122)
+      elif arm == 1: apertureLimit = 1.85954E-05+((xi<0.14324)*0.00475349+(xi>=0.14324)*0.00629514)*(xi-0.14324)
 
     elif era == "2016postTS2":
-      if arm == 0: apertureLimit = 0.104
-      elif arm == 1: apertureLimit = 999.9 # Note - 1 strip RP was not in, so no aperture cuts derived
+      if arm == 0: apertureLimit = 6.10374E-05+((xi<0.113491)*0.00795942+(xi>=0.113491)*0.01935)*(xi-0.113491)
+      elif arm == 1: apertureLimit = (xi-0.110)/130.0 # Note - 1 strip RP was not in, so no aperture cuts derived
 
     elif era == "2017preTS2":
-      if arm == 0: apertureLimit = 0.066 + (3.54e-4 * xangle)
-      elif arm == 1: apertureLimit = 0.062 + (5.96e-4 * xangle)
+      if arm == 0: apertureLimit = -(8.71198E-07*xangle-0.000134726)+((xi<(0.000264704*xangle+0.081951))*-(4.32065E-05*xangle-0.0130746)+(xi>=(0.000264704*xangle+0.081951))*-(0.000183472*xangle-0.0395241))*(xi-(0.000264704*xangle+0.081951))
+      elif arm == 1: apertureLimit = 3.43116E-05+((xi<(0.000626936*xangle+0.061324))*0.00654394+(xi>=(0.000626936*xangle+0.061324))*-(0.000145164*xangle-0.0272919))*(xi-(0.000626936*xangle+0.061324))
 
     elif era == "2017postTS2":
-      if arm == 0: apertureLimit = 0.073 + (4.11e-4 * xangle)
-      elif arm == 1: apertureLimit = 0.067 + (6.87e-4 * xangle)
+      if arm == 0: apertureLimit = -(8.92079E-07*xangle-0.000150214)+((xi<(0.000278622*xangle+0.0964383))*-(3.9541e-05*xangle-0.0115104)+(xi>=(0.000278622*xangle+0.0964383))*-(0.000108249*xangle-0.0249303))*(xi-(0.000278622*xangle+0.0964383))
+      elif arm == 1: apertureLimit = 4.56961E-05+((xi<(0.00075625*xangle+0.0643361))*-(3.01107e-05*xangle-0.00985126)+(xi>=(0.00075625*xangle+0.0643361))*-(8.95437e-05*xangle-0.0169474))*(xi-(0.00075625*xangle+0.0643361))
 
-    else:
-      if arm == 0: apertureLimit = 0.079 + (4.21e-4 * xangle)
-      elif arm == 1: apertureLimit = 0.074 + (6.6e-4 * xangle)
+    elif '2018' in era:
+      if arm == 0: apertureLimit = -(8.44219E-07*xangle-0.000100957)+((xi<(0.000247185*xangle+0.101599))*-(1.40289E-05*xangle-0.00727237)+(xi>=(0.000247185*xangle+0.101599))*-(0.000107811*xangle-0.0261867))*(xi-(0.000247185*xangle+0.101599))
+      elif arm == 1: apertureLimit = -(-4.74758E-07*xangle+3.0881E-05)+((xi<(0.000727859*xangle+0.0722653))*-(2.43968E-05*xangle-0.0085461)+(xi>=(0.000727859*xangle+0.0722653))*-(7.19216E-05*xangle-0.0148267))*(xi-(0.000727859*xangle+0.0722653))
 
-    return apertureLimit
+    return -1*apertureLimit
     
 
 def validRecoInfo(run,v_trks,sector45):

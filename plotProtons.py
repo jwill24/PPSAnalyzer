@@ -14,7 +14,7 @@ gStyle.SetPalette(ROOT.kRainBow)
 
 lab = 'HLT selection'
 selection = 'HLT'
-years = ['2016']
+years = ['2017']
 s_years = '+'.join(years)
 colors = makeColors()
 
@@ -127,9 +127,9 @@ def makeXiComp(sector,log):
     c.SetTicks(1,1)
     if log: c.SetLogy()
     #c.SetGrid(1,1)
-    h_near = ROOT.TH1F('h_near', '', 100, 0.0, 0.3) 
-    h_far = ROOT.TH1F('h_far', '', 100, 0.0, 0.3) 
-    h_multi = ROOT.TH1F('h_multi', '', 100, 0.0, 0.3) 
+    h_near = ROOT.TH1F('h_near', '', 100, 0.0, 0.2) 
+    h_far = ROOT.TH1F('h_far', '', 100, 0.0, 0.2) 
+    h_multi = ROOT.TH1F('h_multi', '', 100, 0.0, 0.2) 
     # Add hists
     for year in years:
         for pf in protonFiles:

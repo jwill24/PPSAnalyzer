@@ -59,6 +59,9 @@ for mc in mcs:
     if 'data' in sample: 
         xsec, n_events = 1, 1
         data_ = True
+    elif 'ALP' in sample:
+        xsec, n_events = 1, 1
+        data_ = False
     elif sample == mc[0]:
         xsec, n_events = float(mc[1]), float(mc[2])
         data_ = False
@@ -80,6 +83,8 @@ print ''
 class DiphotonAnalysis(Module):
     def __init__(self):
         self.writeHistFile=True
+
+        self.count = 0
 
         # Get SF hists for ID and CSEV
         self.photonmapname = "EGamma_SF2D"        
@@ -213,6 +218,8 @@ class DiphotonAnalysis(Module):
     def endJob(self):
         Module.endJob(self)
 
+        print 'Events passing:', self.count
+
         if nSelect == 2.5 or nSelect == 5:
             self.diphoton_file.Write()
             self.diphoton_file.Close()
@@ -258,7 +265,9 @@ class DiphotonAnalysis(Module):
         elif data_ and method == 'multiRP': protons, tracks = Collection(event, "Proton_multiRP"), Collection(event, "PPSLocalTrack") # edited
         photons = Collection(event, "Photon")
         if data_: pu_weight, vtxWeight, prefWeight, eff_pho1, eff_pho2 = 1.0, 1.0, 1.0, 1.0, 1.0
-        else: pu_weight, vtxWeight, prefWeight = event.puWeightUp, self.rhoReweight(event.Pileup_nPU), event.PrefireWeight if '2017' in sample else 1.0
+        else: 
+            try: pu_weight, vtxWeight, prefWeight = event.puWeightUp, self.rhoReweight(event.Pileup_nPU), event.PrefireWeight if '2017' in sample else 1.0
+            except: pu_weight, vtxWeight, prefWeight = 1.0, 1.0, 1.0
         s_weight = sample_weight*pu_weight*prefWeight
 
         if len(photons) < 2: return
@@ -282,7 +291,7 @@ class DiphotonAnalysis(Module):
         xim = 1/13000.0*( pho1.pt*math.exp(-1*pho1.eta)+pho2.pt*math.exp(-1*pho2.eta) )
         if data_: weight = 1
         pt_thresh = 75.0 if year == '2016' else 100.0
-                    
+
         # Make selection cuts
         if nSelect > 1:                                   # Preselection
             if pho1.pt < pt_thresh or pho2.pt < pt_thresh: return
@@ -298,6 +307,8 @@ class DiphotonAnalysis(Module):
             if not acop_cut(acop): return
         if nSelect > 4 or nSelect == 2.5:                 # Tight xi or reverse elastic
             if not xi_cut(xip,xim): return
+
+        self.count += 1
 
         # Print high-mass event kinematics
         if data_: 
@@ -327,7 +338,7 @@ class DiphotonAnalysis(Module):
             if data_:
                 mystruct.crossingAngle = event.LHCInfo_crossingAngle # edited from xangle
                 mystruct.era = getEra(event.run)
-            else: # FIXME
+            else: # dummy variables
                 mystruct.crossingAngle = 150.0 # random crossingAngle
                 mystruct.era = '2017E' if '2017' in sample else '2018D' # random eras
             self.diphoton_tree.Fill()
@@ -376,7 +387,7 @@ class DiphotonAnalysis(Module):
                 elif method == 'singleRP':
                     if t.singleRPProtonIdx == i: v_trks.append(t)
 
-            if not checkProton(event.run,event.LHCInfo_crossingAngle,v_trks,proton): continue # edited from xangle
+            if not checkProton(event.run,event.LHCInfo_crossingAngle,v_trks,proton): continue 
             if proton.sector45:   v45.append(proton), self.h_pro_xip.Fill( proton.xi )
             elif proton.sector56: v56.append(proton), self.h_pro_xim.Fill( proton.xi )
             for t in v_trks: 
@@ -410,11 +421,12 @@ class DiphotonAnalysis(Module):
         pro_m = max(v56, key=lambda x:x.xi)
         pro_p = max(v45, key=lambda x:x.xi)
 
-        # SetPoint for matching plot
-        pps_mass, pps_rap = mass(pro_m.xi,pro_p.xi), rapidity(pro_m.xi,pro_p.xi)
-        pps_mass_err, pps_rap_err = mass_err(pro_m, pro_p, event.run), rapidity_err(pro_m, pro_p, event.run)
+        # Set point for matching plot
+        pps_mass, pps_rap = mass(pro_m.xi,pro_p.xi), rapidity(pro_m.xi,pro_p.xi) 
+        pps_mass_err, pps_rap_err = mass_err(method, pro_m, pro_p, event.run), rapidity_err(method, pro_m, pro_p, event.run)
         mass_point = (pps_mass - diph_mass) / (pps_mass_err + diph_mass*rel_mass_err) 
-        rap_point = (pps_rap - diph_rap) / (pps_rap_err + rel_rap_err*diph_rap)
+        rap_point = (pps_rap - diph_rap) / (pps_rap_err + rel_rap_err*abs(diph_rap))
+        
         self.gr_matching.SetPoint( self.gr_matching.GetN(), mass_point, rap_point )
         self.gr_xim_matching.SetPoint( self.gr_xim_matching.GetN(), pro_m.xi, xim )
         self.gr_xip_matching.SetPoint( self.gr_xip_matching.GetN(), pro_p.xi, xip )
