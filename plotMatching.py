@@ -11,15 +11,15 @@ from ROOT import gROOT, gStyle
 gStyle.SetOptStat(0)
 extension = 'pdf'
 
-#years = ['2016','2017','2018']
-years = ['2018']
+years = ['2016','2017','2018']
+#years = ['2018']
 s_years = '+'.join(years)
-files = [['2016',TFile('outputHists/2016/histOut_data2016_ReverseElastic_multiRP.root')],
-         ['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic_multiRP.root')],
-         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic_multiRP.root')]]
-#files = [['2016',TFile('outputHists/2016/histOut_data2016_Xi_multiRP.root')],
-#         ['2017',TFile('outputHists/2017/histOut_data2017_Xi_singleRP.root')],
-#         ['2018',TFile('outputHists/2018/histOut_data2018_Xi_singleRP.root')]]
+#files = [['2016',TFile('outputHists/2016/histOut_data2016_ReverseElastic_multiRP.root')],
+#         ['2017',TFile('outputHists/2017/histOut_data2017_ReverseElastic_multiRP.root')],
+#         ['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic_multiRP.root')]]
+files = [['2016',TFile('outputHists/2016/histOut_data2016_Xi_multiRP.root')],
+         ['2017',TFile('outputHists/2017/histOut_data2017_Xi_multiRP.root')],
+         ['2018',TFile('outputHists/2018/histOut_data2018_Xi_multiRP.root')]]
 
 #files = [['2018',TFile('outputHists/2018/histOut_data2018_ReverseElastic_multiRP.root')]]
 
@@ -51,7 +51,8 @@ def prelimLabel():
     label.SetLineStyle(0)
     label.SetTextAlign(11)
     label.AddText( "#font[62]{CMS}" )
-    label.AddText( "#scale[0.75]{#font[52]{Preliminary}}" )
+    #label.AddText( "#scale[0.75]{#font[52]{Preliminary}}" )
+    label.AddText( "#scale[0.75]{#font[52]{Inteneral}}" )
     label.SetTextSize(0.043)
     label.SetTextFont( 52 )
     label.SetTextColor( 1 )
@@ -109,6 +110,7 @@ def massrap_matching(blinded):
         n_gr = gr.GetN() if i > 0 else 0
         for j in range(g.GetN()):
             g.GetPoint(j,x,y)
+            #print 'm:', x, 'y:', y
             ex = g.GetErrorX(j)
             ey = g.GetErrorY(j)
             gr.SetPoint(n_gr+j,x,y)
@@ -324,7 +326,7 @@ def oneDim_matching(blinded):
 
 massrap_matching(False)
 
-#oneDim_matching(True)
+#oneDim_matching(False)
 
 #xi_matching('m')
 #xi_matching('p')

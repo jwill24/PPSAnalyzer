@@ -3,9 +3,6 @@
 # <selection = HLT/Elastic/Xi/...
 # <method> = singleRP/multiRP
 
-# To-Do
-
-# Add pixel and strip uncertainties on xi
 
 #!/usr/bin/env python
 import os, sys, re
@@ -65,6 +62,9 @@ for mc in mcs:
     elif sample == mc[0]:
         xsec, n_events = float(mc[1]), float(mc[2])
         data_ = False
+    else:
+        xsec, n_events = 1, 1
+        data_ = False
 
 if data_: sample_weight = 1
 else: 
@@ -121,17 +121,20 @@ class DiphotonAnalysis(Module):
 	Module.beginJob(self,histFile,histDirName)
         
         self.h_num_pho=ROOT.TH1F('h_num_pho', 'Number Of Photons', 8, 0, 8)
-        self.h_diph_mass=ROOT.TH1F('h_diph_mass', 'Diphoton Mass', 100, 100 if nSelect<2 else 350, 2500.) # aqgc - 3000, data - 2500
+        self.h_diph_mass=ROOT.TH1F('h_diph_mass', 'Diphoton Mass', 100, 100 if nSelect<2 else 350, 3000.) # aqgc - 3000, data - 2500
         self.h_diph_rap=ROOT.TH1F('h_diph_rap', 'Diphoton Rapidity', 100, -2, 2)
-        self.h_acop=ROOT.TH1F('h_acop', 'Diphoton Acoplanarity', 100, 0., 0.25 if nSelect < 4 else 0.005) # aqgc - 0.01, data - 0.25 if nSelect < 4 else 0.01
+        self.h_acop=ROOT.TH1F('h_acop', 'Diphoton Acoplanarity', 100, 0., 0.01 if nSelect < 4 else 0.005) # aqgc - 0.01, data - 0.25 if nSelect < 4 else 0.01
+        self.h_single_phi=ROOT.TH1F('h_single_phi', 'Single Photon #phi', 100, -6.3, 6.3)
+        self.h_lead_phi=ROOT.TH1F('h_lead_phi', 'Leading Photon #phi', 100, -6.3, 6.3)
+        self.h_sub_phi=ROOT.TH1F('h_sub_phi', 'Subleading Photon #phi', 100, -6.3, 6.3)
         self.h_pt_ratio=ROOT.TH1F('h_pt_ratio', 'Diphoton p_{T} Ratio', 100, 0, 2)
         self.h_single_eta=ROOT.TH1F('h_single_eta', 'Single Photon Eta', 100, -3.0, 3.0)
         self.h_lead_eta=ROOT.TH1F('h_lead_eta', 'Leading Photon Eta', 100, -3.0, 3.0)
         self.h_sub_eta=ROOT.TH1F('h_sub_eta', 'Subleading Photon Eta', 100, -3.0, 3.0)
-        self.h_single_pt=ROOT.TH1F('h_single_pt', 'Single Photon pT', 100, 100, 750) # aqgc - 1400, data - 750
+        self.h_single_pt=ROOT.TH1F('h_single_pt', 'Single Photon pT', 100, 0.0, 1400) # aqgc - 1400, data - 750
         self.h_lead_pt=ROOT.TH1F('h_lead_pt', 'Lead Photon pT', 100, 100, 750)
         self.h_sub_pt=ROOT.TH1F('h_sub_pt', 'Sublead Photon pT', 100, 100, 750)
-        self.h_single_r9=ROOT.TH1F('h_single_r9', 'Single Photon R_{9}', 100, 0.5, 1) # aqgc - 0.8, data - 0.5 if nSelect < 4 else 0.8
+        self.h_single_r9=ROOT.TH1F('h_single_r9', 'Single Photon R_{9}', 100, 0.8, 1) # aqgc - 0.8, data - 0.5 if nSelect < 4 else 0.8
         self.h_lead_r9=ROOT.TH1F('h_lead_r9', 'Lead Photon R_{9}', 100, 0.5, 1)
         self.h_sub_r9=ROOT.TH1F('h_sub_r9', 'Sublead Photon R_{9}', 100, 0.5, 1)
         self.h_single_hoe=ROOT.TH1F('h_single_hoe', 'Single Photon H/E', 100, 0, 1 if nSelect < 2 else 0.1)
@@ -150,7 +153,9 @@ class DiphotonAnalysis(Module):
         self.h_vtx_z=ROOT.TH1F('h_vtx_z', 'Vtx z position', 100,-15,15)
         self.h_fgr=ROOT.TH1F('h_fgr', 'fixedGridRho', 58, 0, 58)
 
-        self.h_num_pro=ROOT.TH1F('h_num_pro', 'Number of Protons', 8, 0, 8)
+        self.h_num_pro=ROOT.TH1F('h_num_pro', 'Number of Protons', 12, 0, 12)
+        self.h_num_pro_45=ROOT.TH1F('h_num_pro_45', 'Number of Protons sector45', 8, 0, 8)
+        self.h_num_pro_56=ROOT.TH1F('h_num_pro_56', 'Number of Protons sector56', 8, 0, 8)
         self.h_proton_side=ROOT.TH1F('h_proton_side', 'Proton side',4, 0, 4)
         self.h_detType=ROOT.TH1F('h_detType', 'PPS Detector Type', 2, 3, 5)
         self.h_pro_xip=ROOT.TH1F('h_pro_xip', 'Proton #xi ^{+}', 100, 0.00, 0.2)
@@ -187,7 +192,8 @@ class DiphotonAnalysis(Module):
         self.addObject( self.h_nvtx ), self.addObject( self.h_vtx_z ), self.addObject( self.h_fgr )
 
         if data_:
-            self.addObject( self.h_num_pro ), self.addObject( self.h_detType ), self.addObject( self.h_proton_side )
+            self.addObject( self.h_num_pro ), self.addObject( self.h_num_pro_45 ), self.addObject( self.h_num_pro_56 ), 
+            self.addObject( self.h_detType ), self.addObject( self.h_proton_side )
             self.addObject( self.h_pro_xip ), self.addObject( self.h_pro_xim )
             self.addObject( self.h_pro_xi_45f ), self.addObject( self.h_pro_xi_45n )
             self.addObject( self.h_pro_xi_56n ), self.addObject( self.h_pro_xi_56f )
@@ -404,6 +410,7 @@ class DiphotonAnalysis(Module):
                 if proton.sector45: self.h_pro_thetaY_45.Fill(proton.thetaY), self.h_pro_time_45.Fill(proton.time) 
                 else: self.h_pro_thetaY_56.Fill(proton.thetaY), self.h_pro_time_56.Fill(proton.time)
                 
+        self.h_num_pro_45.Fill( len(v45) ), self.h_num_pro_56.Fill( len(v56) )
 
         if len(v45) == 0 or len(v56) == 0: # check for two opposite-side protons
             if len(v45) == 0 and len(v56) == 0: self.h_proton_side.Fill(0)
@@ -413,6 +420,17 @@ class DiphotonAnalysis(Module):
         
         self.h_proton_side.Fill(3)
 
+        # Remove protons not within chosen xi range
+        if nSelect == 5:
+            for i, pro in enumerate(v45):
+                if pro.xi < 0.035 or pro.xi > 0.15: del v45[i]
+            for j, pro in enumerate(v56):
+                if pro.xi < 0.035 or pro.xi > 0.18: del v56[j]
+            
+            # Cut on events without opposite-side signal protons
+            if len(v45) == 0 or len(v56) == 0: return
+            
+        
         # Choose the diproton candidate with the best xi matching
         #pro_m = min(v56, key=lambda x:abs(x.xi-xim))
         #pro_p = min(v45, key=lambda x:abs(x.xi-xip))
@@ -421,11 +439,27 @@ class DiphotonAnalysis(Module):
         pro_m = max(v56, key=lambda x:x.xi)
         pro_p = max(v45, key=lambda x:x.xi)
 
+        # stop if the xi cut didn't work
+        if nSelect == 5: 
+            if pro_m.xi < 0.035 or pro_m > 0.18:
+                print 'Stop everything! pro_m.xi =', pro_m.xi
+                sys.exit()
+            if pro_p.xi < 0.035 or pro_p > 0.15:
+                print 'Stop everything! pro_p.xi =', pro_p.xi
+                sys.exit()
+
         # Set point for matching plot
         pps_mass, pps_rap = mass(pro_m.xi,pro_p.xi), rapidity(pro_m.xi,pro_p.xi) 
         pps_mass_err, pps_rap_err = mass_err(method, pro_m, pro_p, event.run), rapidity_err(method, pro_m, pro_p, event.run)
         mass_point = (pps_mass - diph_mass) / (pps_mass_err + diph_mass*rel_mass_err) 
         rap_point = (pps_rap - diph_rap) / (pps_rap_err + rel_rap_err*abs(diph_rap))
+
+        if abs(mass_point) < 3 and abs(rap_point) < 3:
+            print 'Mass point:', mass_point, 'Rap point:', rap_point
+            print 'xip:', pro_p.xi, 'xim:', pro_m.xi
+            print 'pps mass err:', pps_mass_err, 'pps rap err:', pps_rap_err
+            print 'diph mass:', diph_mass, 'diph_rap', diph_rap
+            print 'pt1:', pho1.pt, 'pt2:', pho2.pt
         
         self.gr_matching.SetPoint( self.gr_matching.GetN(), mass_point, rap_point )
         self.gr_xim_matching.SetPoint( self.gr_xim_matching.GetN(), pro_m.xi, xim )

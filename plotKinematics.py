@@ -15,8 +15,8 @@ gStyle.SetOptStat(0)
 
 extension = 'pdf'
 #lab = '#xi^{#gamma#gamma} #in PPS selection'
-lab = 'Elastic selection'
-selection = 'Elastic'
+lab = '#xi #in PPS selection'
+selection = 'Xi'
 method = 'multiRP'
 years = ['2016','2017','2018']
 #years = ['2016']
@@ -108,6 +108,9 @@ def plotRatio(name, h1, v_hist, hs, log):
     l1.Draw(), l2.Draw(), l3.Draw(), l4.Draw(), l5.Draw()
 
     Prettify( h_ratio )
+
+    #ax  = h_ratio.GetXaxis();
+    #ax.SetNdivisions(506);
 
     if len(years) == 1: c.SaveAs('plots/%s/%s_%s.%s' % (years[0],name,selection,extension))
     else: c.SaveAs('plots/combined/%s_%s_%s.%s' % (name,selection,s_years,extension)) 
@@ -226,6 +229,9 @@ def getColors(sample):
 #-----------------------
 
 
+makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
+
+'''
 makePlot('h_diph_mass', 'h_mass_comp', 'm_{#gamma#gamma} GeV', 4, True)
 makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
 makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 4, True)
@@ -245,4 +251,4 @@ makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
 makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 2, True)
 makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
 makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, True)
-
+'''

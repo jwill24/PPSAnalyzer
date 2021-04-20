@@ -52,6 +52,7 @@ class SignalStudy(Module):
         self.h_rap_diff=ROOT.TH1F('h_rap_diff', 'Diphoton Rapidity Resolution', 100, -0.3, 0.3)
         self.h_pt_res=ROOT.TH1F('h_pt_res', 'Single #gamma p_{T} Resolution', 100, -0.25, 0.25)
         self.h_phi_diff=ROOT.TH1F('h_phi_diff', 'Single Photon #phi Resolution', 100, -0.01, 0.01)
+        self.h_phi_res=ROOT.TH1F('h_phi_res', 'Single Photon #phi Resolution', 100, -0.01, 0.01)
         self.h_dphi_diff=ROOT.TH1F('h_dphi_diff', '#Delta#phi Resolution', 100, -0.01, 0.01)
         self.h_eta_res=ROOT.TH1F('h_eta_res', '#eta Resolution', 100, -0.25, 0.25) 
         self.h_eta_diff=ROOT.TH1F('h_eta_diff', '#eta Resolution', 100, -0.25, 0.25) 
@@ -74,6 +75,7 @@ class SignalStudy(Module):
         self.addObject( self.h_rap_diff )
         self.addObject( self.h_pt_res )
         self.addObject( self.h_phi_diff )
+        self.addObject( self.h_phi_res )
         self.addObject( self.h_dphi_diff )
         self.addObject( self.h_eta_res )
         self.addObject( self.h_eta_diff )
@@ -144,7 +146,7 @@ class SignalStudy(Module):
         #protons = Collection(event,"Proton_singleRP")
         #protons = Collection(event, "Proton_multiRP")
         #lhe = Collection(event, "LHEPart")
-        #gen = Collection(event, "GenPart")
+        gen = Collection(event, "GenPart")
 
         if len(photons) < 2: return
         self.total += 1
@@ -173,6 +175,7 @@ class SignalStudy(Module):
 
 
         # Signal efficiency study
+        '''
         if pho1.pt < 100 or pho2.pt < 100: return
         if not hoe_cut(pho1,pho2): return
         if not eta_cut(pho1,pho2): return 
@@ -183,10 +186,10 @@ class SignalStudy(Module):
         if not xi_cut(xip,xim): return
 
         self.passing_wp90 += 1
+        '''
 
         # Generated photons
-        '''
-        part1, part2 = gen[2], gen[3] #gen[19], gen[20]
+        part1, part2 = gen[19], gen[20] #gen[2], gen[3]
         if ( abs(part1.p4().Pz()-pho1.p4().Pz()) ) > ( abs(part2.p4().Pz()-pho1.p4().Pz()) ): part1, part2 = gen[3], gen[2]  #gen[20], gen[19] 
         part_p4 = ROOT.TLorentzVector( part1.p4() + part2.p4() )
         part_mass = part_p4.M()
@@ -196,16 +199,22 @@ class SignalStudy(Module):
         part_acop = 1 - abs(part_dphi)/PI
         part_xip = 1/13000.*( part1.pt*math.exp(part1.eta)+part2.pt*math.exp(part2.eta) )
         part_xim = 1/13000.*( part1.pt*math.exp(-1*part1.eta)+part2.pt*math.exp(-1*part2.eta) )
-        '''
+
         
         # Diphoton resolution plots
-        '''
+
+        #print 'diph_mass:', diph_mass, 'part_mass:', part_mass
+        #print 'pho1.phi:', pho1.phi, 'part1.phi:', part1.phi
+        #print ''
+
         self.h_mass_res.Fill( (diph_mass-part_mass)/part_mass )
         self.h_rap_diff.Fill( (diph_rap-part_rap) )
         self.h_pt_res.Fill( (pho1.pt-part1.pt)/part1.pt )
         self.h_pt_res.Fill( (pho2.pt-part2.pt)/part2.pt )
         self.h_phi_diff.Fill( (pho1.phi-part1.phi) )
         self.h_phi_diff.Fill( (pho2.phi-part2.phi) )
+        self.h_phi_res.Fill( (pho1.phi-part1.phi) / part1.phi )
+        self.h_phi_res.Fill( (pho2.phi-part2.phi) / part2.phi )
         self.h_dphi_diff.Fill( (delta_phi-part_dphi) )
         self.h_eta_res.Fill( (pho1.eta-part1.eta)/part1.eta )
         self.h_eta_res.Fill( (pho2.eta-part2.eta)/part2.eta )
@@ -217,7 +226,7 @@ class SignalStudy(Module):
         self.h_xi_res.Fill( (xim-part_xim)/part_xim )
         self.h_logxi_diff.Fill( math.log(1/xip)-math.log(1/part_xip) )
         self.h_logxi_diff.Fill( math.log(1/xim)-math.log(1/part_xim) )
-        '''
+
         
 
         # Generated protons
@@ -268,6 +277,6 @@ class SignalStudy(Module):
 
 
 preselection=''
-files=['/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/nanoAOD_aqgc2017_Skim.root']
+files=['/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/Skims/2017/nanoAOD_aqgc2017_Skim.root']
 p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[hepmcDump(),SignalStudy()],noOut=True,histFileName="histOut_aqgc2017_study.root",histDirName="plots")
 p.run()

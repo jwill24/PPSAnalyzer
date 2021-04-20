@@ -12,12 +12,13 @@ from common import Prettify
 
 gStyle.SetOptStat(0)
 
-era = '2018'
+era = '2017'
 
 color = 50
 stations = [['0','45'], ['1','56'], ['3','45N'], ['23','45F'], ['103','56N'], ['123','56F']]
 
 #aqgcFile = TFile('outputHists/histOut_resolution_aqgc.root')
+aqgcFile = TFile('outputHists/2017/histOut_aqgc2017_study.root')
 #aqgcFile = TFile('histOut_signal_singleRP_2017postTS2.root')
 
 f = TFile('outputHists/directSimulation/output_hists_%s.root' % era)
@@ -28,7 +29,7 @@ def Canvas(name):
     return c
 
 def selectionLabel(text):
-    label = TPaveText( 0.1, 0.9, 0.18, 0.92, 'NB NDC' ) 
+    label = TPaveText( 0.15, 0.9, 0.23, 0.92, 'NB NDC' ) 
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
@@ -41,7 +42,7 @@ def selectionLabel(text):
     return label
 
 def condLabel():
-    label = TPaveText( 0.57, 0.9, 0.73, 0.93, 'NB NDC' )
+    label = TPaveText( 0.67, 0.9, 0.81, 0.93, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
@@ -70,7 +71,7 @@ def descriptionLabel():
 
 
 def simLabel():
-    label = TPaveText( 0.10, 0.9, 0.18, 0.92, 'NB NDC' )
+    label = TPaveText( 0.12, 0.9, 0.18, 0.92, 'NB NDC' )
     label.SetFillStyle(0)
     label.SetBorderSize(0)
     label.SetLineWidth(0)
@@ -128,10 +129,12 @@ def plotDiff(variable, symbol, h):
     h.SetXTitle(symbol+'_{reco} - '+symbol+'_{gen}')
     h.GetXaxis().SetTitleOffset(1.2)
     h.GetXaxis().SetLimits(-0.25,0.25)
-    h.SetYTitle('Events')
+    h.SetYTitle('Events fraction')
     h.SetFillColorAlpha(color,0.0001)
     h.SetLineColor(color)
-    h.Draw()
+    h.Rebin(4)
+    h.Scale(1.0/h.GetEntries())
+    h.Draw('HIST')
     mean, rms = round(h.GetMean(),3), round(h.GetRMS(),4)
     statsLabel = makeStats(mean,rms)
     sampleText, cLabel, pLabel = addText(), condLabel(), simLabel()
@@ -247,10 +250,12 @@ plotRes('eta', '#eta', h_eta_res)
 
 h_rap_diff = aqgcFile.Get('plots/h_rap_diff')
 plotDiff('rap', 'y', h_rap_diff)
+'''
 
 h_phi_diff = aqgcFile.Get('plots/h_phi_diff')
 plotDiff('phi', '#phi', h_phi_diff)
 
+'''
 h_dphi_diff = aqgcFile.Get('plots/h_dphi_diff')
 plotDiff('dphi', '#Delta#phi', h_dphi_diff)
 
@@ -265,7 +270,7 @@ plotDiff('diphpt', 'p_{T}^{#gamma#gamma}', h_diphpt_diff)
 
 h_logxi_diff = aqgcFile.Get('plots/h_logxi_diff')
 plotDiff('logxi', 'log(1/#xi)', h_logxi_diff)
-'''
+
 
 h_xi_sim_total = f.Get('h_xi_sim')
 h_xi_sim_single = f.Get('h_xi_sim_twopro_single')
@@ -300,7 +305,7 @@ plotEA(h_mass_reco_eff, h_mass_reco_total, 'multiRP with efficiencies', 'multiRP
 
 plotEA(h_xi_reco_eff, h_xi_sim_total, 'multiRP reco with efficiencies', 'simulated', 'pds_xi_eXA_%s.pdf' % era)
 plotEA(h_mass_reco_eff, h_mass_sim_total, 'multiRP reco with efficiencies', 'simulated', 'pds_mass_eXA_%s.pdf' % era)
-
+'''
 
 
 

@@ -37,6 +37,30 @@ class plotEfficiency(Module):
         self.gr_acc = ROOT.TGraph2D()
         self.gr_eff = ROOT.TGraph2D()
 
+        # Get SF hists for ID and CSEV
+        self.photonmapname = "EGamma_SF2D"
+
+        self.photon_file_16 = open_root("/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/egammaEffi.txt_EGM2D_Pho_wp90_UL16.root")
+        self.csev_file_16 = open_root("/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/CSEV_SummaryPlot_UL16_preVFP.root")
+        
+        self.photon_file_17 = open_root("/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/egammaEffi.txt_EGM2D_PHO_MVA90_UL17.root")
+        self.csev_file_17 = open_root("/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/CSEV_SummaryPlot_UL17.root")
+        
+        self.photon_file_18 = open_root("/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/egammaEffi.txt_EGM2D_Pho_wp90.root_UL18.root")
+        self.csev_file_18 = open_root("/home/t3-ku/juwillia/CMSSW_10_6_13/src/PPSAnalyzer/data/CSEV_SummaryPlot_UL18.root")
+
+        self.csevmapname = "MVAID/SF_CSEV_MVAID"
+
+        self.csev_map_16 = get_root_obj(self.csev_file_16, self.csevmapname)
+        self.photon_map_16 = get_root_obj(self.photon_file_16, self.photonmapname)
+
+        self.csev_map_17 = get_root_obj(self.csev_file_17, self.csevmapname)
+        self.photon_map_17 = get_root_obj(self.photon_file_17, self.photonmapname)
+
+        self.csev_map_18 = get_root_obj(self.csev_file_18, self.csevmapname)
+        self.photon_map_18 = get_root_obj(self.photon_file_18, self.photonmapname)
+
+
     def beginJob(self,histFile=None,histDirName=None):
         Module.beginJob(self,histFile,histDirName)
 
@@ -64,6 +88,46 @@ class plotEfficiency(Module):
 
         for s in samples:
             self.gr_acc.SetPoint( self.gr_acc.GetN(), s[2]*1.0e12, s[3]*1.0e12, float(s[5])/float(s[4]) )
+
+    
+    # Get the SFs for MCs
+    def efficiency(self,year,pt,eta_sc,r9):
+        
+        #if nSelect != 2.5 and nSelect < 3: return 1.0
+
+        if year == '2016':
+            bin_x = min( max( self.photon_map_16.GetXaxis().FindBin( eta_sc ), 1 ), self.photon_map_16.GetXaxis().GetNbins() )
+            bin_y = min( max( self.photon_map_16.GetYaxis().FindBin( pt ), 1 ), self.photon_map_16.GetYaxis().GetNbins() )
+            id_sf = self.photon_map_16.GetBinContent( bin_x, bin_y )
+            #id_sf -= self.photon_map_16.GetBinError( bin_x, bin_y )
+
+            if abs(eta_sc) <= 1.4442: bin_r9 = 2 if r9 > 0.94 else 3
+            else: bin_r9 = 5 if r9 > 0.94 else 6
+            csev_sf = self.csev_map_16.GetBinContent( bin_r9 )
+
+        elif year == '2017':
+            bin_x = min( max( self.photon_map_17.GetXaxis().FindBin( eta_sc ), 1 ), self.photon_map_17.GetXaxis().GetNbins() )
+            bin_y = min( max( self.photon_map_17.GetYaxis().FindBin( pt ), 1 ), self.photon_map_17.GetYaxis().GetNbins() )
+            id_sf = self.photon_map_17.GetBinContent( bin_x, bin_y )
+            #id_sf -= self.photon_map_17.GetBinError( bin_x, bin_y )
+
+            if abs(eta_sc) <= 1.4442: bin_r9 = 2 if r9 > 0.94 else 3
+            else: bin_r9 = 5 if r9 > 0.94 else 6
+            csev_sf = self.csev_map_17.GetBinContent( bin_r9 )
+
+        elif year == '2018':
+            bin_x = min( max( self.photon_map_18.GetXaxis().FindBin( eta_sc ), 1 ), self.photon_map_18.GetXaxis().GetNbins() )
+            bin_y = min( max( self.photon_map_18.GetYaxis().FindBin( pt ), 1 ), self.photon_map_18.GetYaxis().GetNbins() )
+            id_sf = self.photon_map_18.GetBinContent( bin_x, bin_y )
+            #id_sf -= self.photon_map_18.GetBinError( bin_x, bin_y )
+
+
+            if abs(eta_sc) <= 1.4442: bin_r9 = 2 if r9 > 0.94 else 3
+            else: bin_r9 = 5 if r9 > 0.94 else 6
+            csev_sf = self.csev_map_18.GetBinContent( bin_r9 )
+
+        return id_sf*csev_sf
+
 
     def analyze(self, event):
         photons = Collection(event, "Photon")
@@ -93,9 +157,15 @@ class plotEfficiency(Module):
         # Make selection cuts
         if pho1.pt < pt_thresh or pho2.pt < pt_thresh: return
 
-        if '2016' in self.fileName: self.total_2016 += 1
-        elif '2017' in self.fileName: self.total_2017 += 1
-        elif '2018' in self.fileName: self.total_2018 += 1
+        if '2016' in self.fileName: 
+            self.total_2016 += 1
+            year = '2016'
+        elif '2017' in self.fileName: 
+            self.total_2017 += 1
+            year = '2017'
+        elif '2018' in self.fileName: 
+            self.total_2018 += 1
+            year = '2018'
 
         if not hoe_cut(pho1,pho2): return
         if not eta_cut(pho1,pho2): return
@@ -105,9 +175,14 @@ class plotEfficiency(Module):
         if not acop_cut(acop): return
         if not xi_cut(xip,xim): return
 
-        if '2016' in self.fileName: self.passing_2016 += 1
-        elif '2017' in self.fileName: self.passing_2017 += 1
-        elif '2018' in self.fileName: self.passing_2018 += 1
+
+
+        eff_pho1, eff_pho2 = self.efficiency(year,pho1.pt,pho1.eta,pho1.r9), self.efficiency(year,pho2.pt,pho2.eta,pho2.r9)
+        w = eff_pho1 * eff_pho2
+
+        if '2016' in self.fileName: self.passing_2016 += w #1
+        elif '2017' in self.fileName: self.passing_2017 += w #1
+        elif '2018' in self.fileName: self.passing_2018 += w #1
         
         return True
 
@@ -118,9 +193,13 @@ files=[
     #'Skims/2017/nanoAOD_aqgc2017_5e-13_0_Skim.root',
     #'Skims/2018/nanoAOD_aqgc2018_e-13_e-13_Skim.root',
 
-    'Skims/2016/nanoAOD_alp2016_fe-1_m2000_Skim.root',
-    'Skims/2017/nanoAOD_alp2017_fe-1_m2000_Skim.root',
-    'Skims/2018/nanoAOD_alp2018_fe-1_m2000_Skim.root',
+    'Skims/2016/nanoAOD_alp2016_fe-1_m500_Skim.root',
+    'Skims/2017/nanoAOD_alp2017_fe-1_m500_Skim.root',
+    'Skims/2018/nanoAOD_alp2018_fe-1_m500_Skim.root',
+
+    #'Skims/2016/nanoAOD_LbL2016_SM_Skim.root',
+    #'Skims/2017/nanoAOD_LbL2017_SM_Skim.root',
+    #'Skims/2018/nanoAOD_LbL2018_SM_Skim.root'
 ]
 p=PostProcessor(".",files,cut=preselection,branchsel=None,modules=[plotEfficiency()],noOut=True,histFileName="histOut_efficiency.root",histDirName="plots")
 p.run()

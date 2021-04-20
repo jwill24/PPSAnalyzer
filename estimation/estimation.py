@@ -1,5 +1,5 @@
 ### CURRENT DIPROTON CHOICE ###
-#   Highest xi in each arm #
+### Max proton on each side
 ###
 
 
@@ -42,11 +42,11 @@ pro_struct  = proStruct()
 
 
 # Flags
-experiments = 1     # number of iterations
-plotting = True     # make matching plot for each experiment
+experiments = 500     # number of iterations
+plotting = False     # make matching plot for each experiment
 testing  = False    # only run over a few events
-test_events = 10    # number of events to use for testing
-method = 'singleRP' # singleRP or multiRP reconstruction
+test_events = 100    # number of events to use for testing
+method = 'multiRP' # singleRP or multiRP reconstruction
 year = '2017'
 
 #diphoton_file = TFile( 'diphotonEvents_data%s_Xi_%s.root' % (year,method) ) # data
@@ -1426,13 +1426,13 @@ h2_xip = TH2F( 'h2_xip', '', 100, 0, 0.2, 100, 0, 0.2 )
 h_xip = TH1F('h_xip', '#xi ^{+}', 100, 0., 0.25)
 h_xim = TH1F('h_xim', '#xi ^{-}', 100, 0., 0.25)
 
-converge = []
-points = [100000]
-for i in range(1,10):
-    for j in range(5):
-        point = i*math.pow(10,j)
-        points.append(int(point))
-points.sort()
+#converge = []
+#points = [100000]
+#for i in range(1,10):
+#    for j in range(5):
+#        point = i*math.pow(10,j)
+#        points.append(int(point))
+#points.sort()
 
 
 #----------------------------------
@@ -1450,7 +1450,7 @@ def getMass(xim,xip):
 #----------------------------------
 
 def getRap(xip,xim):
-    if xim <= 0 or xip <= 0: return -999
+    if xim <= 0.0 or xip <= 0.0: return -999
     else: return 0.5*math.log(xim/xip)
 
 #----------------------------------
@@ -1669,7 +1669,13 @@ if testing: entries, experiments = test_events, 1
 
 v_count, v_20sig, v_5sig,  v_3sig, v_2sig = [], [], [], [], []
 
+#file = open("matching_%s_reverseMixing.txt" % year,"w")
+#file.close()
+#sys.exit()
+
 for e in range(experiments):
+
+    v_xi_match = []
 
     count, matching_2sig, matching_3sig, matching_5sig, matching_20sig = 0, 0, 0, 0, 0
     gr_estimate.Set(0)
@@ -1684,10 +1690,10 @@ for e in range(experiments):
         if data_:
             era, crossingAngle = diph_struct.era, diph_struct.crossingAngle
         else:
-            #era = random.choice(v_eras)
-            #crossingAngle = random.choice(v_crossingAngles)
-            era = getEra(year)
-            crossingAngle = getXangle( diph_struct.era )
+            era = random.choice(v_eras)
+            crossingAngle = random.choice(v_crossingAngles)
+            #era = getEra(year)
+            #crossingAngle = getXangle( diph_struct.era )
             
 
         # Get entry by era and crossingAngle
@@ -1897,14 +1903,23 @@ for e in range(experiments):
             continue
 
         for j in range(pro_struct.num_m): 
-            v_xim.append( pro_struct.xim[j] )
-            v_idm.append( pro_struct.idm[j] )
-        for j in range(pro_struct.num_p): 
-            v_xip.append( pro_struct.xip[j] )
-            v_idp.append( pro_struct.idp[j] )
+            # signal selected protons 0.035 < xi56 < 0.18
+            if pro_struct.xim[j] > 0.035 and pro_struct.xim[j] < 0.18: 
+                v_xim.append( pro_struct.xim[j] )
+                v_idm.append( pro_struct.idm[j] )
+        for j in range(pro_struct.num_p):
+            # signal selected protons 0.035 < xi45 < 0.15
+            if pro_struct.xip[j] > 0.035 and pro_struct.xip[j] < 0.15:
+                v_xip.append( pro_struct.xip[j] )
+                v_idp.append( pro_struct.idp[j] )
 
+
+        if len(v_xim) == 0 or len(v_xip) == 0: continue
 
         #------ Choose the best diproton candidate ------
+
+        # Max proton (per side) cut
+        #if len(v_xim) > 4 or len(v_xip) > 4: continue
 
         # Use the proton from each arm best matching in xi
         #pro_xim, pro_xip = find_nearest(v_xim, diph_struct.xim), find_nearest(v_xip, diph_struct.xip) 
@@ -1945,7 +1960,10 @@ for e in range(experiments):
             matching_20sig += 1
         if abs(mass_match) < 5 and abs(rap_match) < 5: matching_5sig += 1
         if abs(mass_match) < 3 and abs(rap_match) < 3: matching_3sig += 1
-        if abs(mass_match) < 2 and abs(rap_match) < 2: matching_2sig += 1
+        if abs(mass_match) < 2 and abs(rap_match) < 2: 
+            matching_2sig += 1
+            v_xi_match.append([pro_xim, pro_xip])
+
         #count += diph_struct.weight
         #if abs(mass_match) < 20 and abs(rap_match) < 20: matching_20sig += diph_struct.weight
         #if abs(mass_match) < 5 and abs(rap_match) < 5: matching_5sig += diph_struct.weight
@@ -1953,21 +1971,35 @@ for e in range(experiments):
         #if abs(mass_match) < 2 and abs(rap_match) < 2: matching_2sig += diph_struct.weight
 
     # Monitor experiments
+    if e*100%experiments == 0: print str(100*e/experiments)+'% done'
+
+    with open('matching_%s_reverseMixing.txt' % year,'a') as mf:
+        for xis in v_xi_match: mf.write(str(xis[0])+','+str(xis[1])+'\n')
+
+    """
     if e*100%experiments == 0: print str(100*e/experiments)+'% done', '--- Averages', 'Total:', getAverage(v_count), '20 sigma:', getAverage(v_20sig), '5 sigma:', getAverage(v_5sig), '3 sigma:', getAverage(v_3sig), '2 sigma:', getAverage(v_2sig)
     v_20sig.append(matching_20sig), v_5sig.append(matching_5sig), v_3sig.append(matching_3sig), v_2sig.append(matching_2sig), v_count.append(count)
     if plotting: plot_estimate( gr_estimate, 'background_estimate_%d.png' % e )
 
-    if e+1 in points: 
-        converge.append([e+1,getAverage(v_3sig),getAverage(v_2sig)])
+
+    #if e+1 in points: 
+    #    converge.append([e+1,getAverage(v_3sig),getAverage(v_2sig)])
 
 print ''
 print ''
 print ''
 print 'Average matching ----> 20 sigma:', getAverage(v_20sig), '5 sigma:', getAverage(v_5sig), '3 sigma:', getAverage(v_3sig), '2 sigma:', getAverage(v_2sig)
 print 'Average num events:', getAverage(v_count)
+"""
+
+
 
 '''
-with open('matching_2016_dataMixing.txt','w') as mf:
+with open('matching_xi_2016.txt','w') as mf:
+    for xis in v_xi_match: mf.write(str(xis[0])+','+str(xis[1])+'\n')
+
+
+with open('matching_%s_dataMixing.txt' % year,'w') as mf:
     for match in matching_points: mf.write(str(match[0])+','+str(match[1])+'\n')
 
 
