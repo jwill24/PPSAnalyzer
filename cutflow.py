@@ -16,7 +16,7 @@ selections = [['ID','Preselection'], ['Elastic','Elastic selection'], ['Xi', '#x
 #selections = [['HLT','After HLT'], ['Elastic','Diphoton selection'], ['Xi', '#xi_{#gamma#gamma}^{#pm} #in PPS']]
 #selections = [['Elastic','Diphoton selection'], ['Xi', '#xi_{#gamma#gamma}^{#pm} #in PPS']]
 #years = ['2016','2017','2018']
-years = ['2016']
+years = ['2018']
 s_years = '+'.join(years)
 #scale2018 = 55.72/37.2
 

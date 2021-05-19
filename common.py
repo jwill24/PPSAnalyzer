@@ -217,7 +217,7 @@ def hoe_cut(pho1,pho2):
 
 # Apply acoplanarity cut
 def acop_cut(acop):
-    if acop < 0.005: return True
+    if acop < 0.0025: return True
     else: return False
 
 # Apply photon ID
@@ -271,6 +271,7 @@ def getXiError(xi,method,detId,run):
     str_method = 'multi' if method == 'multiRP' else 'single'
     protonEra = getProtonEra(run)
     era = protonEra[:4] + '_' + protonEra[4:]
+    #era = '2017_preTS2' # FIXME FIXME FIXME
     bias_map = get_root_obj(unc_file, '%s/%s rp-%s/xi/g_bias_vs_xi' % (era,str_method,detId)) 
     res_map = get_root_obj(unc_file, '%s/%s rp-%s/xi/g_resolution_vs_xi' % (era,str_method,detId))
     syst_map = get_root_obj(unc_file, '%s/%s rp-%s/xi/g_systematics_vs_xi' % (era,str_method,detId))
@@ -281,7 +282,8 @@ def mass_err(method,pro1,pro2,run):
     return mass(pro1.xi,pro2.xi) * rapidity_err(method,pro1,pro2,run) 
 
 def rapidity_err(method,pro1,pro2,run):
-    if pro1.sector45 == 1: pro_p, pro_m = pro1, pro2
+    if pro1.sector45 == 1: pro_p, pro_m = pro1, pro2 #FIXME FIXME FIXME
+    #if pro1.arm == 0: pro_p, pro_m = pro1, pro2 
     else: pro_p, pro_m = pro2, pro1
     if method == 'multiRP':
         xip_err, xim_err = getXiError(pro_p.xi,method,0,run), getXiError(pro_m.xi,method,1,run)

@@ -14,8 +14,8 @@ from common import sampleColors, Canvas, Prettify, lumiLabel, makeLegend, asym_e
 gStyle.SetOptStat(0)
 
 extension = 'pdf'
-#lab = '#xi^{#gamma#gamma} #in PPS selection'
-lab = '#xi #in PPS selection'
+lab = '#xi^{#gamma#gamma} #in PPS selection'
+#lab = 'Elastic selection'
 selection = 'Xi'
 method = 'multiRP'
 years = ['2016','2017','2018']
@@ -24,7 +24,7 @@ s_years = '+'.join(years)
 samples = sampleColors()
 samples.append(['aqgc',92,92])
 samples.append(['data',kBlack,kBlack])
-aqgcFile = TFile('outputHists/2017/histOut_aqgc2017_Xi_multiRP.root')
+aqgcFile = TFile('outputHists/2017/histOut_aqgc2017_%s_multiRP.root' % selection)
 v_files = []
 for year in years:
     for s in samples:
@@ -179,7 +179,7 @@ def makePlot(inName, outName, xTitle, rbin, log):
             bins = h_standard.GetNbinsX()
             first = h_standard.GetXaxis().GetXmin()
             last = h_standard.GetXaxis().GetXmax()
-            
+       
             h_data = TH1F('h_data', '', bins, first, last)
             h_ggj = TH1F('h_ggj', '', bins, first, last)
             h_gj = TH1F('h_gj', '', bins, first, last)
@@ -188,6 +188,7 @@ def makePlot(inName, outName, xTitle, rbin, log):
             h_zg = TH1F('h_zg', '', bins, first, last)
             h_tt = TH1F('h_tt', '', bins, first, last)
             h_aqgc = TH1F('h_aqgc', '', bins, first, last)
+
 
         h_data.Add( getHist('data',year,inName) )
         h_ggj.Add( getHist('ggj',year,inName) )
@@ -198,12 +199,14 @@ def makePlot(inName, outName, xTitle, rbin, log):
         h_tt.Add( getHist('tt',year,inName) )
         h_aqgc.Add( getHist('aqgc',year,inName) ) 
 
+
     h_data.SetTitle('')
     h_data.SetXTitle(xTitle)
     h_data.SetYTitle('Events')
     h_data.Rebin(rbin)
     h_data.SetMarkerStyle(20)
     h_data.SetMarkerSize(0.7)
+
 
     setPlot(h_ggj, 'ggj', rbin)
     setPlot(h_gj, 'g+j', rbin)
@@ -229,26 +232,23 @@ def getColors(sample):
 #-----------------------
 
 
-makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
-
-'''
 makePlot('h_diph_mass', 'h_mass_comp', 'm_{#gamma#gamma} GeV', 4, True)
-makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
+#makePlot('h_acop', 'h_acop_comp', '1- |#Delta #phi|/#pi', 2, True)
 makePlot('h_single_pt', 'h_pt_comp', 'p_{T}^{#gamma} GeV', 4, True)
-makePlot('h_lead_pt', 'h_lead_pt_comp', 'Leading p_{T}^{#gamma} GeV', 2, True)
-makePlot('h_sub_pt', 'h_sub_pt_comp', 'Subleading p_{T}^{#gamma} GeV', 2, True)
-makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 2, False)
-makePlot('h_lead_eta', 'h_lead_eta_comp', 'Leading #eta ^{#gamma}', 4, False)
-makePlot('h_sub_eta', 'h_sub_eta_comp', 'Subleading #eta ^{#gamma}', 4, False)
-makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 1, True)
-makePlot('h_lead_r9', 'h_lead_r9_comp', 'Leading R_{9} ^{#gamma}', 2, True)
-makePlot('h_sub_r9', 'h_sub_r9_comp', 'Subleading R_{9} ^{#gamma}', 2, True)
-makePlot('h_eb_hoe', 'h_eb_hoe_comp', 'EB H/E', 1, True)
-makePlot('h_eb_sieie', 'h_eb_sieie_comp', 'EB #sigma_{i#etai#eta}', 1, True)
-makePlot('h_nvtx', 'h_nvtx_comp', 'Number of vertices', 1, True)
-makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
-makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
-makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 2, True)
-makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
-makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, True)
-'''
+#makePlot('h_lead_pt', 'h_lead_pt_comp', 'Leading p_{T}^{#gamma} GeV', 2, True)
+#makePlot('h_sub_pt', 'h_sub_pt_comp', 'Subleading p_{T}^{#gamma} GeV', 2, True)
+#makePlot('h_single_eta', 'h_eta_comp', '#eta ^{#gamma}', 2, False)
+#makePlot('h_lead_eta', 'h_lead_eta_comp', 'Leading #eta ^{#gamma}', 4, False)
+#makePlot('h_sub_eta', 'h_sub_eta_comp', 'Subleading #eta ^{#gamma}', 4, False)
+#makePlot('h_single_r9', 'h_r9_comp', 'R_{9} ^{#gamma}', 1, True)
+#makePlot('h_lead_r9', 'h_lead_r9_comp', 'Leading R_{9} ^{#gamma}', 2, True)
+#makePlot('h_sub_r9', 'h_sub_r9_comp', 'Subleading R_{9} ^{#gamma}', 2, True)
+#makePlot('h_eb_hoe', 'h_eb_hoe_comp', 'EB H/E', 1, True)
+#makePlot('h_eb_sieie', 'h_eb_sieie_comp', 'EB #sigma_{i#etai#eta}', 1, True)
+#makePlot('h_nvtx', 'h_nvtx_comp', 'Number of vertices', 1, True)
+#makePlot('h_vtx_z', 'h_vtx_z_comp', 'Vertex z position', 1, True)
+#makePlot('h_xip', 'h_xip_comp', '#xi_{#gamma#gamma}^{+}', 4, True)
+#makePlot('h_xim', 'h_xim_comp', '#xi_{#gamma#gamma}^{-}', 2, True)
+#makePlot('h_fgr', 'h_fgr_comp', 'fixedGridRho', 1, True)
+#makePlot('h_num_pho', 'h_num_pho_comp', 'Number of photons', 1, True)
+
